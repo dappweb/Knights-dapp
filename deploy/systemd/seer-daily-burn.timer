@@ -1,0 +1,10 @@
+[Unit]
+Description=Run SEER daily burn at 00:00 UTC
+
+[Timer]
+OnCalendar=*-*-* 00:00:00 UTC
+Persistent=true
+Unit=seer-daily-burn.service
+
+[Install]
+WantedBy=timers.target

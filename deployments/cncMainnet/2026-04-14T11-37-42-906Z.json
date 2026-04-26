@@ -1,0 +1,17 @@
+{
+  "network": "cncMainnet",
+  "chainId": 50716,
+  "deployer": "0x744447d8580EB900b199e852C132F626247a36F7",
+  "timestamp": "2026-04-14T11:37:42.905Z",
+  "contracts": {
+    "usdt": "0xC4eA24dFC165Fedb881783a84F44C2806CF7FBbD",
+    "seer": "0x3cc5015C839198EbacfBc05D35505a14673868B9",
+    "protocol": "0x950aB6763963e89718bD9E6AC2031a29e8d53002",
+    "minerNode": "0x873BAc3Db515271b2e09039Cb1F13f4186c49bB9",
+    "airdrop": "0xF06ce49eeD616AA1Eac937baFDD25db5B5c9Fd47"
+  },
+  "funding": {
+    "miningPoolSeer": "1000000.0",
+    "airdropPoolSeer": "50000.0"
+  }
+}

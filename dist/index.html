@@ -1,0 +1,114 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/knights-logo.svg" type="image/svg+xml" />
+    <link rel="shortcut icon" href="/knights-logo.svg" />
+    <link rel="apple-touch-icon" href="/knights-logo.svg" />
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Preload critical resources -->
+    <link rel="dns-prefetch" href="//cncchainpro.com" />
+    <!-- Preconnect to external APIs -->
+    <link rel="preconnect" href="https://rpc.cncchainpro.com" crossorigin />
+    
+    <!-- Open Graph / Facebook / DApp Browsers -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://knights-dapp.pages.dev/" />
+    <meta property="og:title" content="KNIGHTS | Decentralized Mining" />
+    <meta property="og:description" content="KNIGHTS - Decentralized Prediction & Mining on CNC Mainnet" />
+    <meta property="og:image" content="https://knights-dapp.pages.dev/knights-logo.svg" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary" />
+    <meta property="twitter:title" content="KNIGHTS | Decentralized Mining" />
+    <meta property="twitter:description" content="KNIGHTS - Decentralized Prediction & Mining on CNC Mainnet" />
+    <meta property="twitter:image" content="https://knights-dapp.pages.dev/knights-logo.svg" />
+
+    <meta name="theme-color" content="#070B10" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: blob:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https: blob:; font-src 'self' data: https:; connect-src 'self' https: wss:;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>KNIGHTS</title>
+    
+    <!-- Critical CSS inline -->
+    <style>body{background:#070b10;color:#f4f7fa;font-family:Inter,sans-serif;margin:0;overflow-x:hidden;padding:0}#root,body,html{margin:0;min-height:100%;padding:0}.glass-panel{backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);background:rgba(16,24,32,.92);border:1px solid rgba(214,177,90,.22);box-shadow:0 4px 20px -5px rgba(214,177,90,.14)}#root{display:flex;flex-direction:column;min-height:100vh}*{box-sizing:border-box}button{cursor:pointer}img{display:block;max-width:100%}.flex{display:flex}.flex-col{flex-direction:column}.items-center{align-items:center}.justify-center{justify-content:center}.gap-2{gap:.5rem}.gap-3{gap:.75rem}.gap-4{gap:1rem}.mb-2{margin-bottom:.5rem}.mb-4{margin-bottom:1rem}.mb-6{margin-bottom:1.5rem}.mt-20{margin-top:5rem}.p-4{padding:1rem}.px-3{padding-left:.75rem;padding-right:.75rem}.py-2{padding-bottom:.5rem;padding-top:.5rem}.rounded-lg{border-radius:.5rem}.rounded-xl{border-radius:.75rem}.border{border-width:1px}.min-h-screen{min-height:100vh}.w-full{width:100%}.text-center{text-align:center}.text-sm{font-size:.875rem}.text-lg{font-size:1.125rem}.text-xl{font-size:1.25rem}.text-2xl{font-size:1.5rem}.text-3xl{font-size:1.875rem}.font-bold{font-weight:700}.font-semibold{font-weight:600}.relative{position:relative}.fixed{position:fixed}.absolute{position:absolute}.inset-0{bottom:0;left:0;right:0;top:0}.z-0{z-index:0}.z-10{z-index:10}</style>
+    
+    <!-- Load Tailwind CSS with retry logic -->
+    <script>
+      (function() {
+        var retryCount = 0;
+        var maxRetries = 3;
+        
+        function loadTailwind() {
+          var script = document.createElement('script');
+          script.src = 'https://cdn.tailwindcss.com';
+          script.async = true;
+          script.onerror = function() {
+            retryCount++;
+            if (retryCount < maxRetries) {
+              setTimeout(loadTailwind, 2000);
+            } else {
+              console.warn('Failed to load Tailwind CSS from CDN after ' + maxRetries + ' retries');
+              // Show fallback message
+              document.body.innerHTML += '<div style="position:fixed;bottom:10px;left:10px;background:rgba(240,82,82,0.1);border:1px solid rgba(240,82,82,0.3);color:#f87171;padding:12px;border-radius:8px;font-size:12px;z-index:9999">鈿狅笍 Some styles may not load properly. Refreshing the page may help.</div>';
+            }
+          };
+          document.head.appendChild(script);
+        }
+        
+        loadTailwind();
+      })();
+    </script>
+    <script>
+      // Tailwind config - load after script loads with safety checks
+      window.addEventListener('load', function() {
+        if (window.tailwind) {
+          try {
+            tailwind.config = {
+              theme: {
+                extend: {
+                  colors: {
+                    knights: {
+                      50: '#F4F7FA', 100: '#E8EEF5', 200: '#C7D2DF', 300: '#9BAABD',
+                      400: '#39BDF8', 500: '#0EA5E9', 600: '#0284C7', 700: '#16212B',
+                      800: '#101820', 900: '#070B10', 950: '#05070A',
+                    },
+                    gold: {
+                      50: '#FFF8DF', 100: '#FDEFB8', 200: '#F3D27A', 300: '#E8BE45',
+                      400: '#D6B15A', 500: '#B88919', 600: '#936B12', 700: '#6E4D0E',
+                      800: '#4A340B', 900: '#2D2108',
+                    },
+                  },
+                  fontFamily: {
+                    sans: ['Inter', 'sans-serif'],
+                    mono: ['Fira Code', 'monospace'],
+                  },
+                }
+              }
+            }
+          } catch(e) {
+            console.warn('Failed to configure Tailwind:', e);
+          }
+        }
+      }, { once: true });
+    </script>
+    <script>
+      // Legacy runtime variable compatibility for cached old chunks.
+      var DEX_ROUTER_ADDRESS = "0x9b619b84b2C866ca8445025F5DF4013d95D28A29";
+      var DEX_PAIR_ADDRESS = "0x390F7eCc2357Bcce414b478CBe969afCC12ebF88";
+      var USDT_TOKEN_ADDRESS = "0xC4eA24dFC165Fedb881783a84F44C2806CF7FBbD";
+      var KNIGHTS_TOKEN_ADDRESS = "0x3cc5015C839198EbacfBc05D35505a14673868B9";
+    </script>
+    <script type="module" crossorigin src="/assets/js/index-269b0e94.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-react-e55f24f0.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-web3-a9b6393d.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-ethers-8e2ec827.js">
+    <link rel="stylesheet" href="/assets/css/style-42e67169.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    
+  </body>
+</html>

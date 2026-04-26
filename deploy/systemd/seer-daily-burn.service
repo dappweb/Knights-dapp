@@ -1,0 +1,13 @@
+[Unit]
+Description=SEER Daily Burn Job
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/seer/daily-burn.env
+WorkingDirectory=__SEER_REPO_DIR__
+ExecStart=/usr/bin/env node scripts/daily-burn.cjs
+StandardOutput=journal
+StandardError=journal
+

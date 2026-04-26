@@ -1,0 +1,15 @@
+{
+  "network": "cncMainnet",
+  "dex": "CNC Mainnet DEX",
+  "timestamp": "2026-04-14T11:12:12.715Z",
+  "signer": "0x744447d8580EB900b199e852C132F626247a36F7",
+  "router": "0x9b619b84b2C866ca8445025F5DF4013d95D28A29",
+  "factory": "0x0C36F3c00f1c73CCc9682B6Bbb03Adf52a8A3658",
+  "pair": "0x390F7eCc2357Bcce414b478CBe969afCC12ebF88",
+  "basePriceUsdt": 0.5,
+  "initialPriceUsdt": 0.1,
+  "liquidity": {
+    "seer": "2100000",
+    "usdt": "210000"
+  }
+}
