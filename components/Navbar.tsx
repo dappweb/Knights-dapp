@@ -1,6 +1,6 @@
 import React, { useEffect, Suspense, lazy } from "react";
 import { AppTab } from "../src/types";
-import { Home, Pickaxe, Users, Settings, Globe, FileText, Wallet, ArrowLeftRight, ShieldCheck } from "lucide-react";
+import { Home, Pickaxe, Users, Settings, Globe, FileText, Wallet, ArrowLeftRight, ShieldCheck, Flame, Ticket, Coins } from "lucide-react";
 import { useLanguage } from "../src/LanguageContext";
 import { useWeb3 } from "../src/Web3Context";
 
@@ -24,6 +24,9 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab, showNodeMenu = true
   }, []);
 
   const navItems = [
+    { tab: AppTab.LP_MINING, icon: Coins, label: "LP" },
+    { tab: AppTab.BURN_QUEUE, icon: Flame, label: "销毁" },
+    { tab: AppTab.MIGRATION, icon: Ticket, label: "平移" },
     { tab: AppTab.HOME, icon: Home, label: t.nav?.home || "首页" },
     ...(showNodeMenu ? [{ tab: AppTab.NODE, icon: ShieldCheck, label: t.nav?.node || "节点" }] : []),
     ...(showMinerMenu ? [{ tab: AppTab.MINER, icon: Pickaxe, label: t.nav?.miner || "矿机" }] : []),

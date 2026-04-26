@@ -53,6 +53,9 @@ const lazyWithRetry = <T extends React.ComponentType<any>>(
 const StatsPanel = lazyWithRetry(() => import("../components/StatsPanel"), "StatsPanel");
 const NodeRecruitmentCampaign = lazyWithRetry(() => import("../components/NodeRecruitmentCampaign"), "NodeRecruitmentCampaign");
 const SwapPanel = lazyWithRetry(() => import("../components/SwapPanel"), "SwapPanel");
+const LpMiningPanel = lazyWithRetry(() => import("../components/LpMiningPanel"), "LpMiningPanel");
+const BurnQueuePanel = lazyWithRetry(() => import("../components/BurnQueuePanel"), "BurnQueuePanel");
+const MigrationNftPanel = lazyWithRetry(() => import("../components/MigrationNftPanel"), "MigrationNftPanel");
 const AirdropPanel = lazyWithRetry(() => import("../components/AirdropPanel"), "AirdropPanel");
 const MiningPanel = lazyWithRetry(() => import("../components/MiningPanel"), "MiningPanel");
 const TeamLevel = lazyWithRetry(() => import("../components/TeamLevel"), "TeamLevel");
@@ -154,6 +157,15 @@ const AppContent: React.FC = () => {
         break;
       case AppTab.SWAP:
         import("../components/SwapPanel");
+        break;
+      case AppTab.LP_MINING:
+        import("../components/LpMiningPanel");
+        break;
+      case AppTab.BURN_QUEUE:
+        import("../components/BurnQueuePanel");
+        break;
+      case AppTab.MIGRATION:
+        import("../components/MigrationNftPanel");
         break;
       case AppTab.MINER:
         import("../components/MiningPanel");
@@ -271,6 +283,30 @@ const AppContent: React.FC = () => {
             <ErrorBoundary onError={handleAppError}>
               <Suspense fallback={<SkeletonCard />}>
                 <SwapPanel />
+              </Suspense>
+            </ErrorBoundary>
+          )}
+
+          {currentTab === AppTab.LP_MINING && (
+            <ErrorBoundary onError={handleAppError}>
+              <Suspense fallback={<SkeletonCard />}>
+                <LpMiningPanel />
+              </Suspense>
+            </ErrorBoundary>
+          )}
+
+          {currentTab === AppTab.BURN_QUEUE && (
+            <ErrorBoundary onError={handleAppError}>
+              <Suspense fallback={<SkeletonCard />}>
+                <BurnQueuePanel />
+              </Suspense>
+            </ErrorBoundary>
+          )}
+
+          {currentTab === AppTab.MIGRATION && (
+            <ErrorBoundary onError={handleAppError}>
+              <Suspense fallback={<SkeletonCard />}>
+                <MigrationNftPanel />
               </Suspense>
             </ErrorBoundary>
           )}

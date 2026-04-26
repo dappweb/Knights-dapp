@@ -66,12 +66,17 @@ const extractReferrerFromLocation = (): string => {
 const ENV_CONTRACT_ADDRESSES = {
   USDT: normalizeAddress(import.meta.env.VITE_USDT_ADDRESS),
   SEER_TOKEN: normalizeAddress(import.meta.env.VITE_KNT_TOKEN_ADDRESS || import.meta.env.VITE_SEER_TOKEN_ADDRESS),
-  PROTOCOL: normalizeAddress(import.meta.env.VITE_KNT_LP_MINING_ADDRESS || import.meta.env.VITE_PROTOCOL_ADDRESS),
+  PROTOCOL: normalizeAddress(import.meta.env.VITE_PROTOCOL_ADDRESS),
   MINER_NODE: normalizeAddress(import.meta.env.VITE_MINER_NODE_ADDRESS),
   AIRDROP: normalizeAddress(import.meta.env.VITE_AIRDROP_ADDRESS),
   DEX_ROUTER: normalizeAddress(import.meta.env.VITE_DEX_ROUTER_ADDRESS),
   DEX_PAIR: normalizeAddress(import.meta.env.VITE_DEX_PAIR_ADDRESS),
   SWAP_POOL_MANAGER: normalizeAddress(import.meta.env.VITE_SWAP_POOL_MANAGER_ADDRESS),
+  LP_MINING: normalizeAddress(import.meta.env.VITE_KNT_LP_MINING_ADDRESS),
+  BURN_QUEUE: normalizeAddress(import.meta.env.VITE_KNT_BURN_QUEUE_ADDRESS),
+  MIGRATION_NFT: normalizeAddress(import.meta.env.VITE_KNT_MIGRATION_NFT_ADDRESS),
+  TAX_MANAGER: normalizeAddress(import.meta.env.VITE_KNT_TAX_MANAGER_ADDRESS),
+  LABUBU_TOKEN: normalizeAddress(import.meta.env.VITE_LABUBU_TOKEN_ADDRESS),
 };
 
 const ROOT_REFERRER_ADDRESS = import.meta.env.VITE_ROOT_REFERRER_ADDRESS || "";
@@ -137,6 +142,11 @@ interface Web3ContextType {
   protocolContract: ethers.Contract | null;
   minerNodeContract: ethers.Contract | null;
   airdropContract: ethers.Contract | null;
+  lpMiningContract: ethers.Contract | null;
+  burnQueueContract: ethers.Contract | null;
+  migrationNftContract: ethers.Contract | null;
+  taxManagerContract: ethers.Contract | null;
+  labubuContract: ethers.Contract | null;
 
   // 用户状态
   usdtBalance: bigint | null;
@@ -362,6 +372,52 @@ const MINER_NODE_ABI = [
   "error NodeTierDisabled(uint256 tier)",
 ] as const;
 
+const LP_MINING_ABI = [
+  "function knt() view returns (address)",
+  "function lpToken() view returns (address)",
+  "function currentDay() view returns (uint256)",
+  "function currentDailyEmission() view returns (uint256)",
+  "function totalLpAmount() view returns (uint256)",
+  "function totalLpValueUsdt() view returns (uint256)",
+  "function totalPower() view returns (uint256)",
+  "function dynamicPool() view returns (uint256)",
+  "function totalKntDistributed() view returns (uint256)",
+  "function nodeCount() view returns (uint256)",
+  "function pendingReward(address) view returns (uint256)",
+  "function users(address) view returns (bool registered,address referrer,uint256 lpAmount,uint256 lpValueUsdt,uint256 power,uint256 lastPowerUpdateDay,uint256 rewardDebt,uint256 pendingKnt,uint256 directLpValueUsdt,uint256 directEffectiveCount,bool isNode,uint256 nodeRewardDebt,uint256 totalStaticReward,uint256 totalDynamicReward,uint256 totalNodeReward)",
+  "function directReferralsOf(address) view returns (address[])",
+  "function depositLp(uint256 lpAmount,uint256 lpValueUsdt,address referrer)",
+  "function withdrawLp(uint256 lpAmount,uint256 lpValueUsdt,uint256 kntAmountToBurn)",
+  "function claim()",
+] as const;
+
+const BURN_QUEUE_ABI = [
+  "function rewardMultiplierBP() view returns (uint256)",
+  "function rewardPool() view returns (uint256)",
+  "function nextPayoutIndex() view returns (uint256)",
+  "function queueLength() view returns (uint256)",
+  "function queue(uint256) view returns (address account,uint256 burnedAmount,uint256 rewardAmount,bool paid)",
+  "function burnAndQueue(uint256 amount) returns (uint256)",
+  "function processNext(uint256 maxCount) returns (uint256)",
+] as const;
+
+const MIGRATION_NFT_ABI = [
+  "function owner() view returns (address)",
+  "function balanceOf(address) view returns (uint256)",
+  "function ownerOf(uint256 tokenId) view returns (address)",
+  "function positions(uint256 tokenId) view returns (uint256 originalAmount,uint256 claimedAmount,uint256 lastClaimDay)",
+  "function claimable(uint256 tokenId) view returns (uint256)",
+  "function currentDay() view returns (uint256)",
+  "function mintMigration(address account,uint256 amount) returns (uint256)",
+  "function claim(uint256 tokenId)",
+] as const;
+
+const TAX_MANAGER_ABI = [
+  "function costBasisOf(address) view returns (uint256 boughtKnt,uint256 spentUsdt)",
+  "function settleSell(uint256 amount,uint256 currentValueUsdt,uint256 priceNowUsdt,uint256 price24hAgoUsdt) returns (uint256)",
+  "function recordBuy(address account,uint256 kntAmount,uint256 usdtSpent)",
+] as const;
+
 // ============================================================
 //                      Provider
 // ============================================================
@@ -387,6 +443,11 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
       DEX_ROUTER: normalizeAddress(runtimeSettings.dexRouterAddress, ENV_CONTRACT_ADDRESSES.DEX_ROUTER),
       DEX_PAIR: normalizeAddress(runtimeSettings.dexPairAddress, ENV_CONTRACT_ADDRESSES.DEX_PAIR),
       SWAP_POOL_MANAGER: ENV_CONTRACT_ADDRESSES.SWAP_POOL_MANAGER,
+      LP_MINING: ENV_CONTRACT_ADDRESSES.LP_MINING,
+      BURN_QUEUE: ENV_CONTRACT_ADDRESSES.BURN_QUEUE,
+      MIGRATION_NFT: ENV_CONTRACT_ADDRESSES.MIGRATION_NFT,
+      TAX_MANAGER: ENV_CONTRACT_ADDRESSES.TAX_MANAGER,
+      LABUBU_TOKEN: ENV_CONTRACT_ADDRESSES.LABUBU_TOKEN,
     }),
     [runtimeSettings]
   );
@@ -434,6 +495,11 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [protocolContract, setProtocolContract] = useState<ethers.Contract | null>(null);
   const [minerNodeContract, setMinerNodeContract] = useState<ethers.Contract | null>(null);
   const [airdropContract, setAirdropContract] = useState<ethers.Contract | null>(null);
+  const [lpMiningContract, setLpMiningContract] = useState<ethers.Contract | null>(null);
+  const [burnQueueContract, setBurnQueueContract] = useState<ethers.Contract | null>(null);
+  const [migrationNftContract, setMigrationNftContract] = useState<ethers.Contract | null>(null);
+  const [taxManagerContract, setTaxManagerContract] = useState<ethers.Contract | null>(null);
+  const [labubuContract, setLabubuContract] = useState<ethers.Contract | null>(null);
 
   // 余额
   const [usdtBalance, setUsdtBalance] = useState<bigint | null>(null);
@@ -470,6 +536,11 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setProtocolContract(null);
       setMinerNodeContract(null);
       setAirdropContract(null);
+      setLpMiningContract(null);
+      setBurnQueueContract(null);
+      setMigrationNftContract(null);
+      setTaxManagerContract(null);
+      setLabubuContract(null);
       return;
     }
 
@@ -487,6 +558,12 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setSeerContract(new ethers.Contract(contractAddresses.SEER_TOKEN, ERC20_ABI, signerOrProvider));
     } else {
       setSeerContract(null);
+    }
+
+    if (contractAddresses.LABUBU_TOKEN) {
+      setLabubuContract(new ethers.Contract(contractAddresses.LABUBU_TOKEN, ERC20_ABI, signerOrProvider));
+    } else {
+      setLabubuContract(null);
     }
 
     // Protocol
@@ -508,6 +585,30 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setAirdropContract(new ethers.Contract(contractAddresses.AIRDROP, AIRDROP_ABI, signerOrProvider));
     } else {
       setAirdropContract(null);
+    }
+
+    if (contractAddresses.LP_MINING) {
+      setLpMiningContract(new ethers.Contract(contractAddresses.LP_MINING, LP_MINING_ABI, signerOrProvider));
+    } else {
+      setLpMiningContract(null);
+    }
+
+    if (contractAddresses.BURN_QUEUE) {
+      setBurnQueueContract(new ethers.Contract(contractAddresses.BURN_QUEUE, BURN_QUEUE_ABI, signerOrProvider));
+    } else {
+      setBurnQueueContract(null);
+    }
+
+    if (contractAddresses.MIGRATION_NFT) {
+      setMigrationNftContract(new ethers.Contract(contractAddresses.MIGRATION_NFT, MIGRATION_NFT_ABI, signerOrProvider));
+    } else {
+      setMigrationNftContract(null);
+    }
+
+    if (contractAddresses.TAX_MANAGER) {
+      setTaxManagerContract(new ethers.Contract(contractAddresses.TAX_MANAGER, TAX_MANAGER_ABI, signerOrProvider));
+    } else {
+      setTaxManagerContract(null);
     }
 
     console.log(`✅ [Web3] 合约已初始化 (${mode})`, {
@@ -937,6 +1038,11 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
         protocolContract,
         minerNodeContract,
         airdropContract,
+        lpMiningContract,
+        burnQueueContract,
+        migrationNftContract,
+        taxManagerContract,
+        labubuContract,
 
         usdtBalance,
         seerBalance,
