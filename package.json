@@ -6,7 +6,8 @@
     "compile": "hardhat compile",
     "deploy:knt:bsc:testnet": "npm run deploy:knt:all-in-one:bsc:testnet",
     "deploy:knt:all-in-one:bsc:testnet": "hardhat run scripts/deploy-knt-all-in-one-bsc-testnet.cjs --network bscTestnet",
-    "deploy:knt:all-in-one:local": "hardhat run scripts/deploy-knt-all-in-one-bsc-testnet.cjs"
+    "deploy:knt:all-in-one:local": "hardhat run scripts/deploy-knt-all-in-one-bsc-testnet.cjs",
+    "deploy:pancake:test-pool:bsc:testnet": "hardhat run scripts/deploy-pancake-test-pool-bsc-testnet.cjs --network bscTestnet"
   },
   "dependencies": {
     "@openzeppelin/contracts": "5.2.0",
