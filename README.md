@@ -1,2 +1,0 @@
-# Knights-dapp
-Knights-dapp

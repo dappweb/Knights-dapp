@@ -1,44 +1,12 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+.env
+.env.*
+!.env.example
 
-node_modules
-dist-ssr
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# Output files
-output/
-*.zip
-verify-data.cjs
-
-# Backup files
-*.backup
-*.old
-*.orig
-*~
-
-# macOS
-.DS_Store
-
-# Build artifacts
+node_modules/
 artifacts/
 cache/
-config/cache/
-.vercel
-.env*.local
+typechain-types/
+
+deployments/hardhat/
+coverage/
+coverage.json
