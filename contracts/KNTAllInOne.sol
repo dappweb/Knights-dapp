@@ -241,6 +241,10 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
         emit RewardsFunded(msg.sender, amount);
     }
 
+    function adminUpdatePool() external onlyOwner {
+        _updatePool();
+    }
+
     function claim() external nonReentrant {
         _updatePool();
         _settleAccount(msg.sender);

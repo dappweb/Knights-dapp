@@ -8,7 +8,8 @@
     "deploy:knt:all-in-one:bsc:testnet": "hardhat run scripts/deploy-knt-all-in-one-bsc-testnet.cjs --network bscTestnet",
     "deploy:knt:all-in-one:local": "hardhat run scripts/deploy-knt-all-in-one-bsc-testnet.cjs",
     "deploy:pancake:test-pool:bsc:testnet": "hardhat run scripts/deploy-pancake-test-pool-bsc-testnet.cjs --network bscTestnet",
-    "test:knt:business:bsc:testnet": "hardhat run scripts/test-knt-business-bsc-testnet.cjs --network bscTestnet"
+    "test:knt:business:bsc:testnet": "hardhat run scripts/test-knt-business-bsc-testnet.cjs --network bscTestnet",
+    "admin:update-pool:bsc:testnet": "hardhat run scripts/admin-update-pool-bsc-testnet.cjs --network bscTestnet"
   },
   "dependencies": {
     "@openzeppelin/contracts": "5.2.0",
