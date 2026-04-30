@@ -1,0 +1,20 @@
+{
+  "network": "bscTestnet",
+  "chainId": 97,
+  "deployedAt": "2026-04-30T07:08:59.947Z",
+  "deployer": "0x744447d8580EB900b199e852C132F626247a36F7",
+  "router": "0xD99D1c33F9fC3444f8101754aBC46c52416550D1",
+  "factory": "0x6725F303b657a9451d8BA641348b6761A6CC7a17",
+  "KNTAllInOne": "0xA0Bf997DEAebf8332b4CDb70E8B4Df5B5282eaa3",
+  "LABUBU": "0x922022fD930751197BF79fE0CA072325cdE3fBdd",
+  "pair": "0xF7c8db96e63C91BB94c399558B5a1D8463f03096",
+  "liquidity": {
+    "KNT": "200000.0",
+    "LABUBU": "600000.0",
+    "tx": "0x6a53c78e66745cddd64b13e9fc7ff1d9fe1d0960f4f75a2135ed541f57064339"
+  },
+  "wallets": {
+    "foundationWallet": "0x744447d8580EB900b199e852C132F626247a36F7",
+    "dexSettlementWallet": "0x744447d8580EB900b199e852C132F626247a36F7"
+  }
+}
