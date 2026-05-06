@@ -1,0 +1,86 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "knights-admin",
+  "main": "cloudflare/worker.js",
+  "compatibility_date": "2026-05-04",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./admin",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "triggers": {
+    "crons": ["*/10 * * * *"]
+  },
+  "kv_namespaces": [
+    {
+      "binding": "KNT_ADMIN_STATE",
+      "id": "5cabee81a8cd44cca15ef9761cd6d6b3"
+    }
+  ],
+  "vars": {
+    "NETWORK_NAME": "bscTestnet",
+    "BSC_CHAIN_ID": "97",
+    "PUBLIC_BSC_RPC_URL": "https://bsc-testnet-rpc.publicnode.com",
+    "EXPLORER_BASE_URL": "https://testnet.bscscan.com",
+    "KNT_CONTRACT_ADDRESS": "0x14Dc8a0E97815128304883DEaEc89D6773937dc0",
+    "USDT_TOKEN_ADDRESS": "0xacD944e910952c020eb129C50921f180c62c3291",
+    "LABUBU_TOKEN_ADDRESS": "0x202C8095F5D52EDF56EaFF8c36aA930e2C414181",
+    "PANCAKE_V2_ROUTER": "0xD99D1c33F9fC3444f8101754aBC46c52416550D1",
+    "KNT_LABUBU_PAIR": "0x3C6934609378293B0698c1242a661a875B5f0c18",
+    "LABUBU_USDT_PAIR": "0x3d15C36a566c99bC740d2f2fA6F602B384476f9b",
+    "KEEPER_START_BLOCK": "105585919",
+    "KEEPER_CONFIRMATIONS": "3",
+    "KEEPER_SCAN_MAX_BLOCKS": "100",
+    "KEEPER_DEADLINE_SECONDS": "1200",
+    "KEEPER_BURN_QUEUE_MAX": "20",
+    "KEEPER_POLLING_INTERVAL_MS": "3000",
+    "ACCOUNTING_START_BLOCK": "105585919",
+    "ACCOUNTING_LOG_CHUNK_BLOCKS": "2000",
+    "ACCOUNTING_USER_LIMIT": "500",
+    "ACCOUNTING_RECORD_LIMIT": "500",
+    "ACCOUNTING_USER_RPC_CONCURRENCY": "6"
+  },
+  "env": {
+    "production": {
+      "name": "knights-admin-production",
+      "triggers": {
+        "crons": ["*/10 * * * *"]
+      },
+      "kv_namespaces": [
+        {
+          "binding": "KNT_ADMIN_STATE",
+          "id": "5cabee81a8cd44cca15ef9761cd6d6b3"
+        }
+      ],
+      "vars": {
+        "NETWORK_NAME": "bscMainnet",
+        "BSC_CHAIN_ID": "56",
+        "PUBLIC_BSC_RPC_URL": "https://bsc-dataseed.bnbchain.org",
+        "EXPLORER_BASE_URL": "https://bscscan.com",
+        "KNT_CONTRACT_ADDRESS": "",
+        "USDT_TOKEN_ADDRESS": "0x55d398326f99059fF775485246999027B3197955",
+        "LABUBU_TOKEN_ADDRESS": "",
+        "PANCAKE_V2_ROUTER": "0x10ED43C718714eb63d5aA57B78B54704E256024E",
+        "KNT_LABUBU_PAIR": "",
+        "LABUBU_USDT_PAIR": "",
+        "KEEPER_START_BLOCK": "0",
+        "KEEPER_CONFIRMATIONS": "12",
+        "KEEPER_SCAN_MAX_BLOCKS": "100",
+        "KEEPER_DEADLINE_SECONDS": "1200",
+        "KEEPER_BURN_QUEUE_MAX": "20",
+        "KEEPER_POLLING_INTERVAL_MS": "3000",
+        "ACCOUNTING_START_BLOCK": "0",
+        "ACCOUNTING_LOG_CHUNK_BLOCKS": "2000",
+        "ACCOUNTING_USER_LIMIT": "500",
+        "ACCOUNTING_RECORD_LIMIT": "500",
+        "ACCOUNTING_USER_RPC_CONCURRENCY": "6"
+      }
+    }
+  }
+}

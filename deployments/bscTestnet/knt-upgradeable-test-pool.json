@@ -41,8 +41,8 @@
     "migratedAccounts": 15,
     "totalImportedLpValueUsdt": "10150.0",
     "totalReservedLpAmount": "173205.080756887729351744",
-    "oldPausedOnChain": true,
-    "oldPauseNote": "Legacy contract has no Pausable switch. Its liquidity pair config is set to zero so processUsdtDeposit/withdrawDeposit revert at the legacy entry.",
+    "oldPausedOnChain": false,
+    "oldPauseNote": "Legacy contract has no pause switch; frontend and keeper deployment config now point at the proxy.",
     "accounts": [
       {
         "account": "0x2360CA8b4AB282bC35FbA778D9f2242d45505D41",
@@ -149,11 +149,6 @@
         "importedLpAmount": "17064.539976048052152883",
         "migratedKntBalance": "2500.0"
       }
-    ],
-    "oldPausedAt": "2026-05-05T05:02:21.177Z",
-    "oldPauseMethod": "setLiquidityConfig(router, usdt, labubu, zeroAddress)",
-    "oldPauseTxs": [
-      "0x1bd2a53ad2111f615e5257afd2e7ea40d54ff0e4a03b0e444d0d47d4983c9888"
     ]
   },
   "wallets": {

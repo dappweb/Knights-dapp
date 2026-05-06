@@ -1,12 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 interface IPancakeV2Router {
     function swapExactTokensForTokens(
@@ -30,7 +26,7 @@ interface IPancakeV2Router {
 
 }
 
-contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
+contract KNTAllInOneUpgradeable {
     using SafeERC20 for IERC20;
 
     uint256 public constant BASIS_POINTS = 10_000;
@@ -93,6 +89,16 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
     uint256 public latestKntPriceUsdt;
     uint256 public price24hAgoUsdt;
     uint256 public latestPriceUpdatedAt;
+    uint256 public rewardPeriodSeconds;
+
+    string private tokenName;
+    string private tokenSymbol;
+    uint256 private tokenTotalSupply;
+    address private contractOwner;
+    bool private initialized;
+    uint256 private reentrancyStatus;
+    mapping(address => uint256) private tokenBalances;
+    mapping(address => mapping(address => uint256)) private tokenAllowances;
 
     bool private systemTransfer;
 
@@ -189,6 +195,21 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
     event GlobalLpValueUpdated(uint256 oldValue, uint256 newValue);
     event KntPriceUpdated(uint256 priceNowUsdt, uint256 price24hAgoUsdt);
     event UsdtDepositProcessed(bytes32 indexed depositId, address indexed account, address indexed operator, uint256 amount);
+    event RewardPeriodUpdated(uint256 oldPeriodSeconds, uint256 newPeriodSeconds);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    modifier initializer() {
+        require(!initialized, "Already initialized");
+        initialized = true;
+        _;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == contractOwner, "Not owner");
+        _;
+    }
 
     modifier onlyAdminOrOwner() {
         require(_isAdminOrOwner(msg.sender), "Not admin");
@@ -205,18 +226,28 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
         _;
     }
 
-    constructor(
+    modifier nonReentrant() {
+        require(reentrancyStatus != 2, "Reentrant");
+        reentrancyStatus = 2;
+        _;
+        reentrancyStatus = 1;
+    }
+
+    function initialize(
         address initialOwner,
         address foundationWallet_,
         address dexSettlementWallet_,
         address pancakeRouter_,
         address usdtToken_,
         address labubuToken_
-    )
-        ERC20("Knight Token", "KNT")
-        Ownable(initialOwner)
-    {
+    ) external initializer {
         require(foundationWallet_ != address(0) && dexSettlementWallet_ != address(0), "Zero wallet");
+        require(initialOwner != address(0), "Zero owner");
+
+        tokenName = "Knight Token";
+        tokenSymbol = "KNT";
+        contractOwner = initialOwner;
+        reentrancyStatus = 1;
         foundationWallet = foundationWallet_;
         dexSettlementWallet = dexSettlementWallet_;
         projectSinkWallet = foundationWallet_;
@@ -224,12 +255,67 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
         pancakeRouter = pancakeRouter_;
         usdtToken = usdtToken_;
         labubuToken = labubuToken_;
+        burnAddress = address(0xdead);
+        burnQueueRewardBP = 12_000;
+        nextMigrationId = 1;
+        rewardPeriodSeconds = 1 days;
         startTimestamp = block.timestamp;
         _mint(initialOwner, TOTAL_SUPPLY);
         taxRecorders[initialOwner] = true;
+        emit OwnershipTransferred(address(0), initialOwner);
     }
 
-    function _update(address from, address to, uint256 value) internal override {
+    function name() external view returns (string memory) {
+        return tokenName;
+    }
+
+    function symbol() external view returns (string memory) {
+        return tokenSymbol;
+    }
+
+    function decimals() public pure returns (uint8) {
+        return 18;
+    }
+
+    function totalSupply() public view returns (uint256) {
+        return tokenTotalSupply;
+    }
+
+    function balanceOf(address account) public view returns (uint256) {
+        return tokenBalances[account];
+    }
+
+    function allowance(address owner_, address spender) public view returns (uint256) {
+        return tokenAllowances[owner_][spender];
+    }
+
+    function owner() public view returns (address) {
+        return contractOwner;
+    }
+
+    function transferOwnership(address newOwner) external onlyOwner {
+        require(newOwner != address(0), "Zero owner");
+        address oldOwner = contractOwner;
+        contractOwner = newOwner;
+        emit OwnershipTransferred(oldOwner, newOwner);
+    }
+
+    function approve(address spender, uint256 value) public returns (bool) {
+        tokenAllowances[msg.sender][spender] = value;
+        emit Approval(msg.sender, spender, value);
+        return true;
+    }
+
+    function burn(uint256 amount) public {
+        _burn(msg.sender, amount);
+    }
+
+    function burnFrom(address account, uint256 amount) public {
+        _spendAllowance(account, msg.sender, amount);
+        _burn(account, amount);
+    }
+
+    function _update(address from, address to, uint256 value) internal {
         if (
             !systemTransfer
                 && referralSignalAmount > 0
@@ -255,7 +341,7 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
             return;
         }
 
-        super._update(from, to, value);
+        _rawUpdate(from, to, value);
 
         if (to == address(0) && from != address(0)) {
             totalBurned += value;
@@ -320,7 +406,7 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
 
     function currentDay() public view returns (uint256) {
         if (block.timestamp <= startTimestamp) return 0;
-        return (block.timestamp - startTimestamp) / 1 days;
+        return (block.timestamp - startTimestamp) / rewardPeriodSeconds;
     }
 
     function dailyEmissionForDay(uint256 dayKey) public view returns (uint256) {
@@ -329,7 +415,9 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
         uint256 emission = BASE_DAILY_EMISSION + (steps * EMISSION_STEP_PER_10K_LP);
         if (emission > MAX_DAILY_EMISSION) emission = MAX_DAILY_EMISSION;
 
-        uint256 rounds = (dayKey * 1 days) / REDUCTION_PERIOD;
+        uint256 reductionPeriods = REDUCTION_PERIOD / rewardPeriodSeconds;
+        if (reductionPeriods == 0) reductionPeriods = 1;
+        uint256 rounds = dayKey / reductionPeriods;
         if (rounds > MAX_REDUCTION_ROUNDS) rounds = MAX_REDUCTION_ROUNDS;
         for (uint256 i = 0; i < rounds; i++) {
             emission = (emission * (BASIS_POINTS - REDUCTION_BP)) / BASIS_POINTS;
@@ -337,21 +425,24 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
         return emission;
     }
 
-    function transfer(address to, uint256 value) public override returns (bool) {
+    function transfer(address to, uint256 value) public returns (bool) {
         if (!systemTransfer && to == address(0)) {
-            _burnAndQueue(_msgSender(), value);
+            _burnAndQueue(msg.sender, value);
             return true;
         }
-        return super.transfer(to, value);
+        _transfer(msg.sender, to, value);
+        return true;
     }
 
-    function transferFrom(address from, address to, uint256 value) public override returns (bool) {
+    function transferFrom(address from, address to, uint256 value) public returns (bool) {
         if (!systemTransfer && to == address(0)) {
-            _spendAllowance(from, _msgSender(), value);
+            _spendAllowance(from, msg.sender, value);
             _burnAndQueue(from, value);
             return true;
         }
-        return super.transferFrom(from, to, value);
+        _spendAllowance(from, msg.sender, value);
+        _transfer(from, to, value);
+        return true;
     }
 
     function processUsdtDeposit(
@@ -664,6 +755,14 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
 
     function setReferralSignalAmount(uint256 amount) external onlyManagerOrAbove {
         referralSignalAmount = amount;
+    }
+
+    function setRewardPeriodSeconds(uint256 periodSeconds) external onlyManagerOrAbove {
+        require(periodSeconds >= 10 minutes && periodSeconds <= 1 days, "Invalid period");
+        _updatePool();
+        uint256 oldPeriodSeconds = rewardPeriodSeconds;
+        rewardPeriodSeconds = periodSeconds;
+        emit RewardPeriodUpdated(oldPeriodSeconds, periodSeconds);
     }
 
     function _isAdminOrOwner(address account) internal view returns (bool) {
@@ -1077,10 +1176,10 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
 
         uint256 netAmount = amount - totalTax;
         if (totalTax > 0) {
-            super._update(account, address(this), totalTax);
+            _rawUpdate(account, address(this), totalTax);
         }
         if (netAmount > 0) {
-            super._update(account, pair, netAmount);
+            _rawUpdate(account, pair, netAmount);
         }
 
         _distributeSellTax(sellTax);
@@ -1153,6 +1252,52 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
         uint256 proportionalCost = (basis.spentUsdt * amount) / basis.boughtKnt;
         basis.boughtKnt -= amount;
         basis.spentUsdt = basis.spentUsdt > proportionalCost ? basis.spentUsdt - proportionalCost : 0;
+    }
+
+    function _transfer(address from, address to, uint256 value) internal {
+        require(from != address(0) && to != address(0), "Invalid transfer");
+        _update(from, to, value);
+    }
+
+    function _mint(address account, uint256 value) internal {
+        require(account != address(0), "Mint zero");
+        _update(address(0), account, value);
+    }
+
+    function _burn(address account, uint256 value) internal {
+        require(account != address(0), "Burn zero");
+        _update(account, address(0), value);
+    }
+
+    function _rawUpdate(address from, address to, uint256 value) internal {
+        if (from == address(0)) {
+            tokenTotalSupply += value;
+        } else {
+            uint256 fromBalance = tokenBalances[from];
+            require(fromBalance >= value, "Balance");
+            unchecked {
+                tokenBalances[from] = fromBalance - value;
+            }
+        }
+
+        if (to == address(0)) {
+            tokenTotalSupply -= value;
+        } else {
+            tokenBalances[to] += value;
+        }
+
+        emit Transfer(from, to, value);
+    }
+
+    function _spendAllowance(address owner_, address spender, uint256 value) internal {
+        uint256 currentAllowance = tokenAllowances[owner_][spender];
+        if (currentAllowance != type(uint256).max) {
+            require(currentAllowance >= value, "Allowance");
+            unchecked {
+                tokenAllowances[owner_][spender] = currentAllowance - value;
+            }
+            emit Approval(owner_, spender, tokenAllowances[owner_][spender]);
+        }
     }
 
     function _freeBalance() internal view returns (uint256) {

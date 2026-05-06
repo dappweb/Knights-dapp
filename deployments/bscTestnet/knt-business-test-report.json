@@ -1,37 +1,59 @@
 {
   "network": "bscTestnet",
   "chainId": 97,
-  "testedAt": "2026-04-30T07:15:26.767Z",
+  "testedAt": "2026-05-05T03:25:05.776Z",
   "deployment": {
     "network": "bscTestnet",
     "chainId": 97,
-    "deployedAt": "2026-04-30T07:08:59.947Z",
+    "deployedAt": "2026-05-05T03:24:55.621Z",
     "deployer": "0x744447d8580EB900b199e852C132F626247a36F7",
     "router": "0xD99D1c33F9fC3444f8101754aBC46c52416550D1",
     "factory": "0x6725F303b657a9451d8BA641348b6761A6CC7a17",
-    "KNTAllInOne": "0xA0Bf997DEAebf8332b4CDb70E8B4Df5B5282eaa3",
-    "LABUBU": "0x922022fD930751197BF79fE0CA072325cdE3fBdd",
-    "pair": "0xF7c8db96e63C91BB94c399558B5a1D8463f03096",
+    "KNTAllInOne": "0x5e23c00276d4454072b181eBA5079440cA6ce83f",
+    "LABUBU": "0x202C8095F5D52EDF56EaFF8c36aA930e2C414181",
+    "USDT": "0xacD944e910952c020eb129C50921f180c62c3291",
+    "usdtSource": "configured",
+    "deployedAtBlock": 105576192,
+    "pair": "0x3B77d4f0BEFC697ae51c39158e4161328FDeFC40",
+    "labubuPair": "0x3B77d4f0BEFC697ae51c39158e4161328FDeFC40",
+    "labubuUsdtPair": "0x3d15C36a566c99bC740d2f2fA6F602B384476f9b",
     "liquidity": {
-      "KNT": "200000.0",
-      "LABUBU": "600000.0",
-      "tx": "0x6a53c78e66745cddd64b13e9fc7ff1d9fe1d0960f4f75a2135ed541f57064339"
+      "KNT_LABUBU": {
+        "KNT": "200000.0",
+        "LABUBU": "600000.0",
+        "tx": "0x86dcb9402c269a3e0e5a546044ede492f30e47357c27b286063316247ff93f0c"
+      },
+      "LABUBU_USDT": {
+        "LABUBU": "500000.0",
+        "USDT": "500000.0",
+        "tx": "0x917821dfdecc3d53b681b53da97392f82482c8e75234fda3e49e1ee37791a04e"
+      }
     },
     "wallets": {
       "foundationWallet": "0x744447d8580EB900b199e852C132F626247a36F7",
-      "dexSettlementWallet": "0x744447d8580EB900b199e852C132F626247a36F7"
+      "dexSettlementWallet": "0x744447d8580EB900b199e852C132F626247a36F7",
+      "projectSinkWallet": "0x744447d8580EB900b199e852C132F626247a36F7",
+      "ecosystemWallet": "0x744447d8580EB900b199e852C132F626247a36F7"
+    },
+    "roles": {
+      "admins": [],
+      "managers": [],
+      "keepers": []
     }
   },
   "testAccounts": {
-    "referrerA": "0x9771D8A353cd25a3d55CdD4228C6BC5d7aA69f08",
-    "userB": "0x83e3DC9aE74E4c40720dC576E9B0afEC33095DC1"
+    "A": "0x068682216a2434ecF3D492378e115A27D4933a61",
+    "B": "0x47dCd3e112bD133fEe14625043f15b581fc87241",
+    "C": "0x643903200dbF41F2B1b0224f64BC4ec2cEA051D9",
+    "D": "0x29c24549F65A08cbCA135787149572685625217b",
+    "E": "0x29FC8c7Abd18D495Ad481d0a6dfd2d2960447Dd3"
   },
   "results": [
     {
       "name": "KNT total supply",
-      "status": "DIFF",
+      "status": "PASS",
       "expected": "210000000",
-      "actual": "209999996.666666666666666667",
+      "actual": "210000000.0",
       "tx": null
     },
     {
@@ -39,8 +61,8 @@
       "status": "PASS",
       "expected": "pair has KNT and LABUBU with LP supply > 0",
       "actual": {
-        "token0": "0x922022fD930751197BF79fE0CA072325cdE3fBdd",
-        "token1": "0xA0Bf997DEAebf8332b4CDb70E8B4Df5B5282eaa3",
+        "token0": "0x202C8095F5D52EDF56EaFF8c36aA930e2C414181",
+        "token1": "0x5e23c00276d4454072b181eBA5079440cA6ce83f",
         "reserve0": "600000000000000000000000",
         "reserve1": "200000000000000000000000",
         "lpSupply": "346410161513775458705489"
@@ -48,50 +70,98 @@
       "tx": null
     },
     {
-      "name": "Referral binding by two zero transfers",
+      "name": "Pancake LABUBU/USDT pair created",
       "status": "PASS",
-      "expected": "B referrer = 0x9771D8A353cd25a3d55CdD4228C6BC5d7aA69f08",
-      "actual": "0x9771D8A353cd25a3d55CdD4228C6BC5d7aA69f08",
-      "tx": [
-        "0x4e1bf7994477cf79131f8dc930458622b9efe6c3c4af7aedf96f7113007e8617",
-        "0x04c569896e7c995ba79e4822fb41db8ca1845a4b7b1826da39fb142babdbee8d"
-      ]
+      "expected": "pair has LABUBU and USDT with LP supply > 0",
+      "actual": {
+        "token0": "0x202C8095F5D52EDF56EaFF8c36aA930e2C414181",
+        "token1": "0xacD944e910952c020eb129C50921f180c62c3291",
+        "reserve0": "500000000000000000000000",
+        "reserve1": "500000000000000000000000",
+        "lpSupply": "500000000000000000000000"
+      },
+      "tx": null
     },
     {
-      "name": "Transfer KNT to contract auto-deposits and creates power",
+      "name": "A-E referral binding by mutual N KNT transfers",
       "status": "PASS",
-      "expected": "A: 1000 deposit/6000 power; B: 3000 deposit/18000 power",
+      "expected": "B/C/D/E referrer = A",
       "actual": {
-        "aDepositAmount": "1000.0",
-        "aPower": "6000.0",
-        "bDepositAmount": "3000.0",
-        "bPower": "18000.0"
+        "B": "0x068682216a2434ecF3D492378e115A27D4933a61",
+        "C": "0x068682216a2434ecF3D492378e115A27D4933a61",
+        "D": "0x068682216a2434ecF3D492378e115A27D4933a61",
+        "E": "0x068682216a2434ecF3D492378e115A27D4933a61"
       },
       "tx": [
-        "0x399ef0f824dbe3624a82d4811c63cc45c641d64d9f4bb1c5fbeec5852ae1b2c8",
-        "0x006aef31f40bf59f3041aaab8c56b488c4619bf90981e350102693ffe450776d"
+        "0x31941e180b9c9dff9b5416edf99b6a2a34efbb2118b8ec15ba9e23e8bc96a2fd",
+        "0x968abe937bec85e57ca67a10b173cd8107749ed0cdf6258a3519ecaac5a2484d",
+        "0x01e2910034f25cc09993b903014d1f6ee65959c41937b05ac396b505edcbe0c5",
+        "0x1549b802c36131baebb1ccf7040253063c44251f8c6928fa31628d1d7dc0e2bf",
+        "0x976ab93ade20f36390d8f42cab3a20539a01d0d4e3f790fa78f4d898d50f7d13",
+        "0x1ce9f2907278603d03cedb0e8b7876ba25070f6a4bce1594aa69ce954d44cca6",
+        "0xdd74951695538ddbc530e37abb26e2323f1c9400d451c5c984ae3835af2b54cc",
+        "0x46d9a8cc76e35883d8743a38a279d691bd85db54e9fe81a0adc0f7f908d5a81b"
       ]
     },
     {
-      "name": "Node qualification",
+      "name": "A-E USDT deposits buy LABUBU, swap half to KNT, add LP, and create power",
+      "status": "PASS",
+      "expected": "each account: 1000U LP value and >=6000 power",
+      "actual": {
+        "A": {
+          "lpTokenAmount": "286.948898367834446037",
+          "lpValueUsdt": "1000.0",
+          "power": "6000.0"
+        },
+        "B": {
+          "lpTokenAmount": "285.569847441306846352",
+          "lpValueUsdt": "1000.0",
+          "power": "6000.0"
+        },
+        "C": {
+          "lpTokenAmount": "284.201008461724827556",
+          "lpValueUsdt": "1000.0",
+          "power": "6000.0"
+        },
+        "D": {
+          "lpTokenAmount": "282.842277667940212331",
+          "lpValueUsdt": "1000.0",
+          "power": "6000.0"
+        },
+        "E": {
+          "lpTokenAmount": "281.493552656111132063",
+          "lpValueUsdt": "1000.0",
+          "power": "6000.0"
+        }
+      },
+      "tx": [
+        "0x2ae0e3a04989f4e085c29e39f18ee998ab2cf764e1cbdfc37b69eeebd56c3370",
+        "0x2bcdea2251220633c90f0ee114cb3a9ff684e25c6347060c57413105e1ea86f5",
+        "0x2c9b903e0abbf96dc2d3360ce6180a76ce32d072cdb86c51688af97cc75dce10",
+        "0xb09c0cdb7dec990c5af7180c48807cf619d4a8d04a36a66324657292f80cd175",
+        "0xb2d876a2e4039937f33399a2ef859acebbdcc25430a2340add3befdcb151aaec"
+      ]
+    },
+    {
+      "name": "Node qualification from A-E deposits",
       "status": "PASS",
       "expected": "A has >=1000 self LP, >=3000 direct LP, >=1 effective account",
       "actual": {
         "isNode": true,
-        "directLpValueUsdt": "3000.0",
-        "directEffectiveCount": "1"
+        "directLpValueUsdt": "4000.0",
+        "directEffectiveCount": "4"
       },
       "tx": null
     },
     {
       "name": "Burn queue entry from transfer to dead",
-      "status": "DIFF",
+      "status": "PASS",
       "expected": "queue length increases by 1",
       "actual": {
-        "before": "1",
+        "before": "0",
         "after": "1"
       },
-      "tx": "0xca9fdb49b55e2871e6260ae290974d7a4e23a7643a24751e177a233618efbfaf"
+      "tx": "0x352fac6a9727241f6ac4c1bcc5af3be564dc78e1e3f43449fa605db69d09ca28"
     },
     {
       "name": "Burn queue pays 1.2x",
@@ -101,21 +171,23 @@
         "paid": true,
         "rewardAmount": "12.0"
       },
-      "tx": "0xa96dd0cf5fadfec4b5d06d99c65df231337648ba6d0606dc84790cd950c040f3"
+      "tx": "0xcb8892d59a092ca273b71c547566fed2c9f990c19dd7788267c5cff41a366285"
     },
     {
-      "name": "Sell tax + profit tax distribution",
+      "name": "Automatic AMM sell tax + profit tax distribution",
       "status": "PASS",
-      "expected": "100 KNT sell at 150U after 100U cost; same foundation/dex wallet receives combined 93.000000000000000001 KNT",
+      "expected": "100 KNT sent to AMM pair at 150U after 100U cost; pair receives 85 KNT and taxes are distributed",
       "actual": {
-        "sameSettlementWallet": true,
-        "foundationDelta": "93.000000000000000001",
-        "dexDelta": "93.000000000000000001",
-        "burnedDelta": "3.333333333333333333"
+        "balanceDeltas": {
+          "0x3B77d4f0BEFC697ae51c39158e4161328FDeFC40": "85.0",
+          "0x744447d8580EB900b199e852C132F626247a36F7": "8.000000000000000001"
+        },
+        "burnedDelta": "3.333333333333333333",
+        "rewardPoolDelta": "3.666666666666666666"
       },
       "tx": [
-        "0x2d31e1c9c1cf1b07a1c644a1738eb3223590da86b8c284e2bcf8e9e85ee4bf5a",
-        "0x6bf301d9f0f78bd47e71bf920982edcd64c9c018068ec8154547dcd9323fa5f9"
+        "0x3442116866cdcf5b19a300266b20a3f4993fde9259cf5e55dc3ee4200cfffdd1",
+        "0x8b8ec7621db9b48e7b2a4e7f6b5812c5798629ca8026b9d11d031e289d1553da"
       ]
     },
     {
@@ -123,7 +195,7 @@
       "status": "PASS",
       "expected": "same-day claimable = 0",
       "actual": "0.0",
-      "tx": "0x961b4dcd7b5c5a68ed77a3171b5046e65ef8e517b1686a055d50b184dbc3759d"
+      "tx": "0x92c6f103ba8af5c44ba6297e047470c51e82113d32d529880e0d45e676f5a1b8"
     },
     {
       "name": "Daily static reward and 1.2% power compounding",
@@ -140,17 +212,10 @@
       "tx": null
     },
     {
-      "name": "Native USDT -> LABUBU/KNT -> LP deposit workflow",
+      "name": "KNT transfer deposit workflow",
       "status": "SKIP",
-      "expected": "XMind describes auto split and LP creation from U",
-      "actual": "current contract supports KNT transfer deposit; Pancake test pool exists separately",
-      "tx": null
-    },
-    {
-      "name": "Automatic Pancake sell tax hook",
-      "status": "SKIP",
-      "expected": "taxes should trigger on swap sell automatically",
-      "actual": "current implementation uses explicit settleSell()",
+      "expected": "users should enter with USDT only",
+      "actual": "removed as a business entry path",
       "tx": null
     },
     {

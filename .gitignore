@@ -1,12 +1,19 @@
 .env
 .env.*
 !.env.example
+.dev.vars
+.dev.vars.*
+.codex_runtime/
+.playwright-cli/
 
 node_modules/
+.wrangler/
 artifacts/
 cache/
 typechain-types/
 
 deployments/hardhat/
+deployments/local/
+deployments/**/*.log
 coverage/
 coverage.json

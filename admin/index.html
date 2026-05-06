@@ -1,0 +1,3084 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>KNT Admin Console</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, Arial, "Microsoft YaHei", sans-serif;
+        background: #f6f7f9;
+        color: #17202c;
+        --surface: #ffffff;
+        --line: #dce1e7;
+        --line-strong: #c6ced8;
+        --muted: #637083;
+        --text: #17202c;
+        --green: #177245;
+        --green-bg: #dcf7e8;
+        --amber: #9a5b00;
+        --amber-bg: #fff2cf;
+        --red: #b42318;
+        --red-bg: #fee4df;
+        --blue: #1455a3;
+        --blue-bg: #e2efff;
+        --focus: #1d6f6f;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+      }
+
+      header {
+        align-items: center;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        gap: 16px;
+        justify-content: space-between;
+        min-height: 68px;
+        padding: 12px 22px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: 20px;
+        line-height: 1.2;
+      }
+
+      h2 {
+        font-size: 16px;
+        line-height: 1.25;
+      }
+
+      h3 {
+        font-size: 14px;
+        line-height: 1.25;
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+
+      button {
+        align-items: center;
+        background: #1f6f5b;
+        border: 1px solid #195d4d;
+        border-radius: 6px;
+        color: #ffffff;
+        cursor: pointer;
+        display: inline-flex;
+        font-weight: 700;
+        justify-content: center;
+        min-height: 38px;
+        padding: 8px 12px;
+        white-space: nowrap;
+      }
+
+      button.secondary {
+        background: #ffffff;
+        border-color: var(--line-strong);
+        color: var(--text);
+      }
+
+      button.danger {
+        background: #b42318;
+        border-color: #8f1d14;
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.58;
+      }
+
+      input,
+      select {
+        background: #ffffff;
+        border: 1px solid var(--line-strong);
+        border-radius: 6px;
+        color: var(--text);
+        min-height: 38px;
+        min-width: 0;
+        padding: 8px 10px;
+        width: 100%;
+      }
+
+      input[type="checkbox"] {
+        min-height: 18px;
+        width: 18px;
+      }
+
+      label {
+        color: #374151;
+        display: grid;
+        font-size: 12px;
+        gap: 5px;
+        line-height: 1.3;
+      }
+
+      code {
+        font-family: Consolas, "SFMono-Regular", monospace;
+        font-size: 12px;
+        overflow-wrap: anywhere;
+      }
+
+      main {
+        display: grid;
+        gap: 14px;
+        padding: 16px 22px 28px;
+      }
+
+      .topbar {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+
+      .identity {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+      }
+
+      .badge {
+        border-radius: 999px;
+        display: inline-flex;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1;
+        padding: 6px 9px;
+        white-space: nowrap;
+      }
+
+      .badge.neutral {
+        background: #eef1f4;
+        color: #394559;
+      }
+
+      .badge.good {
+        background: var(--green-bg);
+        color: var(--green);
+      }
+
+      .badge.warn {
+        background: var(--amber-bg);
+        color: var(--amber);
+      }
+
+      .badge.bad {
+        background: var(--red-bg);
+        color: var(--red);
+      }
+
+      .tabs {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        display: grid;
+        gap: 3px;
+        grid-template-columns: repeat(6, minmax(max-content, 1fr));
+        overflow-x: auto;
+        padding: 4px;
+      }
+
+      .tab {
+        background: transparent;
+        border-color: transparent;
+        color: #344256;
+        min-height: 34px;
+        min-width: 78px;
+      }
+
+      .tab.active {
+        background: #e4f1ed;
+        border-color: #b7d6cc;
+        color: #145747;
+      }
+
+      .mobile-menu {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        display: none;
+        gap: 6px;
+        padding: 8px;
+      }
+
+      .mobile-menu span {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .notice {
+        background: var(--blue-bg);
+        border: 1px solid #b6d6ff;
+        border-radius: 6px;
+        color: var(--blue);
+        display: none;
+        font-size: 13px;
+        line-height: 1.35;
+        padding: 10px 12px;
+        overflow-wrap: anywhere;
+      }
+
+      .notice.show {
+        display: block;
+      }
+
+      .notice.error {
+        background: var(--red-bg);
+        border-color: #ffc0b8;
+        color: var(--red);
+      }
+
+      .notice.success {
+        background: var(--green-bg);
+        border-color: #aee6c4;
+        color: var(--green);
+      }
+
+      .view {
+        display: none;
+      }
+
+      .view.active {
+        display: grid;
+        gap: 14px;
+      }
+
+      .metrics {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+      }
+
+      .keeper-grid {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(auto-fit, minmax(238px, 1fr));
+      }
+
+      .keeper-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        display: grid;
+        gap: 9px;
+        padding: 12px;
+      }
+
+      .keeper-card-head {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: space-between;
+      }
+
+      .keeper-card p {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .metric {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        min-height: 80px;
+        padding: 11px 12px;
+      }
+
+      .metric span {
+        color: var(--muted);
+        display: block;
+        font-size: 12px;
+      }
+
+      .metric strong {
+        display: block;
+        font-size: 19px;
+        line-height: 1.25;
+        margin-top: 8px;
+        overflow-wrap: anywhere;
+      }
+
+      .metric small {
+        color: var(--muted);
+        display: block;
+        font-size: 11px;
+        line-height: 1.35;
+        margin-top: 5px;
+      }
+
+      .panel {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        display: grid;
+        gap: 12px;
+        padding: 14px;
+      }
+
+      .panel-head {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: space-between;
+      }
+
+      .panel-description {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.5;
+        max-width: 980px;
+      }
+
+      .field-help {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .parameter-callout {
+        background: #fff8e6;
+        border: 1px solid #f2ca73;
+        border-radius: 6px;
+        padding: 10px;
+      }
+
+      .parameter-callout input {
+        border-color: #d49a22;
+        box-shadow: 0 0 0 1px rgba(212, 154, 34, 0.18);
+      }
+
+      .case-notes {
+        border-top: 1px solid #e8ebef;
+        display: grid;
+        gap: 7px;
+        padding-top: 10px;
+      }
+
+      .case-notes h3 {
+        color: #344256;
+        font-size: 13px;
+      }
+
+      .case-notes ul {
+        display: grid;
+        gap: 5px;
+        margin: 0;
+        padding-left: 18px;
+      }
+
+      .case-notes li {
+        color: #465366;
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .form-grid {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+      }
+
+      .span-2 {
+        grid-column: span 2;
+      }
+
+      .span-3 {
+        grid-column: span 3;
+      }
+
+      .span-4 {
+        grid-column: span 4;
+      }
+
+      .span-5 {
+        grid-column: span 5;
+      }
+
+      .span-6 {
+        grid-column: span 6;
+      }
+
+      .span-8 {
+        grid-column: span 8;
+      }
+
+      .span-12 {
+        grid-column: span 12;
+      }
+
+      .check-row {
+        align-items: end;
+        display: flex;
+        gap: 8px;
+        min-height: 38px;
+      }
+
+      .button-row {
+        align-items: end;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .segment-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+      }
+
+      .segment-button {
+        background: #ffffff;
+        border-color: var(--line-strong);
+        color: #344256;
+        min-height: 32px;
+        padding: 6px 10px;
+      }
+
+      .segment-button.active {
+        background: #e4f1ed;
+        border-color: #b7d6cc;
+        color: #145747;
+      }
+
+      .table-wrap {
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        overflow-x: auto;
+      }
+
+      .pagination {
+        align-items: center;
+        color: var(--muted);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: space-between;
+      }
+
+      .pagination.hidden {
+        display: none;
+      }
+
+      .pagination-summary {
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .pagination-actions {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .pagination-actions button {
+        min-height: 30px;
+        padding: 5px 9px;
+      }
+
+      .pagination-actions select {
+        min-height: 30px;
+        padding: 5px 8px;
+        width: auto;
+      }
+
+      table {
+        border-collapse: collapse;
+        min-width: 900px;
+        width: 100%;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid #e8ebef;
+        font-size: 13px;
+        line-height: 1.35;
+        padding: 9px 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #f0f3f6;
+        color: #344256;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .mono-list {
+        display: grid;
+        gap: 4px;
+      }
+
+      .tree-wrap {
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        display: grid;
+        gap: 8px;
+        max-height: 520px;
+        overflow: auto;
+        padding: 10px;
+      }
+
+      .tree-node {
+        align-items: start;
+        border-left: 3px solid #b7d6cc;
+        display: grid;
+        gap: 4px;
+        min-width: 560px;
+        padding: 7px 8px;
+      }
+
+      .tree-meta {
+        color: var(--muted);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        font-size: 12px;
+      }
+
+      .inline-button {
+        background: #ffffff;
+        border-color: var(--line-strong);
+        color: var(--text);
+        font-size: 12px;
+        min-height: 28px;
+        padding: 4px 8px;
+      }
+
+      @media (max-width: 860px) {
+        header,
+        main {
+          padding-left: 12px;
+          padding-right: 12px;
+        }
+
+        header {
+          align-items: flex-start;
+          display: grid;
+        }
+
+        .topbar {
+          justify-content: flex-start;
+        }
+
+        .tabs {
+          grid-template-columns: repeat(6, minmax(86px, 1fr));
+        }
+
+        .span-2,
+        .span-3,
+        .span-4,
+        .span-5,
+        .span-6,
+        .span-8 {
+          grid-column: span 12;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .tabs {
+          display: none;
+        }
+
+        .mobile-menu {
+          display: grid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>KNT Admin Console</h1>
+        <div class="identity" id="chainLine"></div>
+      </div>
+      <div class="topbar">
+        <button class="secondary" id="refreshButton" type="button">刷新</button>
+        <button id="connectButton" type="button">连接钱包</button>
+      </div>
+    </header>
+
+    <main>
+      <nav class="tabs" aria-label="Admin sections">
+        <button class="tab active" type="button" data-view="overview">总览</button>
+        <button class="tab" type="button" data-view="roles">权限</button>
+        <button class="tab" type="button" data-view="params">参数</button>
+        <button class="tab" type="button" data-view="keeper">Keeper</button>
+        <button class="tab" type="button" data-view="accounting">账务</button>
+        <button class="tab" type="button" data-view="logs">日志</button>
+      </nav>
+      <label class="mobile-menu" for="mobileViewSelect">
+        <span>菜单</span>
+        <select id="mobileViewSelect" aria-label="选择后台栏目">
+          <option value="overview">总览</option>
+          <option value="roles">权限</option>
+          <option value="params">参数</option>
+          <option value="keeper">Keeper</option>
+          <option value="accounting">账务</option>
+          <option value="logs">日志</option>
+        </select>
+      </label>
+
+      <div class="notice" id="notice"></div>
+
+      <section class="view active" id="view-overview">
+        <div class="metrics" id="metrics"></div>
+        <section class="panel">
+          <div class="panel-head">
+            <h2>LP Pools</h2>
+            <span class="badge neutral" id="marketBadge">-</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>状态</th>
+                  <th>池子</th>
+                  <th>估值</th>
+                  <th>Token 0</th>
+                  <th>Token 1</th>
+                  <th>LP USDT</th>
+                </tr>
+              </thead>
+              <tbody id="pairRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" id="view-roles">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>角色查询</h2>
+            <span class="badge neutral" id="currentRoleBadge">未连接</span>
+          </div>
+          <div class="form-grid">
+            <label class="span-8">地址
+              <input id="roleAddress" placeholder="0x..." autocomplete="off" />
+            </label>
+            <div class="span-4 button-row">
+              <button class="secondary" id="lookupRoleButton" type="button">查询角色</button>
+            </div>
+          </div>
+          <div class="metrics" id="roleMetrics"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Owner 转移</h2>
+            <span class="badge bad">最高权限</span>
+          </div>
+          <p class="panel-description">只能由当前 Owner 钱包提交。交易确认后，新地址立即获得 Owner 权限，原 Owner 立即失去 Owner 权限；Admin、Manager、Keeper、Tax Recorder 角色不会自动迁移。</p>
+          <div class="metrics" id="ownerTransferMetrics"></div>
+          <div class="form-grid">
+            <label class="span-5">新 Owner 地址
+              <input id="newOwnerAddress" placeholder="0x..." autocomplete="off" />
+            </label>
+            <label class="span-5">确认当前 Owner 地址
+              <input id="ownerTransferConfirm" placeholder="粘贴当前 Owner 地址" autocomplete="off" />
+              <span class="field-help">用于防误触。必须与链上当前 Owner 完全一致。</span>
+            </label>
+            <div class="span-2 button-row">
+              <button class="danger" id="transferOwnerButton" type="button">转移 Owner</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Owner 转移记录</h2>
+            <span class="badge neutral" id="ownerTransferBadge">-</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>区块</th>
+                  <th>原 Owner</th>
+                  <th>新 Owner</th>
+                  <th>TX</th>
+                </tr>
+              </thead>
+              <tbody id="ownerTransferRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>角色设置</h2>
+            <span class="badge warn">链上交易</span>
+          </div>
+          <div class="form-grid">
+            <label class="span-5">地址
+              <input id="setRoleAddress" placeholder="0x..." autocomplete="off" />
+            </label>
+            <label class="span-3">角色
+              <select id="setRoleName">
+                <option value="admin">Admin</option>
+                <option value="manager">Manager</option>
+                <option value="keeper">Keeper</option>
+                <option value="taxRecorder">Tax Recorder</option>
+              </select>
+            </label>
+            <label class="span-2">状态
+              <select id="setRoleEnabled">
+                <option value="true">启用</option>
+                <option value="false">停用</option>
+              </select>
+            </label>
+            <div class="span-2 button-row">
+              <button id="setRoleButton" type="button">提交</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>经理记录</h2>
+            <span class="badge neutral" id="roleManagerBadge">-</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>类型</th>
+                  <th>区块</th>
+                  <th>经理</th>
+                  <th>状态</th>
+                  <th>TX</th>
+                </tr>
+              </thead>
+              <tbody id="roleManagerRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" id="view-params">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>参数配置说明</h2>
+            <span class="badge neutral">提交前核对</span>
+          </div>
+          <p class="panel-description">本页参数会通过钱包签名提交链上交易，生效后会影响入金换币、LP 计算、卖出结算、燃烧队列和推荐绑定。地址类参数必须使用当前网络上的有效地址；BP 表示基点，10000 = 100%；KNT 数量按页面显示的代币数量输入。</p>
+          <div class="case-notes">
+            <h3>通用案例</h3>
+            <ul>
+              <li>Burn Queue BP 设置为 12000，表示燃烧队列奖励为销毁量的 120%；用户销毁 100 KNT，会进入待发 120 KNT 的队列。</li>
+              <li>Referral Signal KNT 设置为 1，表示推荐人向用户转 1 KNT、用户再向推荐人转 1 KNT 后，系统绑定用户到该推荐人。</li>
+              <li>修改钱包或池子地址前，先确认新地址已具备必要授权和资产准备；错误地址会导致后续结算或 Keeper 任务失败。</li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>钱包参数</h2>
+            <span class="badge warn">Admin/Owner</span>
+          </div>
+          <p class="panel-description">钱包参数决定税费、结算资产和沉淀奖励的去向。修改后不会迁移历史余额，只影响后续交易和奖励分配。</p>
+          <div class="form-grid">
+            <label class="span-6">Foundation Wallet
+              <input id="foundationWallet" placeholder="0x..." autocomplete="off" />
+              <span class="field-help">基金会收款地址。卖出税中归基金会的部分会转入该钱包。</span>
+            </label>
+            <label class="span-6">DEX Settlement Wallet
+              <input id="dexSettlementWallet" placeholder="0x..." autocomplete="off" />
+              <span class="field-help">DEX 结算钱包。用于接收卖出结算净额，并参与入金换币和组 LP 的 KNT 结算。</span>
+            </label>
+            <div class="span-12 button-row">
+              <button id="setWalletsButton" type="button">设置核心钱包</button>
+            </div>
+            <label class="span-8">Project Sink Wallet
+              <input id="projectSinkWallet" placeholder="0x..." autocomplete="off" />
+              <span class="field-help">项目沉淀钱包。动态奖励因代数不足或条件不满足产生的沉淀部分会计入该地址。</span>
+            </label>
+            <div class="span-4 button-row">
+              <button id="setProjectSinkButton" type="button">设置 Sink</button>
+            </div>
+            <label class="span-8">Ecosystem Wallet
+              <input id="ecosystemWallet" placeholder="0x..." autocomplete="off" />
+              <span class="field-help">生态发展钱包。盈利税中归生态发展的部分会转入该钱包。</span>
+            </label>
+            <div class="span-4 button-row">
+              <button id="setEcosystemButton" type="button">设置生态钱包</button>
+            </div>
+          </div>
+          <div class="case-notes">
+            <h3>案例说明</h3>
+            <ul>
+              <li>用户卖出 KNT 时，5% 卖出税中的 2% 进入排队奖励池，3% 进入 Foundation Wallet。</li>
+              <li>用户产生盈利税时，30% 盈利税会按规则拆分，其中 15% 进入 Ecosystem Wallet，其余进入奖励池或销毁。</li>
+              <li>24h 价格下跌时，砸盘税按实际跌幅收取；跌 12.5% 时，卖出 100 KNT 会额外扣 12.5 KNT。</li>
+              <li>如果直推层级没有达到可领取条件，未发出的动态奖励会沉淀到 Project Sink Wallet 对应账户。</li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>流动性参数</h2>
+            <span class="badge warn">Manager+</span>
+          </div>
+          <p class="panel-description">流动性参数用于 Keeper 入金流程和 AMM 买卖识别。Router、USDT、LABUBU 必须是非零地址；KNT/LABUBU Pair 可为空，填入后会自动启用为 AMM Pair。</p>
+          <div class="form-grid">
+            <label class="span-6">Pancake Router
+              <input id="pancakeRouter" placeholder="0x..." autocomplete="off" />
+              <span class="field-help">PancakeSwap V2 Router 地址。入金时用于 USDT、LABUBU 和 KNT 之间的换币与加池。</span>
+            </label>
+            <label class="span-6">USDT Token
+              <input id="usdtToken" placeholder="0x..." autocomplete="off" />
+              <span class="field-help">入金资产地址。Keeper 会扫描用户向合约转入的 USDT 并触发后续处理。</span>
+            </label>
+            <label class="span-6">LABUBU Token
+              <input id="labubuToken" placeholder="0x..." autocomplete="off" />
+              <span class="field-help">流动性配对资产。入金 USDT 会先换成 LABUBU，再拆分为买 KNT 和组 LP 两部分。</span>
+            </label>
+            <label class="span-6">KNT/LABUBU Pair
+              <input id="labubuKntPair" placeholder="0x..." autocomplete="off" />
+              <span class="field-help">主交易对地址。填入后会同时作为 AMM Pair 启用，用于识别买入、卖出和税费逻辑。</span>
+            </label>
+            <div class="span-12 button-row">
+              <button id="setLiquidityButton" type="button">设置流动性配置</button>
+            </div>
+            <label class="span-6">AMM Pair
+              <input id="ammPair" placeholder="0x..." autocomplete="off" />
+              <span class="field-help">额外 AMM 池地址。需要把某个池纳入或移出卖出识别时使用。</span>
+            </label>
+            <label class="span-3">状态
+              <select id="ammPairEnabled">
+                <option value="true">启用</option>
+                <option value="false">停用</option>
+              </select>
+              <span class="field-help">启用后，用户向该 Pair 转出 KNT 会按卖出处理；停用后不再按 AMM 卖出识别。</span>
+            </label>
+            <div class="span-3 button-row">
+              <button id="setAmmPairButton" type="button">设置 AMM</button>
+            </div>
+          </div>
+          <div class="case-notes">
+            <h3>案例说明</h3>
+            <ul>
+              <li>上线主池时，填写 Router、USDT、LABUBU 和 KNT/LABUBU Pair 后提交“设置流动性配置”，该 Pair 会自动启用为 AMM Pair。</li>
+              <li>如果新增 KNT/USDT 池，需要在 AMM Pair 填入该池地址并选择“启用”，后续用户卖入该池才会触发卖出税和价格记录。</li>
+              <li>如果某个测试池不再使用，将该池填入 AMM Pair 并选择“停用”，可避免普通转账被误识别为卖出。</li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>业务参数</h2>
+            <span class="badge warn">Manager+</span>
+          </div>
+          <p class="panel-description">业务参数控制燃烧排队奖励倍率和推荐关系信号。Burn Queue BP 必须为整数基点，合约允许范围为 10000 到 30000；Referral Signal KNT 可设置为 0 来关闭自动信号绑定。</p>
+          <div class="form-grid">
+            <label class="span-4">Burn Queue BP
+              <input id="burnQueueRewardBP" inputmode="numeric" placeholder="12000" />
+              <span class="field-help">燃烧队列奖励倍率。10000 = 1 倍，12000 = 1.2 倍，30000 = 3 倍。</span>
+            </label>
+            <div class="span-2 button-row">
+              <button id="setBurnQueueRewardButton" type="button">设置</button>
+            </div>
+            <label class="span-4">Referral Signal KNT
+              <input id="referralSignalAmount" inputmode="decimal" placeholder="1" />
+              <span class="field-help">推荐绑定信号金额。只有双方互转完全相同的 KNT 数量时，才会记录或绑定推荐关系。</span>
+            </label>
+            <div class="span-2 button-row">
+              <button id="setReferralSignalButton" type="button">设置</button>
+            </div>
+            <label class="span-4 parameter-callout">产币周期（秒）
+              <input id="rewardPeriodSeconds" inputmode="numeric" placeholder="600" />
+              <span class="field-help">高影响参数。合约允许 600 到 86400 秒；当前值：<strong id="rewardPeriodCurrent">-</strong>。</span>
+            </label>
+            <div class="span-2 button-row">
+              <button id="setRewardPeriodButton" type="button">设置周期</button>
+            </div>
+          </div>
+          <div class="case-notes">
+            <h3>案例说明</h3>
+            <ul>
+              <li>Burn Queue BP = 10000 时，用户销毁 100 KNT，队列奖励为 100 KNT；设置为 12000 时，奖励为 120 KNT。</li>
+              <li>Referral Signal KNT = 1 时，A 先向 B 转 1 KNT，B 再向 A 转 1 KNT，系统会把 B 绑定到 A 名下。</li>
+              <li>Referral Signal KNT = 0 时，普通 KNT 转账不会触发推荐信号记录，适合临时关闭自动绑定。</li>
+              <li>产币周期决定奖励池多久结算一轮；设置前合约会先结算旧周期奖励。600 秒表示 10 分钟一轮，86400 秒表示 1 天一轮；该值也会影响减产周期折算。</li>
+            </ul>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" id="view-keeper">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Keeper 分类</h2>
+            <span class="badge neutral" id="keeperRuntimeBadge">-</span>
+          </div>
+          <div class="keeper-grid" id="keeperClassCards"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>触发条件</h2>
+            <span class="badge warn">KV 配置</span>
+          </div>
+          <p class="panel-description">这些条件控制 Cloudflare scheduled keeper 是否自动触发。手动按钮会要求钱包签名并立即执行；链上权限仍由合约 Keeper/Admin/Owner 角色控制。</p>
+          <div class="keeper-grid" id="keeperSettingsCards"></div>
+          <div class="form-grid">
+            <div class="span-12 button-row">
+              <button id="saveKeeperSettingsButton" type="button">保存触发条件</button>
+            </div>
+          </div>
+          <div class="case-notes">
+            <h3>参数说明</h3>
+            <ul>
+              <li>Interval Minutes：同一类 keeper 两次自动触发之间的最小间隔；定时器当前每 10 分钟唤醒一次。</li>
+              <li>Confirmations：扫链等待确认数；越大越安全但入金处理越慢。</li>
+              <li>Scan Max Blocks：单次扫描区块上限；RPC 限流时应调小。</li>
+              <li>Deviation BP：市场参数变动阈值，100 = 1%；设为 0 表示到达间隔就更新。</li>
+              <li>Min/Max Deposit USDT：Deposit Keeper 只处理范围内的入金；Max 为 0 表示不设上限。</li>
+              <li>Burn Queue Max：Reward Keeper 单次最多处理的燃烧队列条数。</li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>手动执行</h2>
+            <span class="badge warn">钱包签名</span>
+          </div>
+          <div class="form-grid">
+            <div class="span-12 button-row">
+              <button class="secondary" id="runObserverButton" type="button">运行 Observer</button>
+              <button id="runProcessUsdtButton" type="button">执行 Deposit</button>
+              <button id="runMaintenanceButton" type="button">执行 Market + Reward</button>
+              <button id="runAllKeeperButton" type="button">执行全部 Keeper</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>链上 Keeper</h2>
+            <span class="badge warn">Keeper+</span>
+          </div>
+          <div class="form-grid">
+            <label class="span-4">Global LP USDT
+              <input id="manualGlobalLp" inputmode="decimal" placeholder="0" />
+            </label>
+            <div class="span-2 button-row">
+              <button id="updateGlobalLpButton" type="button">更新 LP</button>
+            </div>
+            <label class="span-3">KNT Price
+              <input id="manualKntPrice" inputmode="decimal" placeholder="0" />
+            </label>
+            <label class="span-3">24h Price
+              <input id="manualKntPrice24h" inputmode="decimal" placeholder="0" />
+            </label>
+            <div class="span-12 button-row">
+              <button id="updatePriceButton" type="button">更新价格</button>
+              <button class="secondary" id="adminUpdatePoolButton" type="button">更新奖励池</button>
+              <button class="secondary" id="processBurnQueueButton" type="button">处理燃烧队列</button>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" id="view-accounting">
+        <div class="metrics" id="accountingMetrics"></div>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>用户详情</h2>
+            <span class="badge neutral" id="userDetailBadge">未选择</span>
+          </div>
+          <div class="form-grid">
+            <label class="span-8">用户地址
+              <input id="userDetailAddress" placeholder="0x..." autocomplete="off" />
+            </label>
+            <div class="span-4 button-row">
+              <button class="secondary" id="loadUserDetailButton" type="button">查看详情</button>
+            </div>
+          </div>
+          <div class="metrics" id="userDetailMetrics"></div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>类型</th>
+                  <th>区块</th>
+                  <th>对象</th>
+                  <th>金额</th>
+                  <th>状态</th>
+                  <th>TX</th>
+                </tr>
+              </thead>
+              <tbody id="userDetailRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>推荐关系树</h2>
+            <span class="badge neutral" id="referralTreeBadge">-</span>
+          </div>
+          <div class="form-grid">
+            <label class="span-8">根地址
+              <input id="referralTreeRoot" placeholder="0x..." autocomplete="off" />
+            </label>
+            <div class="span-4 button-row">
+              <button class="secondary" id="renderReferralTreeButton" type="button">展开团队</button>
+            </div>
+          </div>
+          <div class="tree-wrap" id="referralTree"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>用户账务总览</h2>
+            <span class="badge neutral" id="accountingBadge">-</span>
+          </div>
+          <div class="form-grid">
+            <label class="span-8">筛选
+              <input id="accountingFilter" placeholder="用户 / 推荐人 / 地址" autocomplete="off" />
+            </label>
+            <div class="span-4 button-row">
+              <button class="secondary" id="accountingClearFilterButton" type="button">清除筛选</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>用户</th>
+                  <th>操作</th>
+                  <th>推荐人</th>
+                  <th>充值 / LP</th>
+                  <th>当前账户</th>
+                  <th>奖励</th>
+                  <th>推荐 / 节点</th>
+                  <th>买卖 / 销毁</th>
+                  <th>活动区块</th>
+                </tr>
+              </thead>
+              <tbody id="accountingUserRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>充值记录</h2>
+            <span class="badge neutral" id="accountingDepositBadge">-</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>类型</th>
+                  <th>区块</th>
+                  <th>用户</th>
+                  <th>USDT / LP</th>
+                  <th>KNT / LABUBU</th>
+                  <th>TX</th>
+                </tr>
+              </thead>
+              <tbody id="accountingDepositRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>奖励记录</h2>
+            <span class="badge neutral" id="accountingRewardBadge">-</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>类型</th>
+                  <th>区块</th>
+                  <th>用户</th>
+                  <th>金额</th>
+                  <th>操作人 / 队列</th>
+                  <th>TX</th>
+                </tr>
+              </thead>
+              <tbody id="accountingRewardRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>静态奖励记录</h2>
+            <span class="badge neutral" id="accountingStaticRewardBadge">-</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>类型</th>
+                  <th>区块</th>
+                  <th>用户</th>
+                  <th>金额</th>
+                  <th>TX</th>
+                </tr>
+              </thead>
+              <tbody id="accountingStaticRewardRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>动态奖励记录</h2>
+            <span class="badge neutral" id="accountingDynamicRewardBadge">-</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>类型</th>
+                  <th>区块</th>
+                  <th>来源用户</th>
+                  <th>接收方</th>
+                  <th>层级 / 状态</th>
+                  <th>金额</th>
+                  <th>TX</th>
+                </tr>
+              </thead>
+              <tbody id="accountingDynamicRewardRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>销毁记录</h2>
+            <span class="badge neutral" id="accountingBurnBadge">-</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>类型</th>
+                  <th>区块</th>
+                  <th>用户</th>
+                  <th>销毁 / 奖励</th>
+                  <th>队列 / 状态</th>
+                  <th>TX</th>
+                </tr>
+              </thead>
+              <tbody id="accountingBurnRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>推荐记录</h2>
+            <span class="badge neutral" id="accountingReferralBadge">-</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>类型</th>
+                  <th>区块</th>
+                  <th>用户</th>
+                  <th>推荐人 / 对方</th>
+                  <th>金额</th>
+                  <th>TX</th>
+                </tr>
+              </thead>
+              <tbody id="accountingReferralRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>税费记录</h2>
+            <span class="badge neutral" id="accountingTaxBadge">-</span>
+          </div>
+          <p class="panel-description">税费表按 SellSettled 事件展示。校验列会用“卖出 - 到账”和“交易税 + 增值税 + 砸盘税”做对比；一致时说明事件金额闭合，不一致时需要回查该交易或扫描范围。</p>
+          <div class="case-notes">
+            <h3>税点口径</h3>
+            <ul>
+              <li>交易税固定为卖出 KNT 的 5%，其中 2% 入排队奖励池，3% 进入 Foundation。</li>
+              <li>增值税只对盈利部分收 30%，页面显示为合约折算后实际扣除的 KNT。</li>
+              <li>砸盘税按 24h 实际跌幅收取，跌多少收多少；无有效价格或价格未下跌时为 0。</li>
+            </ul>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>类型</th>
+                  <th>区块</th>
+                  <th>用户</th>
+                  <th>卖出 / 到账</th>
+                  <th>交易税</th>
+                  <th>增值税</th>
+                  <th>砸盘税</th>
+                  <th>合计</th>
+                  <th>校验 / 说明</th>
+                  <th>TX</th>
+                </tr>
+              </thead>
+              <tbody id="accountingTaxRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>交易与销毁</h2>
+            <span class="badge neutral" id="accountingLedgerBadge">-</span>
+          </div>
+          <div class="segment-controls" id="accountingLedgerFilters" role="group" aria-label="交易与销毁筛选">
+            <button class="segment-button active" type="button" data-ledger-filter="core">核心</button>
+            <button class="segment-button" type="button" data-ledger-filter="trades">买卖</button>
+            <button class="segment-button" type="button" data-ledger-filter="burns">销毁</button>
+            <button class="segment-button" type="button" data-ledger-filter="system">系统</button>
+            <button class="segment-button" type="button" data-ledger-filter="transfers">转账</button>
+            <button class="segment-button" type="button" data-ledger-filter="all">全部</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>类型</th>
+                  <th>区块</th>
+                  <th>用户</th>
+                  <th>金额</th>
+                  <th>税费 / 状态</th>
+                  <th>TX</th>
+                </tr>
+              </thead>
+              <tbody id="accountingLedgerRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" id="view-logs">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Keeper Runs</h2>
+            <span class="badge neutral" id="scanBadge">-</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>状态</th>
+                  <th>区块</th>
+                  <th>发现</th>
+                  <th>处理</th>
+                  <th>失败</th>
+                  <th>时间</th>
+                </tr>
+              </thead>
+              <tbody id="runRows"></tbody>
+            </table>
+          </div>
+        </section>
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Maintenance</h2>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>状态</th>
+                  <th>Total LP</th>
+                  <th>KNT Price</th>
+                  <th>Emission</th>
+                  <th>Burn Queue</th>
+                  <th>TX / Error</th>
+                  <th>时间</th>
+                </tr>
+              </thead>
+              <tbody id="maintenanceRows"></tbody>
+            </table>
+          </div>
+        </section>
+        <section class="panel">
+          <div class="panel-head">
+            <h2>USDT Deposits</h2>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>状态</th>
+                  <th>用户</th>
+                  <th>USDT</th>
+                  <th>KNT</th>
+                  <th>LABUBU</th>
+                  <th>LP</th>
+                  <th>TX / Error</th>
+                  <th>时间</th>
+                </tr>
+              </thead>
+              <tbody id="depositRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script type="module">
+      import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6.16.0/+esm";
+
+      const KNT_ABI = [
+        "function roleOf(address) view returns(bool isOwnerRole,bool isAdminRole,bool isManagerRole,bool isKeeperRole,bool isTaxRecorderRole)",
+        "function transferOwnership(address)",
+        "function setAdmin(address,bool)",
+        "function setManager(address,bool)",
+        "function setKeeper(address,bool)",
+        "function setTaxRecorder(address,bool)",
+        "function setWallets(address,address)",
+        "function setProjectSinkWallet(address)",
+        "function setEcosystemWallet(address)",
+        "function setLiquidityConfig(address,address,address,address)",
+        "function setAmmPair(address,bool)",
+        "function setBurnQueueRewardBP(uint256)",
+        "function setReferralSignalAmount(uint256)",
+        "function setRewardPeriodSeconds(uint256)",
+        "function keeperUpdateGlobalLpValue(uint256)",
+        "function keeperUpdateKntPrices(uint256,uint256)",
+        "function keeperReduceUserLp(address,uint256,uint256)",
+        "function keeperBurnFrom(address,uint256)",
+        "function adminUpdatePool()",
+        "function processBurnQueue(uint256) returns(uint256)",
+      ];
+
+      const state = {
+        config: null,
+        status: null,
+        logs: null,
+        accounting: null,
+        provider: null,
+        signer: null,
+        account: null,
+        role: null,
+        selectedAccountingAddress: "",
+        activeView: "overview",
+        accountingLedgerFilter: "core",
+        tablePages: {},
+      };
+
+      const $ = (id) => document.getElementById(id);
+      const ZERO = "0x0000000000000000000000000000000000000000";
+      const ACCOUNTING_RECORD_LIMIT = 500;
+      const DEFAULT_PAGE_SIZE = 20;
+      const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
+      const VIEW_IDS = new Set(["overview", "roles", "params", "keeper", "accounting", "logs"]);
+      const KEEPER_TYPES = [
+        {
+          key: "observer",
+          label: "Observer Keeper",
+          risk: "L1 / 低烈性",
+          summary: "只读扫链，发现 USDT 入金和链上处理状态，不发送交易。",
+          fields: [
+            ["intervalMinutes", "Interval Minutes", "number"],
+            ["confirmations", "Confirmations", "number"],
+            ["scanMaxBlocks", "Scan Max Blocks", "number"],
+          ],
+        },
+        {
+          key: "market",
+          label: "Market Keeper",
+          risk: "L2 / 中烈性",
+          summary: "更新 KNT 价格和全局 LP 估值，影响税费判断和排放档位。",
+          fields: [
+            ["intervalMinutes", "Interval Minutes", "number"],
+            ["priceDeviationBP", "Price Deviation BP", "number"],
+            ["lpDeviationBP", "LP Deviation BP", "number"],
+          ],
+        },
+        {
+          key: "reward",
+          label: "Reward Keeper",
+          risk: "L3 / 高烈性",
+          summary: "推进奖励池、处理燃烧队列，会改变用户奖励状态。",
+          fields: [
+            ["intervalMinutes", "Interval Minutes", "number"],
+            ["burnQueueMax", "Burn Queue Max", "number"],
+            ["minRewardPoolKnt", "Min Reward Pool KNT", "decimal"],
+          ],
+        },
+        {
+          key: "deposit",
+          label: "Deposit Keeper",
+          risk: "L4 / 最高烈性",
+          summary: "处理用户 USDT 入金，执行换币、加池和用户业务状态导入。",
+          fields: [
+            ["intervalMinutes", "Interval Minutes", "number"],
+            ["confirmations", "Confirmations", "number"],
+            ["scanMaxBlocks", "Scan Max Blocks", "number"],
+            ["deadlineSeconds", "Deadline Seconds", "number"],
+            ["minDepositUsdt", "Min Deposit USDT", "decimal"],
+            ["maxDepositUsdt", "Max Deposit USDT", "decimal"],
+          ],
+        },
+      ];
+
+      function escapeHtml(value) {
+        return String(value ?? "-")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function shortAddress(value) {
+        if (!value) return "-";
+        const text = String(value);
+        if (!text.startsWith("0x") || text.length <= 18) return escapeHtml(text);
+        return `${escapeHtml(text.slice(0, 8))}...${escapeHtml(text.slice(-6))}`;
+      }
+
+      function txLink(hash) {
+        if (!hash || !String(hash).startsWith("0x")) return escapeHtml(hash || "-");
+        const base = state.config?.explorerBaseUrl || state.config?.deployment?.explorerBaseUrl || "https://testnet.bscscan.com";
+        return `<a href="${base}/tx/${escapeHtml(hash)}" target="_blank" rel="noreferrer"><code>${shortAddress(hash)}</code></a>`;
+      }
+
+      function addressLink(address) {
+        if (!address || !String(address).startsWith("0x")) return escapeHtml(address || "-");
+        const base = state.config?.explorerBaseUrl || state.config?.deployment?.explorerBaseUrl || "https://testnet.bscscan.com";
+        return `<a href="${base}/address/${escapeHtml(address)}" target="_blank" rel="noreferrer"><code>${shortAddress(address)}</code></a>`;
+      }
+
+      function setNotice(message, type = "info") {
+        const box = $("notice");
+        box.className = `notice show ${type === "error" ? "error" : type === "success" ? "success" : ""}`;
+        box.innerHTML = escapeHtml(message);
+      }
+
+      function clearNotice() {
+        $("notice").className = "notice";
+        $("notice").textContent = "";
+      }
+
+      function setActiveView(view) {
+        const next = VIEW_IDS.has(view) ? view : "overview";
+        state.activeView = next;
+        document.querySelectorAll(".tab").forEach((item) => {
+          item.classList.toggle("active", item.dataset.view === next);
+        });
+        document.querySelectorAll(".view").forEach((item) => {
+          item.classList.toggle("active", item.id === `view-${next}`);
+        });
+        if ($("mobileViewSelect")) $("mobileViewSelect").value = next;
+      }
+
+      function statusBadge(status) {
+        const value = status || "pending";
+        const cls = value === "processed" || value === "valued" || value === "enabled" ? "good" : value === "failed" || value === "zero" || value === "paused" ? "bad" : "warn";
+        return `<span class="badge ${cls}">${escapeHtml(value)}</span>`;
+      }
+
+      function metric(label, value, note = "") {
+        const noteHtml = note ? `<small>${escapeHtml(note)}</small>` : "";
+        return `<div class="metric"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value ?? "-")}</strong>${noteHtml}</div>`;
+      }
+
+      function typeBadge(type) {
+        return `<span class="badge neutral">${escapeHtml(type || "-")}</span>`;
+      }
+
+      function compactAmount(value) {
+        const text = String(value ?? "-");
+        if (!text.includes(".")) return text;
+        const [whole, fraction] = text.split(".");
+        const trimmed = fraction.replace(/0+$/, "").slice(0, 6);
+        return trimmed ? `${whole}.${trimmed}` : whole;
+      }
+
+      function unitValue(value, unit) {
+        const text = String(value ?? "-");
+        if (!unit || !text || text === "-") return text || "-";
+        return `${text} ${unit}`;
+      }
+
+      function formatPeriodSeconds(value) {
+        const seconds = Number(value || 0);
+        if (!Number.isFinite(seconds) || seconds <= 0) return "-";
+        if (seconds % 86400 === 0) return `${seconds} 秒 / ${seconds / 86400} 天`;
+        if (seconds % 3600 === 0) return `${seconds} 秒 / ${seconds / 3600} 小时`;
+        if (seconds % 60 === 0) return `${seconds} 秒 / ${seconds / 60} 分钟`;
+        return `${seconds} 秒`;
+      }
+
+      function sumRawAmounts(...values) {
+        try {
+          const total = values.reduce((sum, value) => sum + BigInt(value || "0"), 0n);
+          return compactAmount(ethers.formatEther(total));
+        } catch (_error) {
+          return "-";
+        }
+      }
+
+      function rawBigInt(value, fallback = 0n) {
+        try {
+          if (value === undefined || value === null || value === "") return fallback;
+          return BigInt(value);
+        } catch (_error) {
+          return fallback;
+        }
+      }
+
+      function rawFromFields(item, fields, fallback = 0n) {
+        for (const field of fields) {
+          if (item?.[field] !== undefined && item?.[field] !== null && item?.[field] !== "") {
+            return rawBigInt(item[field], fallback);
+          }
+        }
+        return fallback;
+      }
+
+      function compactRawAmount(value) {
+        try {
+          return compactAmount(ethers.formatEther(value));
+        } catch (_error) {
+          return "-";
+        }
+      }
+
+      function percentOfRaw(part, base) {
+        if (!base || base <= 0n) return "-";
+        const scaled = (part * 1_000_000n) / base;
+        const whole = scaled / 10_000n;
+        const fraction = (scaled % 10_000n).toString().padStart(4, "0").replace(/0+$/, "");
+        return `${whole}${fraction ? `.${fraction}` : ""}%`;
+      }
+
+      function infoLine(label, value) {
+        if (value === undefined || value === null || value === "") return "";
+        return `<div><span class="muted">${escapeHtml(label)}</span> ${escapeHtml(value)}</div>`;
+      }
+
+      function taxRawParts(item) {
+        const sellTax = rawFromFields(item, ["transactionTaxRaw", "sellTaxRaw"]);
+        const profitTax = rawFromFields(item, ["valueAddedTaxRaw", "profitTaxRaw"]);
+        const dumpTax = rawFromFields(item, ["dumpTaxRaw"]);
+        const totalFromParts = sellTax + profitTax + dumpTax;
+        const gross = rawFromFields(item, ["grossAmountRaw"]);
+        const net = rawFromFields(item, ["netAmountRaw"]);
+        const totalFromEvent = rawFromFields(item, ["totalTaxRaw"], totalFromParts);
+        const totalFromNet = gross >= net ? gross - net : 0n;
+        return { gross, net, sellTax, profitTax, dumpTax, totalFromParts, totalFromEvent, totalFromNet };
+      }
+
+      function taxSummary(raw) {
+        const gross = rawBigInt(raw?.sellGross);
+        const net = rawBigInt(raw?.sellNet);
+        const sellTax = rawBigInt(raw?.sellTax);
+        const profitTax = rawBigInt(raw?.profitTax);
+        const dumpTax = rawBigInt(raw?.dumpTax);
+        const totalFromParts = sellTax + profitTax + dumpTax;
+        const totalFromNet = gross >= net ? gross - net : 0n;
+        return { gross, net, sellTax, profitTax, dumpTax, totalFromParts, totalFromNet };
+      }
+
+      function isNonZeroAmount(value) {
+        const text = String(value ?? "");
+        return text && text !== "-" && text !== "0" && text !== "0.0" && !/^0\.0*$/.test(text);
+      }
+
+      function amountLine(label, value, unit = "") {
+        if (!isNonZeroAmount(value)) return "";
+        return `<div><span class="muted">${escapeHtml(label)}</span> ${escapeHtml(unitValue(compactAmount(value), unit))}</div>`;
+      }
+
+      function amountLines(lines) {
+        return lines.filter(Boolean).join("") || "-";
+      }
+
+      function resetPage(key) {
+        if (state.tablePages[key]) state.tablePages[key].page = 1;
+      }
+
+      function pagerState(key) {
+        if (!state.tablePages[key]) {
+          state.tablePages[key] = { page: 1, pageSize: DEFAULT_PAGE_SIZE };
+        }
+        const pager = state.tablePages[key];
+        if (!PAGE_SIZE_OPTIONS.includes(Number(pager.pageSize))) pager.pageSize = DEFAULT_PAGE_SIZE;
+        if (!Number.isFinite(Number(pager.page)) || Number(pager.page) < 1) pager.page = 1;
+        return pager;
+      }
+
+      function pagedRows(key, rows) {
+        const list = rows || [];
+        const pager = pagerState(key);
+        const pageSize = Number(pager.pageSize);
+        const pageCount = Math.max(1, Math.ceil(list.length / pageSize));
+        pager.page = Math.min(Math.max(1, Number(pager.page)), pageCount);
+        const startIndex = (pager.page - 1) * pageSize;
+        return {
+          rows: list.slice(startIndex, startIndex + pageSize),
+          total: list.length,
+          page: pager.page,
+          pageSize,
+          pageCount,
+          start: list.length ? startIndex + 1 : 0,
+          end: Math.min(startIndex + pageSize, list.length),
+        };
+      }
+
+      function paginationHost(rowTargetId) {
+        const body = $(rowTargetId);
+        const wrap = body?.closest(".table-wrap");
+        if (!wrap) return null;
+        const id = `${rowTargetId}Pager`;
+        let host = $(id);
+        if (!host) {
+          host = document.createElement("div");
+          host.id = id;
+          host.className = "pagination";
+          wrap.insertAdjacentElement("afterend", host);
+        }
+        return host;
+      }
+
+      function renderPagination(key, rowTargetId, page, renderFn) {
+        const host = paginationHost(rowTargetId);
+        if (!host) return;
+        if (page.total <= page.pageSize) {
+          host.className = "pagination hidden";
+          host.innerHTML = "";
+          return;
+        }
+        host.className = "pagination";
+        host.innerHTML = `
+          <div class="pagination-summary">第 ${escapeHtml(page.page)} / ${escapeHtml(page.pageCount)} 页，显示 ${escapeHtml(page.start)}-${escapeHtml(page.end)} / ${escapeHtml(page.total)} 行</div>
+          <div class="pagination-actions">
+            <button class="secondary" type="button" data-page-action="first" ${page.page <= 1 ? "disabled" : ""}>首页</button>
+            <button class="secondary" type="button" data-page-action="prev" ${page.page <= 1 ? "disabled" : ""}>上一页</button>
+            <button class="secondary" type="button" data-page-action="next" ${page.page >= page.pageCount ? "disabled" : ""}>下一页</button>
+            <button class="secondary" type="button" data-page-action="last" ${page.page >= page.pageCount ? "disabled" : ""}>末页</button>
+            <select data-page-size aria-label="每页行数">
+              ${PAGE_SIZE_OPTIONS.map((size) => `<option value="${size}" ${size === page.pageSize ? "selected" : ""}>${size} / 页</option>`).join("")}
+            </select>
+          </div>
+        `;
+        host.querySelectorAll("[data-page-action]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const pager = pagerState(key);
+            const action = button.dataset.pageAction;
+            if (action === "first") pager.page = 1;
+            if (action === "prev") pager.page -= 1;
+            if (action === "next") pager.page += 1;
+            if (action === "last") pager.page = page.pageCount;
+            renderFn();
+          });
+        });
+        host.querySelector("[data-page-size]")?.addEventListener("change", (event) => {
+          const pager = pagerState(key);
+          pager.pageSize = Number(event.target.value) || DEFAULT_PAGE_SIZE;
+          pager.page = 1;
+          renderFn();
+        });
+      }
+
+      function renderPagedRows(key, rowTargetId, rows, emptyRow, renderFn) {
+        const page = pagedRows(key, rows);
+        $(rowTargetId).innerHTML = page.rows.length ? page.rows.join("") : emptyRow;
+        renderPagination(key, rowTargetId, page, renderFn);
+      }
+
+      function blockCell(record) {
+        return `<code>${escapeHtml(record?.blockNumber ?? "-")}</code>`;
+      }
+
+      function sumRecordAmounts(records, types, fields) {
+        const allowed = types ? new Set(types) : null;
+        let total = 0n;
+        let found = false;
+        for (const record of records || []) {
+          if (allowed && !allowed.has(record.type)) continue;
+          for (const field of fields) {
+            const value = record[field];
+            if (value === undefined || value === null || value === "") continue;
+            total += BigInt(value);
+            found = true;
+          }
+        }
+        return found ? compactAmount(ethers.formatEther(total)) : "";
+      }
+
+      function uniqueByAddress(values) {
+        const seen = new Set();
+        return (values || []).filter((value) => {
+          const key = addressKey(value);
+          if (!key || seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+      }
+
+      function uniqueValues(values) {
+        const seen = new Set();
+        return (values || []).filter((value) => {
+          const key = String(value || "");
+          if (!key || seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+      }
+
+      function compactRecordList(items, renderItem, limit = 4) {
+        const list = (items || []).filter(Boolean);
+        if (!list.length) return "";
+        const visible = list.slice(0, limit).map(renderItem).join("");
+        const extra = list.length > limit ? `<div><span class="muted">+${escapeHtml(list.length - limit)} more</span></div>` : "";
+        return `${visible}${extra}`;
+      }
+
+      function groupRecordsByAccount(records, accountForRecord) {
+        const groups = new Map();
+        for (const record of records || []) {
+          const account = accountForRecord(record);
+          const key = addressKey(account);
+          if (!key) continue;
+          if (!groups.has(key)) {
+            groups.set(key, {
+              account,
+              records: [],
+              firstBlock: Number(record.blockNumber || 0),
+              lastBlock: Number(record.blockNumber || 0),
+              latestLogIndex: Number(record.logIndex || 0),
+            });
+          }
+          const group = groups.get(key);
+          const block = Number(record.blockNumber || 0);
+          group.records.push(record);
+          group.firstBlock = Math.min(group.firstBlock, block);
+          if (block > group.lastBlock || (block === group.lastBlock && Number(record.logIndex || 0) > group.latestLogIndex)) {
+            group.lastBlock = block;
+            group.latestLogIndex = Number(record.logIndex || 0);
+          }
+        }
+        return Array.from(groups.values()).sort((a, b) => {
+          const blockDelta = Number(b.lastBlock || 0) - Number(a.lastBlock || 0);
+          return blockDelta || Number(b.latestLogIndex || 0) - Number(a.latestLogIndex || 0);
+        });
+      }
+
+      function groupRecordsByKey(records, keyForRecord, accountForRecord) {
+        const groups = new Map();
+        for (const record of records || []) {
+          const key = keyForRecord(record);
+          if (!key) continue;
+          if (!groups.has(key)) {
+            groups.set(key, {
+              account: accountForRecord(record),
+              records: [],
+              firstBlock: Number(record.blockNumber || 0),
+              lastBlock: Number(record.blockNumber || 0),
+              latestLogIndex: Number(record.logIndex || 0),
+            });
+          }
+          const group = groups.get(key);
+          const block = Number(record.blockNumber || 0);
+          group.records.push(record);
+          group.firstBlock = Math.min(group.firstBlock, block);
+          if (block > group.lastBlock || (block === group.lastBlock && Number(record.logIndex || 0) > group.latestLogIndex)) {
+            group.lastBlock = block;
+            group.latestLogIndex = Number(record.logIndex || 0);
+          }
+        }
+        return Array.from(groups.values()).sort((a, b) => {
+          const blockDelta = Number(b.lastBlock || 0) - Number(a.lastBlock || 0);
+          return blockDelta || Number(b.latestLogIndex || 0) - Number(a.latestLogIndex || 0);
+        });
+      }
+
+      function groupedTypeCell(group) {
+        const types = uniqueValues(group.records.map((record) => record.type));
+        return `${compactRecordList(types, (type) => `<div>${typeBadge(type)}</div>`, 4)}<div><span class="muted">${escapeHtml(group.records.length)} events</span></div>`;
+      }
+
+      function groupedBlockCell(group) {
+        if (group.firstBlock === group.lastBlock) return `<code>${escapeHtml(group.lastBlock || "-")}</code>`;
+        return `<code>${escapeHtml(group.lastBlock || "-")}</code><br><span class="muted">from</span> <code>${escapeHtml(group.firstBlock || "-")}</code>`;
+      }
+
+      function groupedTxCell(group) {
+        const txs = uniqueValues(group.records.map((record) => record.txHash));
+        return compactRecordList(txs, (hash) => `<div>${txLink(hash)}</div>`) || "-";
+      }
+
+      function rawAmountLine(label, records, types, fields, unit = "") {
+        return amountLine(label, sumRecordAmounts(records, types, fields), unit);
+      }
+
+      function validateAddress(value, fieldName = "地址") {
+        const raw = String(value || "").trim();
+        if (!ethers.isAddress(raw)) throw new Error(`${fieldName} 无效`);
+        return ethers.getAddress(raw);
+      }
+
+      function optionalAddress(value) {
+        const raw = String(value || "").trim();
+        if (!raw) return ZERO;
+        if (!ethers.isAddress(raw)) throw new Error("地址无效");
+        return ethers.getAddress(raw);
+      }
+
+      function parseEtherInput(value, fieldName) {
+        const raw = String(value || "0").trim();
+        if (!raw || Number(raw) < 0) throw new Error(`${fieldName} 无效`);
+        return ethers.parseEther(raw);
+      }
+
+      function parseRewardPeriodSeconds(value) {
+        const raw = String(value || "").trim();
+        if (!/^\d+$/.test(raw)) throw new Error("产币周期必须是整数秒");
+        const seconds = BigInt(raw);
+        if (seconds < 600n || seconds > 86400n) throw new Error("产币周期范围是 600 到 86400 秒");
+        return seconds;
+      }
+
+      async function api(path, options = {}) {
+        const response = await fetch(path, { cache: "no-store", ...options });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || data.ok === false) throw new Error(data.error || `HTTP ${response.status}`);
+        return data;
+      }
+
+      async function loadConfig() {
+        const data = await api("/api/config");
+        state.config = data.deployment;
+      }
+
+      async function refreshAll() {
+        clearNotice();
+        if (!state.config) await loadConfig();
+        const [status, logs, accounting] = await Promise.all([
+          api("/api/status"),
+          api("/api/logs"),
+          api(`/api/accounting?limit=${ACCOUNTING_RECORD_LIMIT}`).catch((error) => ({
+            ok: false,
+            error: error.shortMessage || error.message || "账务数据加载失败",
+            totals: {},
+            users: [],
+            records: { deposits: [], rewards: [], staticRewards: [], dynamicRewards: [], referrals: [], burns: [], taxes: [], managers: [], ownerTransfers: [], ledger: [] },
+            recordTotals: {},
+          })),
+        ]);
+        state.status = status;
+        state.logs = logs;
+        state.accounting = accounting;
+        renderAll();
+        if (state.account) await loadCurrentRole();
+      }
+
+      function renderAll() {
+        setActiveView(state.activeView);
+        renderHeader();
+        renderOverview();
+        renderParams();
+        renderKeeper();
+        renderOwnerTransfer();
+        renderOwnerTransfers();
+        renderRoleManagers();
+        renderAccounting();
+        renderLogs();
+      }
+
+      function renderHeader() {
+        const cfg = state.config || {};
+        const contract = cfg.contract || "-";
+        const account = state.account ? shortAddress(state.account) : "未连接";
+        const roleText = state.role ? roleLabel(state.role) : "-";
+        $("chainLine").innerHTML = [
+          `<span class="badge neutral">${escapeHtml(cfg.network || "-")} / ${escapeHtml(cfg.chainId || "-")}</span>`,
+          `<span class="badge neutral">合约 ${shortAddress(contract)}</span>`,
+          `<span class="badge ${state.account ? "good" : "warn"}">${account}</span>`,
+          `<span class="badge neutral">${escapeHtml(roleText)}</span>`,
+        ].join("");
+        $("connectButton").textContent = state.account ? "已连接" : "连接钱包";
+      }
+
+      function renderOverview() {
+        const contract = state.status?.contract || {};
+        const logs = state.status?.logs || {};
+        $("metrics").innerHTML = [
+          metric("奖励池 KNT", contract.rewardPool),
+          metric("Daily Emission", contract.dailyEmission),
+          metric("Reward Period", formatPeriodSeconds(contract.params?.rewardPeriodSeconds)),
+          metric("Global LP USDT", contract.globalLpValueUsdt),
+          metric("User LP USDT", contract.totalLpValueUsdt),
+          metric("Total Power", contract.totalPower),
+          metric("KNT Price", contract.latestKntPriceUsdt),
+          metric("Nodes", contract.nodeCount),
+          metric("Burn Queue", `${contract.nextPayoutIndex || 0}/${contract.burnQueueLength || 0}`),
+          metric("Last Scanned Block", logs.lastScannedBlock),
+        ].join("");
+
+        const market = state.status?.market || {};
+        $("marketBadge").textContent = market.error ? market.error : `Total ${market.totalLpValue || "-"}`;
+        const rows = (market.pairs || []).map((item) => `
+          <tr>
+            <td>${statusBadge(item.status)}</td>
+            <td>${escapeHtml(item.label || item.key)}<br>${addressLink(item.address)}</td>
+            <td>${escapeHtml(item.valuation || item.basis || "-")}</td>
+            <td>${reserveCell(item.token0)}</td>
+            <td>${reserveCell(item.token1)}</td>
+            <td>${escapeHtml(item.value || "-")}</td>
+          </tr>
+        `);
+        $("pairRows").innerHTML = rows.length ? rows.join("") : `<tr><td colspan="6">${escapeHtml(market.error || "No LP data")}</td></tr>`;
+      }
+
+      function reserveCell(token) {
+        if (!token) return "-";
+        return `${escapeHtml(token.symbol || "-")}: ${escapeHtml(token.reserve || "-")}<br>${addressLink(token.address)}`;
+      }
+
+      function renderParams() {
+        const contract = state.status?.contract || {};
+        const wallets = contract.wallets || {};
+        const liquidity = contract.liquidity || {};
+        const params = contract.params || {};
+        $("foundationWallet").value = wallets.foundationWallet || "";
+        $("dexSettlementWallet").value = wallets.dexSettlementWallet || "";
+        $("projectSinkWallet").value = wallets.projectSinkWallet || "";
+        $("ecosystemWallet").value = wallets.ecosystemWallet || "";
+        $("pancakeRouter").value = liquidity.pancakeRouter || state.config?.router || "";
+        $("usdtToken").value = liquidity.usdtToken || state.config?.usdt || "";
+        $("labubuToken").value = liquidity.labubuToken || state.config?.labubu || "";
+        $("labubuKntPair").value = liquidity.labubuKntPair || state.config?.labubuPair || "";
+        $("ammPair").value = state.config?.labubuPair || "";
+        $("burnQueueRewardBP").value = params.burnQueueRewardBP || "";
+        $("referralSignalAmount").value = params.referralSignalAmount || "";
+        $("rewardPeriodSeconds").value = params.rewardPeriodSeconds || "";
+        $("rewardPeriodCurrent").textContent = formatPeriodSeconds(params.rewardPeriodSeconds);
+        $("manualGlobalLp").value = contract.globalLpValueUsdt || "";
+        $("manualKntPrice").value = contract.latestKntPriceUsdt || "";
+        $("manualKntPrice24h").value = contract.price24hAgoUsdt || "";
+      }
+
+      function keeperSetting(type, field, fallback = "") {
+        return state.status?.keeper?.settings?.[type]?.[field] ?? fallback;
+      }
+
+      function keeperTrigger(type) {
+        return state.status?.keeper?.triggers?.[type] || {};
+      }
+
+      function renderKeeper() {
+        const keeper = state.status?.keeper || {};
+        const settings = keeper.settings || {};
+        const latestObserverRun = keeper.latestObserverRun;
+        $("keeperRuntimeBadge").textContent = `observer ${keeper.observerLastScannedBlock || 0} / deposits ${keeper.lastObservedDepositCount || 0}`;
+        $("keeperClassCards").innerHTML = KEEPER_TYPES.map((type) => {
+          const config = settings[type.key] || {};
+          const trigger = keeperTrigger(type.key);
+          const status = config.enabled ? "enabled" : "paused";
+          return `
+            <div class="keeper-card">
+              <div class="keeper-card-head">
+                <h3>${escapeHtml(type.label)}</h3>
+                ${statusBadge(status)}
+              </div>
+              <span class="badge neutral">${escapeHtml(type.risk)}</span>
+              <p>${escapeHtml(type.summary)}</p>
+              <div class="mono-list">
+                <div><span class="muted">Interval</span> ${escapeHtml(config.intervalMinutes ?? "-")} min</div>
+                <div><span class="muted">Last</span> ${escapeHtml(trigger.lastTriggeredAt || "-")}</div>
+                <div><span class="muted">Status</span> ${escapeHtml(trigger.lastStatus || "-")}</div>
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        $("keeperSettingsCards").innerHTML = KEEPER_TYPES.map((type) => `
+          <div class="keeper-card">
+            <div class="keeper-card-head">
+              <h3>${escapeHtml(type.label)}</h3>
+              <span class="badge neutral">${escapeHtml(type.risk)}</span>
+            </div>
+            <label>Enabled
+              <select id="keeper-${type.key}-enabled">
+                <option value="true" ${keeperSetting(type.key, "enabled", true) ? "selected" : ""}>Enabled</option>
+                <option value="false" ${keeperSetting(type.key, "enabled", true) ? "" : "selected"}>Paused</option>
+              </select>
+            </label>
+            ${type.fields.map(([field, label, inputType]) => `
+              <label>${escapeHtml(label)}
+                <input id="keeper-${type.key}-${field}" inputmode="${inputType === "decimal" ? "decimal" : "numeric"}" value="${escapeHtml(keeperSetting(type.key, field, ""))}" />
+              </label>
+            `).join("")}
+          </div>
+        `).join("");
+
+        if (latestObserverRun?.status) {
+          $("keeperRuntimeBadge").textContent += ` / latest observer ${latestObserverRun.status}`;
+        }
+      }
+
+      function renderAccounting() {
+        const accounting = state.accounting || {};
+        const totals = accounting.totals || {};
+        const raw = totals.raw || {};
+        const records = accounting.records || {};
+        const recordTotals = accounting.recordTotals || {};
+        const contract = state.status?.contract || {};
+
+        const range = accounting.error
+          ? accounting.error
+          : `${accounting.fromBlock ?? "-"} - ${accounting.toBlock ?? "-"} / logs ${accounting.logCount ?? 0}`;
+        $("accountingBadge").textContent = accounting.truncatedUsers
+          ? `${range} / users ${totals.loadedUserCount || 0}/${totals.userCount || 0}`
+          : range;
+        const taxes = taxSummary(raw);
+        const taxDiff = taxes.totalFromParts >= taxes.totalFromNet
+          ? taxes.totalFromParts - taxes.totalFromNet
+          : taxes.totalFromNet - taxes.totalFromParts;
+        $("accountingMetrics").innerHTML = [
+          metric("用户", `${totals.loadedUserCount || 0}/${totals.userCount || 0}`),
+          metric("已注册", totals.registeredCount || 0),
+          metric("奖励池 KNT", compactAmount(accounting.rewardPool || contract.rewardPool || "0")),
+          metric("USDT 充值", compactAmount(totals.usdtDeposited || "0")),
+          metric("LP 入账价值", compactAmount(totals.depositLpValueUsdt || totals.lpValueUsdt || "0")),
+          metric("奖励发放", sumRawAmounts(raw.rewardsReceived, raw.queueRewardsReceived)),
+          metric("静态奖励", compactAmount(totals.staticRewardsAccrued || "0")),
+          metric("动态奖励", compactAmount(totals.dynamicRewardsAccrued || "0")),
+          metric("推荐记录", totals.referralRecords || 0),
+          metric("交易税", compactRawAmount(taxes.sellTax), `占卖出 ${percentOfRaw(taxes.sellTax, taxes.gross)} / 固定 5%`),
+          metric("增值税", compactRawAmount(taxes.profitTax), "利润 30%，按 KNT 折算"),
+          metric("砸盘税", compactRawAmount(taxes.dumpTax), `占卖出 ${percentOfRaw(taxes.dumpTax, taxes.gross)} / 按24h跌幅`),
+          metric("税费合计", compactRawAmount(taxes.totalFromParts), `卖出-到账 ${compactRawAmount(taxes.totalFromNet)} / 差额 ${compactRawAmount(taxDiff)}`),
+          metric("销毁 / 队列", unitValue(sumRawAmounts(raw.burnQueuedAmount, raw.liquidityKntBurned, raw.keeperBurned), "KNT")),
+        ].join("");
+
+        renderUserDetail(accounting.users || [], records);
+        renderReferralTree(accounting.users || []);
+        renderAccountingUsers(accounting.users || []);
+        renderAccountingDeposits(records.deposits || [], recordTotals.deposits);
+        renderAccountingRewards(records.rewards || [], recordTotals.rewards);
+        renderAccountingStaticRewards(records.staticRewards || [], recordTotals.staticRewards);
+        renderAccountingDynamicRewards(records.dynamicRewards || [], recordTotals.dynamicRewards);
+        renderAccountingBurns(records.burns || [], recordTotals.burns);
+        renderAccountingReferrals(records.referrals || [], recordTotals.referrals);
+        renderAccountingTaxes(records.taxes || [], recordTotals.taxes);
+        renderAccountingLedger(records.ledger || [], recordTotals.ledger);
+      }
+
+      function addressKey(address) {
+        return String(address || "").toLowerCase();
+      }
+
+      function findAccountingUser(users, address) {
+        const key = addressKey(address);
+        return users.find((item) => addressKey(item.account) === key) || null;
+      }
+
+      function recordMatchesAddress(item, address) {
+        const key = addressKey(address);
+        return [item.user, item.from, item.to, item.referrer, item.operator, item.source, item.receiver, item.manager]
+          .filter(Boolean)
+          .some((value) => addressKey(value) === key);
+      }
+
+      function allAccountingRecords(records) {
+        const combined = [
+          ...(records.deposits || []),
+          ...(records.rewards || []),
+          ...(records.staticRewards || []),
+          ...(records.dynamicRewards || []),
+          ...(records.referrals || []),
+          ...(records.burns || []),
+          ...(records.taxes || []),
+          ...(records.ledger || []),
+        ];
+        const seen = new Set();
+        return combined.filter((item) => {
+          const key = `${item.type || ""}:${item.txHash || ""}:${item.logIndex ?? ""}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        }).sort((a, b) => {
+          const blockDelta = Number(b.blockNumber || 0) - Number(a.blockNumber || 0);
+          return blockDelta || Number(b.logIndex || 0) - Number(a.logIndex || 0);
+        });
+      }
+
+      function selectAccountingAddress(address) {
+        const checked = validateAddress(address, "用户地址");
+        state.selectedAccountingAddress = checked;
+        resetPage("userDetail");
+        $("userDetailAddress").value = checked;
+        $("referralTreeRoot").value = checked;
+        renderAccounting();
+      }
+
+      function renderUserDetail(users, records) {
+        const selected = state.selectedAccountingAddress;
+        if (!selected) {
+          $("userDetailBadge").textContent = "未选择";
+          $("userDetailMetrics").innerHTML = "";
+          $("userDetailRows").innerHTML = '<tr><td colspan="6">请选择用户地址</td></tr>';
+          return;
+        }
+
+        const item = findAccountingUser(users, selected);
+        const current = item?.current || {};
+        const user = current.user || {};
+        const costBasis = current.costBasis || {};
+        const totals = item?.eventTotals || {};
+        const raw = item?.eventTotalsRaw || {};
+        const directReferrals = current.directReferrals || [];
+        const directCount = current.directReferralCount ?? item?.directReferralEventCount ?? 0;
+        const status = current.error
+          ? "RPC Error"
+          : user.registered
+            ? "Registered"
+            : item
+              ? "Event only"
+              : "No event";
+
+        $("userDetailBadge").textContent = `${shortAddress(selected)} / ${status}`;
+        $("userDetailMetrics").innerHTML = [
+          metric("上级", item?.referrer ? shortAddress(item.referrer) : "-"),
+          metric("直推", directCount),
+          metric("有效直推", user.directEffectiveCount || "0"),
+          metric("节点", user.isNode ? "Yes" : "No"),
+          metric("USDT 充值", totals.usdtDeposited || "0"),
+          metric("LP 价值", user.lpValueUsdt || totals.depositLpValueUsdt || totals.lpValueUsdt || "0"),
+          metric("算力", user.power || "0"),
+          metric("待发 KNT", user.pendingKnt || "0"),
+          metric("静态收益", user.totalStaticReward || "0"),
+          metric("动态收益", user.totalDynamicReward || "0"),
+          metric("节点收益", user.totalNodeReward || "0"),
+          metric("已发奖励", sumRawAmounts(raw.rewardsReceived, raw.queueRewardsReceived)),
+          metric("销毁排队", unitValue(sumRawAmounts(raw.burnQueuedAmount, raw.liquidityKntBurned, raw.keeperBurned), "KNT")),
+          metric("排队应得", unitValue(totals.burnQueuedReward || "0", "KNT")),
+          metric("KNT 余额", current.balance || "0"),
+          metric("成本 USDT", costBasis.spentUsdt || totals.buyUsdtSpent || "0"),
+        ].join("");
+
+        const rows = allAccountingRecords(records)
+          .filter((record) => recordMatchesAddress(record, selected))
+          .map((record) => `
+            <tr>
+              <td>${typeBadge(record.type)}</td>
+              <td>${blockCell(record)}</td>
+              <td>${recordSubjectCell(record)}</td>
+              <td>${recordAmountCell(record)}</td>
+              <td>${recordStatusCell(record)}</td>
+              <td>${txLink(record.txHash)}</td>
+            </tr>
+          `);
+        const directRows = directReferrals.length
+          ? `<tr><td>${typeBadge("DirectReferrals")}</td><td>-</td><td colspan="4">${directReferrals.map((address) => addressLink(address)).join("<br>")}</td></tr>`
+          : "";
+        renderPagedRows(
+          "userDetail",
+          "userDetailRows",
+          directRows ? [directRows, ...rows] : rows,
+          '<tr><td colspan="6">No records for selected user</td></tr>',
+          renderAccounting
+        );
+      }
+
+      function defaultReferralRoot(users) {
+        const withChildren = users.find((item) => Number(item.current?.directReferralCount || item.directReferralEventCount || 0) > 0);
+        return withChildren?.account || users[0]?.account || "";
+      }
+
+      function renderReferralTree(users) {
+        const rawRoot = String($("referralTreeRoot")?.value || state.selectedAccountingAddress || defaultReferralRoot(users) || "").trim();
+        if (!rawRoot) {
+          $("referralTreeBadge").textContent = "-";
+          $("referralTree").innerHTML = "No referral users";
+          return;
+        }
+        if (!ethers.isAddress(rawRoot)) {
+          $("referralTreeBadge").textContent = "地址无效";
+          $("referralTree").innerHTML = "Invalid root address";
+          return;
+        }
+
+        const root = ethers.getAddress(rawRoot);
+        if (!$("referralTreeRoot").value) $("referralTreeRoot").value = root;
+        const userByKey = new Map(users.map((item) => [addressKey(item.account), item]));
+        const childrenByReferrer = new Map();
+        for (const item of users) {
+          if (!item.referrer) continue;
+          const key = addressKey(item.referrer);
+          if (!childrenByReferrer.has(key)) childrenByReferrer.set(key, []);
+          childrenByReferrer.get(key).push(item);
+        }
+
+        const rows = [];
+        const walk = (address, depth, visited) => {
+          const key = addressKey(address);
+          if (visited.has(key)) return;
+          visited.add(key);
+          const item = userByKey.get(key) || { account: address, current: {} };
+          const user = item.current?.user || {};
+          const children = childrenByReferrer.get(key) || [];
+          rows.push(referralTreeNode(item, user, children.length, depth));
+          for (const child of children) walk(child.account, depth + 1, visited);
+        };
+        walk(root, 0, new Set());
+
+        $("referralTreeBadge").textContent = `${rows.length} nodes`;
+        $("referralTree").innerHTML = rows.length ? rows.join("") : "No referral tree";
+      }
+
+      function referralTreeNode(item, user, childCount, depth) {
+        const totals = item.eventTotals || {};
+        const node = user.isNode ? '<span class="badge good">Node</span>' : '<span class="badge neutral">User</span>';
+        const registered = user.registered ? '<span class="badge good">Registered</span>' : '<span class="badge neutral">Event</span>';
+        return `
+          <div class="tree-node" style="margin-left:${Math.min(depth, 12) * 18}px">
+            <div>${addressLink(item.account)} <button class="inline-button" type="button" data-detail-address="${escapeHtml(item.account)}">详情</button> ${registered} ${node}</div>
+            <div class="tree-meta">
+              <span>层级 ${escapeHtml(depth)}</span>
+              <span>直推 ${escapeHtml(childCount)}</span>
+              <span>有效 ${escapeHtml(user.directEffectiveCount || "0")}</span>
+              <span>LP ${escapeHtml(compactAmount(user.lpValueUsdt || totals.depositLpValueUsdt || totals.lpValueUsdt || "0"))}</span>
+              <span>算力 ${escapeHtml(compactAmount(user.power || "0"))}</span>
+            </div>
+          </div>
+        `;
+      }
+
+      function renderAccountingUsers(users) {
+        const filter = String($("accountingFilter")?.value || "").trim().toLowerCase();
+        const filtered = users.filter((item) => {
+          if (!filter) return true;
+          const current = item.current || {};
+          const directReferrals = (current.directReferrals || []).join(" ");
+          return [
+            item.account,
+            item.referrer,
+            directReferrals,
+            current.user?.isNode ? "node" : "",
+            current.user?.registered ? "registered" : "",
+          ].filter(Boolean).join(" ").toLowerCase().includes(filter);
+        });
+
+        const rows = filtered.map((item) => {
+          const current = item.current || {};
+          const user = current.user || {};
+          const costBasis = current.costBasis || {};
+          const totals = item.eventTotals || {};
+          const raw = item.eventTotalsRaw || {};
+          const directCount = current.directReferralCount ?? item.directReferralEventCount ?? 0;
+          const status = current.error
+            ? `<span class="badge bad">RPC Error</span>`
+            : user.registered
+              ? `<span class="badge good">Registered</span>`
+              : `<span class="badge neutral">Event only</span>`;
+          const node = user.isNode ? `<span class="badge good">Node</span>` : `<span class="badge neutral">No node</span>`;
+          return `
+            <tr>
+              <td>${addressLink(item.account)}<br>${status}</td>
+              <td><button class="inline-button" type="button" data-detail-address="${escapeHtml(item.account)}">详情</button></td>
+              <td>${item.referrer ? addressLink(item.referrer) : "-"}<br><span class="muted">Signals ${escapeHtml(item.referralSignalsSent || 0)} / ${escapeHtml(item.referralSignalsReceived || 0)}</span></td>
+              <td>${amountLines([
+                amountLine("USDT", totals.usdtDeposited),
+                amountLine("LP token", totals.depositAmount || totals.lpAmount),
+                amountLine("LP value", user.lpValueUsdt || totals.depositLpValueUsdt || totals.lpValueUsdt),
+              ])}</td>
+              <td>${amountLines([
+                amountLine("Balance", current.balance),
+                amountLine("Token in", totals.tokenReceived),
+                amountLine("Token out", totals.tokenSent),
+                amountLine("Pending", user.pendingKnt),
+                amountLine("Power", user.power),
+              ])}</td>
+              <td>${amountLines([
+                amountLine("Static", user.totalStaticReward),
+                amountLine("Dynamic", user.totalDynamicReward),
+                amountLine("Node", user.totalNodeReward),
+                amountLine("Paid", sumRawAmounts(raw.rewardsReceived, raw.queueRewardsReceived)),
+              ])}</td>
+              <td><div><span class="muted">Direct</span> ${escapeHtml(directCount)}</div><div><span class="muted">Effective</span> ${escapeHtml(user.directEffectiveCount || "0")}</div>${node}</td>
+              <td>${amountLines([
+                amountLine("Buy KNT", totals.buyKnt),
+                amountLine("Cost USDT", costBasis.spentUsdt || totals.buyUsdtSpent),
+                amountLine("Sell gross", totals.sellGross),
+                amountLine("Sell tax", sumRawAmounts(raw.sellTax, raw.profitTax, raw.dumpTax)),
+                amountLine("Burn", sumRawAmounts(raw.burnQueuedAmount, raw.liquidityKntBurned, raw.keeperBurned), "KNT"),
+              ])}</td>
+              <td><code>${escapeHtml(item.firstActivityBlock ?? "-")}</code><br><code>${escapeHtml(item.lastActivityBlock ?? "-")}</code></td>
+            </tr>
+          `;
+        });
+        renderPagedRows("accountingUsers", "accountingUserRows", rows, '<tr><td colspan="9">No accounting users</td></tr>', renderAccounting);
+      }
+
+      function renderAccountingDeposits(records, totalCount) {
+        const groups = groupRecordsByAccount(records, (item) => item.user);
+        $("accountingDepositBadge").textContent = `${groups.length} accounts / ${records.length}/${totalCount ?? records.length} logs`;
+        const rows = groups.map((group) => {
+          const groupRecords = group.records || [];
+          const usdtAmount = sumRecordAmounts(groupRecords, ["UsdtDeposited"], ["usdtAmountRaw"])
+            || sumRecordAmounts(groupRecords, ["UsdtDepositProcessed"], ["amountRaw"]);
+          const lpValue = sumRecordAmounts(groupRecords, ["Deposited"], ["lpValueUsdtRaw"])
+            || sumRecordAmounts(groupRecords, ["UsdtDeposited"], ["lpValueUsdtRaw"]);
+          const lpToken = sumRecordAmounts(groupRecords, ["UsdtDeposited"], ["lpAmountRaw"])
+            || sumRecordAmounts(groupRecords, ["Deposited"], ["amountRaw"]);
+          const kntUsed = sumRecordAmounts(groupRecords, ["UsdtDeposited"], ["kntUsedRaw"]);
+          const labubuUsed = sumRecordAmounts(groupRecords, ["UsdtDeposited"], ["labubuUsedRaw"]);
+          const addedPower = sumRecordAmounts(groupRecords, ["Deposited"], ["addedPowerRaw"]);
+          const operators = uniqueByAddress(groupRecords.map((item) => item.operator));
+          const depositIds = uniqueValues(groupRecords.map((item) => item.depositId));
+          const txCell = [
+            groupedTxCell(group),
+            compactRecordList(operators, (operator) => `<div><span class="muted">Operator</span> ${addressLink(operator)}</div>`, 2),
+            compactRecordList(depositIds, (depositId) => `<div><span class="muted">ID</span> <code>${shortAddress(depositId)}</code></div>`, 2),
+          ].filter(Boolean).join("");
+          return `
+          <tr>
+            <td>${groupedTypeCell(group)}</td>
+            <td>${groupedBlockCell(group)}</td>
+            <td>${addressLink(group.account)}</td>
+            <td>${amountLines([
+              amountLine("USDT", usdtAmount),
+              amountLine("LP value", lpValue),
+              amountLine("LP token", lpToken),
+            ])}</td>
+            <td>${amountLines([
+              amountLine("KNT", kntUsed),
+              amountLine("LABUBU", labubuUsed),
+              amountLine("Power", addedPower),
+            ])}</td>
+            <td>${txCell || "-"}</td>
+          </tr>
+        `;
+        });
+        renderPagedRows("accountingDeposits", "accountingDepositRows", rows, '<tr><td colspan="6">No deposit records</td></tr>', renderAccounting);
+      }
+
+      function renderAccountingRewards(records, totalCount) {
+        $("accountingRewardBadge").textContent = `${records.length}/${totalCount ?? records.length}`;
+        const rows = records.map((item) => `
+          <tr>
+            <td>${typeBadge(item.type)}</td>
+            <td>${blockCell(item)}</td>
+            <td>${addressLink(item.user)}</td>
+            <td>${amountLines([amountLine("KNT", item.amount || item.rewardAmount)])}</td>
+            <td>${item.operator ? addressLink(item.operator) : item.index ? `<span class="muted">Queue</span> ${escapeHtml(item.index)}` : "-"}</td>
+            <td>${txLink(item.txHash)}</td>
+          </tr>
+        `);
+        renderPagedRows("accountingRewards", "accountingRewardRows", rows, '<tr><td colspan="6">No reward records</td></tr>', renderAccounting);
+      }
+
+      function renderAccountingStaticRewards(records, totalCount) {
+        $("accountingStaticRewardBadge").textContent = `${records.length}/${totalCount ?? records.length}`;
+        const rows = records.map((item) => `
+          <tr>
+            <td>${typeBadge(item.type)}</td>
+            <td>${blockCell(item)}</td>
+            <td>${addressLink(item.user)}</td>
+            <td>${amountLines([amountLine("KNT", item.amount)])}</td>
+            <td>${txLink(item.txHash)}</td>
+          </tr>
+        `);
+        renderPagedRows("accountingStaticRewards", "accountingStaticRewardRows", rows, '<tr><td colspan="5">No static reward records</td></tr>', renderAccounting);
+      }
+
+      function renderAccountingDynamicRewards(records, totalCount) {
+        $("accountingDynamicRewardBadge").textContent = `${records.length}/${totalCount ?? records.length}`;
+        const rows = records.map((item) => `
+          <tr>
+            <td>${typeBadge(item.type)}</td>
+            <td>${blockCell(item)}</td>
+            <td>${addressLink(item.source || item.user)}</td>
+            <td>${item.receiver ? addressLink(item.receiver) : "-"}</td>
+            <td>${item.level ? `<span class="muted">Level</span> ${escapeHtml(item.level)}` : item.status === "sunk" ? '<span class="badge warn">沉淀</span>' : "-"}</td>
+            <td>${amountLines([amountLine("KNT", item.amount)])}</td>
+            <td>${txLink(item.txHash)}</td>
+          </tr>
+        `);
+        renderPagedRows("accountingDynamicRewards", "accountingDynamicRewardRows", rows, '<tr><td colspan="7">No dynamic reward records</td></tr>', renderAccounting);
+      }
+
+      function renderRoleManagers() {
+        const records = state.accounting?.records?.managers || [];
+        const totalCount = state.accounting?.recordTotals?.managers;
+        $("roleManagerBadge").textContent = `${records.length}/${totalCount ?? records.length}`;
+        const rows = records.map((item) => `
+          <tr>
+            <td>${typeBadge(item.type)}</td>
+            <td>${blockCell(item)}</td>
+            <td>${addressLink(item.manager || item.user)}</td>
+            <td>${item.enabled ? '<span class="badge good">Enabled</span>' : '<span class="badge neutral">Removed</span>'}</td>
+            <td>${txLink(item.txHash)}</td>
+          </tr>
+        `);
+        renderPagedRows("roleManagers", "roleManagerRows", rows, '<tr><td colspan="5">No manager records</td></tr>', renderRoleManagers);
+      }
+
+      function renderOwnerTransfers() {
+        const records = state.accounting?.records?.ownerTransfers || [];
+        const totalCount = state.accounting?.recordTotals?.ownerTransfers;
+        $("ownerTransferBadge").textContent = `${records.length}/${totalCount ?? records.length}`;
+        const rows = records.map((item) => `
+          <tr>
+            <td>${blockCell(item)}</td>
+            <td>${addressLink(item.previousOwner)}</td>
+            <td>${addressLink(item.newOwner)}</td>
+            <td>${txLink(item.txHash)}</td>
+          </tr>
+        `);
+        renderPagedRows("ownerTransfers", "ownerTransferRows", rows, '<tr><td colspan="4">No owner transfer records</td></tr>', renderOwnerTransfers);
+      }
+
+      function renderAccountingBurns(records, totalCount) {
+        const groups = groupRecordsByKey(
+          records,
+          (item) => item.index
+            ? `queue:${addressKey(item.user)}:${item.index}`
+            : `${item.type}:${addressKey(item.user)}:${item.txHash || ""}:${item.logIndex ?? ""}`,
+          (item) => item.user
+        );
+        $("accountingBurnBadge").textContent = `${groups.length} rows / ${totalCount ?? records.length} logs`;
+        const rows = groups.map((group) => {
+          const groupRecords = group.records || [];
+          const hasQueued = groupRecords.some((item) => item.type === "BurnQueued");
+          const hasPaid = groupRecords.some((item) => item.type === "QueuePaid");
+          const hasLpExit = groupRecords.some((item) => item.type === "LiquidityKntBurned" || item.type === "KeeperLpReduced");
+          const queueIndexes = uniqueValues(groupRecords.map((item) => item.index));
+          const status = [
+            hasPaid ? '<span class="badge good">已支付</span>' : hasQueued ? '<span class="badge warn">排队中</span>' : "",
+            hasLpExit ? '<span class="badge neutral">LP 退场</span>' : "",
+            compactRecordList(queueIndexes, (index) => `<div><span class="muted">Queue</span> ${escapeHtml(index)}</div>`, 2),
+          ].filter(Boolean).join("");
+          return `
+          <tr>
+            <td>${groupedTypeCell(group)}</td>
+            <td>${groupedBlockCell(group)}</td>
+            <td>${addressLink(group.account)}</td>
+            <td>${amountLines([
+              rawAmountLine("Burned", groupRecords, ["BurnQueued"], ["burnedAmountRaw"], "KNT"),
+              rawAmountLine("LP Exit", groupRecords, ["LiquidityKntBurned", "KeeperLpReduced"], ["amountRaw", "lpAmountRaw"], "KNT"),
+              rawAmountLine("Expected", groupRecords, ["BurnQueued"], ["rewardAmountRaw"], "KNT"),
+              rawAmountLine("Paid", groupRecords, ["QueuePaid"], ["rewardAmountRaw"], "KNT"),
+            ])}</td>
+            <td>${status || "-"}</td>
+            <td>${groupedTxCell(group)}</td>
+          </tr>
+        `;
+        });
+        renderPagedRows("accountingBurns", "accountingBurnRows", rows, '<tr><td colspan="6">No burn records</td></tr>', renderAccounting);
+      }
+
+      function renderAccountingReferrals(records, totalCount) {
+        const groups = groupRecordsByAccount(records, (item) => item.user || item.from);
+        $("accountingReferralBadge").textContent = `${groups.length} accounts / ${totalCount ?? records.length} logs`;
+        const rows = groups.map((group) => {
+          const groupRecords = group.records || [];
+          const referrers = uniqueByAddress(groupRecords.filter((item) => item.type === "ReferrerBound").map((item) => item.referrer));
+          const signalTargets = uniqueByAddress(groupRecords.filter((item) => item.type === "ReferralSignal").map((item) => item.to));
+          const signalAmount = sumRecordAmounts(groupRecords, ["ReferralSignal"], ["amountRaw"]);
+          const counterpartyCell = [
+            compactRecordList(referrers, (address) => `<div><span class="muted">Referrer</span> ${addressLink(address)}</div>`, 3),
+            compactRecordList(signalTargets, (address) => `<div><span class="muted">Signal</span> ${addressLink(address)}</div>`, 3),
+          ].filter(Boolean).join("");
+          return `
+            <tr>
+              <td>${groupedTypeCell(group)}</td>
+              <td>${groupedBlockCell(group)}</td>
+              <td>${addressLink(group.account)}</td>
+              <td>${counterpartyCell || "-"}</td>
+              <td>${amountLines([amountLine("KNT", signalAmount)])}</td>
+              <td>${groupedTxCell(group)}</td>
+            </tr>
+          `;
+        });
+        renderPagedRows("accountingReferrals", "accountingReferralRows", rows, '<tr><td colspan="6">No referral records</td></tr>', renderAccounting);
+      }
+
+      function renderAccountingTaxes(records, totalCount) {
+        $("accountingTaxBadge").textContent = `${records.length}/${totalCount ?? records.length}`;
+        const rows = records.map((item) => {
+          const tax = taxRawParts(item);
+          return `
+            <tr>
+              <td>${typeBadge(item.type)}</td>
+              <td>${blockCell(item)}</td>
+              <td>${addressLink(item.user)}</td>
+              <td>${amountLines([
+                amountLine("卖出", item.grossAmount),
+                amountLine("到账", item.netAmount),
+              ])}</td>
+              <td>${amountLines([
+                amountLine("KNT", item.transactionTax),
+                infoLine("比例", percentOfRaw(tax.sellTax, tax.gross)),
+              ])}</td>
+              <td>${amountLines([
+                amountLine("KNT", item.valueAddedTax),
+                infoLine("占卖出", percentOfRaw(tax.profitTax, tax.gross)),
+              ])}</td>
+              <td>${amountLines([
+                amountLine("KNT", item.dumpTax),
+                infoLine("占卖出", percentOfRaw(tax.dumpTax, tax.gross)),
+              ])}</td>
+              <td>${amountLines([
+                infoLine("KNT", compactRawAmount(tax.totalFromParts)),
+                infoLine("总税率", percentOfRaw(tax.totalFromParts, tax.gross)),
+              ])}</td>
+              <td>${taxCheckCell(tax)}</td>
+              <td>${txLink(item.txHash)}</td>
+            </tr>
+          `;
+        });
+        renderPagedRows("accountingTaxes", "accountingTaxRows", rows, '<tr><td colspan="10">No tax records</td></tr>', renderAccounting);
+      }
+
+      function taxCheckCell(tax) {
+        const eventTotalMatches = tax.totalFromEvent === tax.totalFromParts;
+        const netMatches = tax.totalFromNet === tax.totalFromParts;
+        const status = eventTotalMatches && netMatches ? "OK" : "Mismatch";
+        const cls = status === "OK" ? "good" : "warn";
+        const diff = tax.totalFromParts >= tax.totalFromNet
+          ? tax.totalFromParts - tax.totalFromNet
+          : tax.totalFromNet - tax.totalFromParts;
+        return amountLines([
+          `<div><span class="badge ${cls}">${escapeHtml(status)}</span></div>`,
+          infoLine("税项合计", compactRawAmount(tax.totalFromParts)),
+          infoLine("卖出-到账", compactRawAmount(tax.totalFromNet)),
+          infoLine("差额", compactRawAmount(diff)),
+        ]);
+      }
+
+      function recordSubjectCell(item) {
+        if (item.type === "Transfer") return `<div><span class="muted">From</span> ${addressLink(item.from)}</div><div><span class="muted">To</span> ${addressLink(item.to)}</div>`;
+        if (item.type === "ReferrerBound") return `<div><span class="muted">User</span> ${addressLink(item.user)}</div><div><span class="muted">Referrer</span> ${addressLink(item.referrer)}</div>`;
+        if (item.type === "ReferralSignal") return `<div><span class="muted">From</span> ${addressLink(item.from)}</div><div><span class="muted">To</span> ${addressLink(item.to)}</div>`;
+        if (item.type === "DynamicRewardAccrued") return `<div><span class="muted">Source</span> ${addressLink(item.source)}</div><div><span class="muted">Receiver</span> ${addressLink(item.receiver)}</div>`;
+        if (item.type === "DynamicSunk") return `<div><span class="muted">Source</span> ${addressLink(item.source || item.user)}</div>`;
+        if (item.type === "ManagerUpdated") return `<div><span class="muted">Manager</span> ${addressLink(item.manager || item.user)}</div>`;
+        if (item.operator) return `<div><span class="muted">User</span> ${addressLink(item.user)}</div><div><span class="muted">Operator</span> ${addressLink(item.operator)}</div>`;
+        return addressLink(item.user);
+      }
+
+      function recordAmountCell(item) {
+        return amountLines([
+          amountLine("USDT", item.usdtAmount || item.usdtSpent),
+          amountLine("LP value", item.lpValueUsdt),
+          amountLine("LP token", item.lpAmount),
+          amountLine("KNT", item.kntUsed || item.kntAmount || item.amount),
+          amountLine("LABUBU", item.labubuUsed),
+          amountLine("Power", item.addedPower),
+          amountLine("Gross", item.grossAmount),
+          amountLine("Net", item.netAmount),
+          amountLine("交易税", item.transactionTax),
+          amountLine("增值税", item.valueAddedTax),
+          amountLine("砸盘税", item.dumpTax),
+          amountLine("税费合计", item.totalTax),
+          amountLine("Burned", item.burnedAmount, "KNT"),
+          amountLine("Reward", item.rewardAmount, "KNT"),
+        ]);
+      }
+
+      function recordStatusCell(item) {
+        if (item.type === "NodeStatusUpdated") return item.isNode ? '<span class="badge good">Node</span>' : '<span class="badge neutral">Removed</span>';
+        if (item.type === "StaticRewardAccrued") return '<span class="badge good">Accrued</span>';
+        if (item.type === "DynamicRewardAccrued") return `<div><span class="muted">Level</span> ${escapeHtml(item.level || "-")}</div>`;
+        if (item.type === "DynamicSunk") return '<span class="badge warn">沉淀</span>';
+        if (item.type === "ManagerUpdated") return item.enabled ? '<span class="badge good">Enabled</span>' : '<span class="badge neutral">Removed</span>';
+        return amountLines([
+          amountLine("Sell tax", item.sellTax),
+          amountLine("Profit tax", item.profitTax),
+          amountLine("Dump tax", item.dumpTax),
+          item.depositId ? `<div><span class="muted">Deposit</span> <code>${shortAddress(item.depositId)}</code></div>` : "",
+          item.id ? `<div><span class="muted">ID</span> ${escapeHtml(item.id)}</div>` : "",
+          item.index ? `<div><span class="muted">Queue</span> ${escapeHtml(item.index)}</div>` : "",
+        ]);
+      }
+
+      function ledgerAmountCell(item) {
+        return amountLines([
+          amountLine("Amount", item.amount),
+          amountLine("KNT", item.kntAmount),
+          amountLine("USDT", item.usdtSpent),
+          amountLine("Gross", item.grossAmount),
+          amountLine("Net", item.netAmount),
+          amountLine("Burned", item.burnedAmount, "KNT"),
+          amountLine("Reward", item.rewardAmount, "KNT"),
+          amountLine("LP", item.lpValueUsdt),
+        ]);
+      }
+
+      function ledgerStatusCell(item) {
+        if (item.type === "NodeStatusUpdated") return item.isNode ? '<span class="badge good">Node</span>' : '<span class="badge neutral">Removed</span>';
+        if (item.type === "Transfer") return `<div><span class="muted">From</span> ${addressLink(item.from)}</div><div><span class="muted">To</span> ${addressLink(item.to)}</div>`;
+        return amountLines([
+          amountLine("Sell tax", item.sellTax),
+          amountLine("Profit tax", item.profitTax),
+          amountLine("Dump tax", item.dumpTax),
+          item.id ? `<div><span class="muted">ID</span> ${escapeHtml(item.id)}</div>` : "",
+          item.index ? `<div><span class="muted">Queue</span> ${escapeHtml(item.index)}</div>` : "",
+        ]);
+      }
+
+      function filterLedgerRecords(records, filter) {
+        const sets = {
+          trades: new Set(["BuyRecorded", "SellSettled"]),
+          burns: new Set(["BurnQueued", "LiquidityKntBurned", "KeeperBurned"]),
+          system: new Set(["RewardsFunded", "DynamicSunk", "MigrationMinted", "MigrationClaimed", "NodeStatusUpdated", "KeeperLpReduced"]),
+          transfers: new Set(["Transfer"]),
+        };
+        if (filter === "all") return records || [];
+        if (filter === "core") return (records || []).filter((item) => item.type !== "Transfer");
+        const allowed = sets[filter];
+        return allowed ? (records || []).filter((item) => allowed.has(item.type)) : (records || []).filter((item) => item.type !== "Transfer");
+      }
+
+      function updateLedgerFilterButtons(filter) {
+        document.querySelectorAll("[data-ledger-filter]").forEach((button) => {
+          button.classList.toggle("active", button.dataset.ledgerFilter === filter);
+        });
+      }
+
+      function ledgerGroupAmountCell(group) {
+        const records = group.records || [];
+        return amountLines([
+          rawAmountLine("买入 KNT", records, ["BuyRecorded"], ["kntAmountRaw"]),
+          rawAmountLine("花费 USDT", records, ["BuyRecorded"], ["usdtSpentRaw"]),
+          rawAmountLine("卖出总额", records, ["SellSettled"], ["grossAmountRaw"]),
+          rawAmountLine("到账净额", records, ["SellSettled"], ["netAmountRaw"]),
+          rawAmountLine("销毁 KNT", records, ["BurnQueued"], ["burnedAmountRaw"], "KNT"),
+          rawAmountLine("队列奖励", records, ["BurnQueued"], ["rewardAmountRaw"], "KNT"),
+          rawAmountLine("LP 退场", records, ["LiquidityKntBurned", "KeeperLpReduced"], ["amountRaw", "lpAmountRaw"], "KNT"),
+          rawAmountLine("迁移 KNT", records, ["MigrationMinted", "MigrationClaimed"], ["amountRaw"]),
+          rawAmountLine("奖励入池", records, ["RewardsFunded"], ["amountRaw"]),
+          rawAmountLine("动态沉淀", records, ["DynamicSunk"], ["amountRaw"]),
+          rawAmountLine("转账", records, ["Transfer"], ["amountRaw"]),
+        ]);
+      }
+
+      function ledgerGroupStatusCell(group) {
+        const records = group.records || [];
+        const queueIndexes = uniqueValues(records.map((item) => item.index));
+        const ids = uniqueValues(records.map((item) => item.id));
+        const nodeUpdates = records.filter((item) => item.type === "NodeStatusUpdated");
+        const transferParties = uniqueByAddress(
+          records
+            .filter((item) => item.type === "Transfer")
+            .flatMap((item) => [item.from, item.to])
+            .filter((address) => addressKey(address) !== addressKey(group.account))
+        );
+        return amountLines([
+          rawAmountLine("卖出税", records, ["SellSettled"], ["sellTaxRaw"]),
+          rawAmountLine("利润税", records, ["SellSettled"], ["profitTaxRaw"]),
+          rawAmountLine("砸盘税", records, ["SellSettled"], ["dumpTaxRaw"]),
+          compactRecordList(queueIndexes, (index) => `<div><span class="muted">Queue</span> ${escapeHtml(index)}</div>`, 3),
+          compactRecordList(ids, (id) => `<div><span class="muted">ID</span> ${escapeHtml(id)}</div>`, 3),
+          compactRecordList(nodeUpdates, (item) => item.isNode ? '<div><span class="badge good">Node</span></div>' : '<div><span class="badge neutral">Removed</span></div>', 2),
+          compactRecordList(transferParties, (address) => `<div><span class="muted">Counterparty</span> ${addressLink(address)}</div>`, 3),
+        ]);
+      }
+
+      function renderAccountingLedger(records, totalCount) {
+        const filter = state.accountingLedgerFilter || "core";
+        updateLedgerFilterButtons(filter);
+        const filtered = filterLedgerRecords(records, filter);
+        const groups = groupRecordsByAccount(filtered, (item) => item.user);
+        $("accountingLedgerBadge").textContent = `${groups.length} accounts / ${filtered.length}/${totalCount ?? records.length} logs`;
+        const rows = groups.map((group) => `
+          <tr>
+            <td>${groupedTypeCell(group)}</td>
+            <td>${groupedBlockCell(group)}</td>
+            <td>${addressLink(group.account)}</td>
+            <td>${ledgerGroupAmountCell(group)}</td>
+            <td>${ledgerGroupStatusCell(group)}</td>
+            <td>${groupedTxCell(group)}</td>
+          </tr>
+        `);
+        renderPagedRows("accountingLedger", "accountingLedgerRows", rows, '<tr><td colspan="6">No ledger records</td></tr>', renderAccounting);
+      }
+
+      function renderLogs() {
+        const logs = state.logs || {};
+        $("scanBadge").textContent = `last ${logs.lastScannedBlock || 0}`;
+        const runRows = (logs.runs || []).slice().reverse().map((item) => `
+          <tr>
+            <td>${statusBadge(item.status)}</td>
+            <td>${escapeHtml(item.fromBlock ?? "-")} - ${escapeHtml(item.toBlock ?? "-")}</td>
+            <td>${escapeHtml(item.discovered ?? "-")}</td>
+            <td>${escapeHtml(item.processed ?? "-")}</td>
+            <td>${escapeHtml(item.failed ?? "-")}</td>
+            <td>${escapeHtml(item.finishedAt || item.startedAt || "-")}</td>
+          </tr>
+        `);
+        renderPagedRows("keeperRuns", "runRows", runRows, '<tr><td colspan="6">No runs</td></tr>', renderLogs);
+
+        const maintenanceRows = (logs.maintenance || []).slice().reverse().map((item) => {
+          const txs = Object.entries(item.txs || {}).map(([name, hash]) => `<div><span class="muted">${escapeHtml(name)}</span> ${txLink(hash)}</div>`).join("");
+          const queue = item.burnQueue ? `${item.burnQueue.nextPayoutIndex || 0}/${item.burnQueue.length || 0}` : "-";
+          return `
+            <tr>
+              <td>${statusBadge(item.status)}</td>
+              <td>${escapeHtml(item.totalLpValue || "-")}<br><span class="muted">+${escapeHtml(item.lpValueDelta || "0")}</span></td>
+              <td>${escapeHtml(item.priceNow || "-")}</td>
+              <td>${escapeHtml(item.dailyEmissionAfterUpdate || "-")}</td>
+              <td>${escapeHtml(queue)}</td>
+              <td><div class="mono-list">${item.error ? escapeHtml(item.error) : txs || "-"}</div></td>
+              <td>${escapeHtml(item.finishedAt || item.startedAt || "-")}</td>
+            </tr>
+          `;
+        });
+        renderPagedRows("maintenanceRuns", "maintenanceRows", maintenanceRows, '<tr><td colspan="7">No maintenance</td></tr>', renderLogs);
+
+        const depositRows = (logs.deposits || []).slice().reverse().map((item) => `
+          <tr>
+            <td>${statusBadge(item.status)}</td>
+            <td>${addressLink(item.user)}</td>
+            <td>${escapeHtml(item.amount || "-")}</td>
+            <td>${escapeHtml(item.kntUsed || "-")}</td>
+            <td>${escapeHtml(item.labubuUsed || "-")}</td>
+            <td>${escapeHtml(item.lpAmount || "-")}</td>
+            <td>${item.error ? escapeHtml(item.error) : txLink(item.processTx || item.txHash)}</td>
+            <td>${escapeHtml(item.processedAt || item.detectedAt || "-")}</td>
+          </tr>
+        `);
+        renderPagedRows("keeperDeposits", "depositRows", depositRows, '<tr><td colspan="8">No deposits</td></tr>', renderLogs);
+      }
+
+      function roleLabel(role) {
+        if (!role) return "-";
+        const roles = [];
+        if (role.isOwner) roles.push("Owner");
+        if (role.isAdmin) roles.push("Admin");
+        if (role.isManager) roles.push("Manager");
+        if (role.isKeeper) roles.push("Keeper");
+        if (role.isTaxRecorder) roles.push("Tax Recorder");
+        return roles.length ? roles.join(" / ") : "No role";
+      }
+
+      function renderRole(role, containerId = "roleMetrics") {
+        $(containerId).innerHTML = [
+          metric("Owner", role.isOwner ? "Yes" : "No"),
+          metric("Admin", role.isAdmin ? "Yes" : "No"),
+          metric("Manager", role.isManager ? "Yes" : "No"),
+          metric("Keeper", role.isKeeper ? "Yes" : "No"),
+          metric("Tax Recorder", role.isTaxRecorder ? "Yes" : "No"),
+        ].join("");
+      }
+
+      function renderOwnerTransfer() {
+        const owner = state.status?.contract?.owner || "";
+        const connectedOwner = state.account && owner && ethers.isAddress(owner) && ethers.getAddress(state.account) === ethers.getAddress(owner);
+        $("ownerTransferMetrics").innerHTML = [
+          metric("当前 Owner", owner || "-"),
+          metric("连接钱包", state.account || "未连接"),
+          metric("Owner 状态", connectedOwner ? "可转移" : "仅当前 Owner 可转移"),
+        ].join("");
+      }
+
+      async function connectWallet() {
+        if (!window.ethereum) throw new Error("未检测到钱包");
+        state.provider = new ethers.BrowserProvider(window.ethereum);
+        await state.provider.send("eth_requestAccounts", []);
+        state.signer = await state.provider.getSigner();
+        state.account = await state.signer.getAddress();
+        $("roleAddress").value = state.account;
+        $("setRoleAddress").value = state.account;
+        if (!$("ownerTransferConfirm").value) $("ownerTransferConfirm").value = state.status?.contract?.owner || "";
+        if (!$("userDetailAddress").value) $("userDetailAddress").value = state.account;
+        await ensureChain();
+        await loadCurrentRole();
+        renderHeader();
+      }
+
+      async function ensureChain() {
+        if (!state.provider || !state.config) return;
+        const network = await state.provider.getNetwork();
+        const target = BigInt(state.config.chainId || 97);
+        if (network.chainId === target) return;
+        const chainId = `0x${target.toString(16)}`;
+        try {
+          await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId }] });
+        } catch (error) {
+          if (error.code !== 4902) throw error;
+          await window.ethereum.request({
+            method: "wallet_addEthereumChain",
+            params: [{
+              chainId,
+              chainName: "BSC Testnet",
+              nativeCurrency: { name: "BNB", symbol: "BNB", decimals: 18 },
+              rpcUrls: [state.config.rpcUrl].filter(Boolean),
+              blockExplorerUrls: [state.config.explorerBaseUrl || "https://testnet.bscscan.com"],
+            }],
+          });
+        }
+      }
+
+      async function loadCurrentRole() {
+        if (!state.account) return;
+        const data = await api(`/api/roles?account=${encodeURIComponent(state.account)}`);
+        state.role = data.role;
+        $("currentRoleBadge").textContent = roleLabel(data.role);
+        renderRole(data.role);
+        renderHeader();
+      }
+
+      async function lookupRole() {
+        const address = validateAddress($("roleAddress").value);
+        const data = await api(`/api/roles?account=${encodeURIComponent(address)}`);
+        renderRole(data.role);
+        $("currentRoleBadge").textContent = roleLabel(data.role);
+      }
+
+      async function contractWithSigner() {
+        if (!state.signer) await connectWallet();
+        await ensureChain();
+        return new ethers.Contract(state.config.contract, KNT_ABI, state.signer);
+      }
+
+      async function sendTx(functionName, args, label) {
+        clearNotice();
+        const contract = await contractWithSigner();
+        setNotice(`${label}: 等待钱包签名`);
+        const tx = await contract[functionName](...args);
+        setNotice(`${label}: 已提交 ${tx.hash}`);
+        const receipt = await tx.wait();
+        setNotice(`${label}: 已确认 ${receipt.hash}`, "success");
+        await refreshAll();
+        return receipt;
+      }
+
+      async function applyRole() {
+        const address = validateAddress($("setRoleAddress").value);
+        const enabled = $("setRoleEnabled").value === "true";
+        const name = $("setRoleName").value;
+        const method = {
+          admin: "setAdmin",
+          manager: "setManager",
+          keeper: "setKeeper",
+          taxRecorder: "setTaxRecorder",
+        }[name];
+        await sendTx(method, [address, enabled], `设置 ${name}`);
+      }
+
+      async function transferOwner() {
+        await loadCurrentRole();
+        if (!state.role?.isOwner) throw new Error("只有当前 Owner 钱包可以转移 Owner");
+        const currentOwner = validateAddress(state.status?.contract?.owner, "当前 Owner");
+        const newOwner = validateAddress($("newOwnerAddress").value, "新 Owner");
+        const confirmation = validateAddress($("ownerTransferConfirm").value, "确认当前 Owner 地址");
+        if (newOwner === currentOwner) throw new Error("新 Owner 不能与当前 Owner 相同");
+        if (confirmation !== currentOwner) throw new Error("确认地址必须等于当前 Owner");
+        const confirmed = window.confirm(`确认把 Owner 从 ${currentOwner} 转移到 ${newOwner}？该操作确认后不能由原 Owner 撤回。`);
+        if (!confirmed) return;
+        await sendTx("transferOwnership", [newOwner], "转移 Owner");
+        $("newOwnerAddress").value = "";
+        $("ownerTransferConfirm").value = newOwner;
+      }
+
+      async function signedKeeperApi(path, label, payload = {}) {
+        clearNotice();
+        if (!state.signer) await connectWallet();
+        await loadCurrentRole();
+        if (!state.role?.isOwner && !state.role?.isAdmin && !state.role?.isManager && !state.role?.isKeeper) {
+          throw new Error("当前钱包没有 Keeper 权限");
+        }
+        const nonce = await api("/api/auth/nonce", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ account: state.account, action: path }),
+        });
+        setNotice(`${label}: 等待钱包签名`);
+        const signature = await state.signer.signMessage(nonce.message);
+        setNotice(`${label}: 已签名，执行中`);
+        const data = await api(path, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ account: state.account, nonce: nonce.nonce, signature, ...payload }),
+        });
+        setNotice(`${label}: 完成`, "success");
+        await refreshAll();
+        return data;
+      }
+
+      async function runKeeperApi(path, label) {
+        return signedKeeperApi(path, label);
+      }
+
+      function readKeeperSettingsForm() {
+        const settings = {};
+        for (const type of KEEPER_TYPES) {
+          settings[type.key] = {
+            enabled: $(`keeper-${type.key}-enabled`).value === "true",
+          };
+          for (const [field] of type.fields) {
+            settings[type.key][field] = $(`keeper-${type.key}-${field}`).value;
+          }
+        }
+        return settings;
+      }
+
+      async function saveKeeperSettings() {
+        await signedKeeperApi("/api/keeper/settings", "保存 Keeper 触发条件", {
+          settings: readKeeperSettingsForm(),
+        });
+      }
+
+      function bindEvents() {
+        document.querySelectorAll(".tab").forEach((button) => {
+          button.addEventListener("click", () => {
+            setActiveView(button.dataset.view);
+          });
+        });
+        $("mobileViewSelect").addEventListener("change", (event) => setActiveView(event.target.value));
+
+        $("connectButton").addEventListener("click", () => runAction(connectWallet));
+        $("refreshButton").addEventListener("click", () => runAction(refreshAll));
+        $("loadUserDetailButton").addEventListener("click", () => runAction(() => selectAccountingAddress($("userDetailAddress").value)));
+        $("renderReferralTreeButton").addEventListener("click", () => runAction(() => {
+          const raw = String($("referralTreeRoot").value || "").trim();
+          if (raw && !ethers.isAddress(raw)) throw new Error("根地址无效");
+          renderAccounting();
+        }));
+        $("view-accounting").addEventListener("click", (event) => {
+          const target = event.target.closest("[data-detail-address]");
+          if (!target) return;
+          runAction(() => selectAccountingAddress(target.dataset.detailAddress));
+        });
+        $("accountingFilter").addEventListener("input", () => {
+          resetPage("accountingUsers");
+          renderAccounting();
+        });
+        $("accountingClearFilterButton").addEventListener("click", () => {
+          $("accountingFilter").value = "";
+          resetPage("accountingUsers");
+          renderAccounting();
+        });
+        document.querySelectorAll("[data-ledger-filter]").forEach((button) => {
+          button.addEventListener("click", () => {
+            state.accountingLedgerFilter = button.dataset.ledgerFilter || "core";
+            resetPage("accountingLedger");
+            renderAccounting();
+          });
+        });
+        $("lookupRoleButton").addEventListener("click", () => runAction(lookupRole));
+        $("setRoleButton").addEventListener("click", () => runAction(applyRole));
+        $("transferOwnerButton").addEventListener("click", () => runAction(transferOwner));
+
+        $("setWalletsButton").addEventListener("click", () => runAction(() =>
+          sendTx("setWallets", [
+            validateAddress($("foundationWallet").value, "Foundation Wallet"),
+            validateAddress($("dexSettlementWallet").value, "DEX Settlement Wallet"),
+          ], "设置核心钱包")
+        ));
+        $("setProjectSinkButton").addEventListener("click", () => runAction(() =>
+          sendTx("setProjectSinkWallet", [validateAddress($("projectSinkWallet").value, "Project Sink Wallet")], "设置 Sink")
+        ));
+        $("setEcosystemButton").addEventListener("click", () => runAction(() =>
+          sendTx("setEcosystemWallet", [validateAddress($("ecosystemWallet").value, "Ecosystem Wallet")], "设置生态钱包")
+        ));
+        $("setLiquidityButton").addEventListener("click", () => runAction(() =>
+          sendTx("setLiquidityConfig", [
+            validateAddress($("pancakeRouter").value, "Pancake Router"),
+            validateAddress($("usdtToken").value, "USDT Token"),
+            validateAddress($("labubuToken").value, "LABUBU Token"),
+            optionalAddress($("labubuKntPair").value),
+          ], "设置流动性配置")
+        ));
+        $("setAmmPairButton").addEventListener("click", () => runAction(() =>
+          sendTx("setAmmPair", [
+            validateAddress($("ammPair").value, "AMM Pair"),
+            $("ammPairEnabled").value === "true",
+          ], "设置 AMM")
+        ));
+        $("setBurnQueueRewardButton").addEventListener("click", () => runAction(() => {
+          const value = BigInt(String($("burnQueueRewardBP").value || "0"));
+          return sendTx("setBurnQueueRewardBP", [value], "设置 Burn Queue BP");
+        }));
+        $("setReferralSignalButton").addEventListener("click", () => runAction(() =>
+          sendTx("setReferralSignalAmount", [parseEtherInput($("referralSignalAmount").value, "Referral Signal")], "设置 Referral Signal")
+        ));
+        $("setRewardPeriodButton").addEventListener("click", () => runAction(() =>
+          sendTx("setRewardPeriodSeconds", [parseRewardPeriodSeconds($("rewardPeriodSeconds").value)], "设置产币周期")
+        ));
+
+        $("saveKeeperSettingsButton").addEventListener("click", () => runAction(saveKeeperSettings));
+        $("runObserverButton").addEventListener("click", () => runAction(() => runKeeperApi("/api/keeper/observer", "运行 Observer")));
+        $("runProcessUsdtButton").addEventListener("click", () => runAction(() => runKeeperApi("/api/keeper/process-usdt", "执行 Deposit")));
+        $("runMaintenanceButton").addEventListener("click", () => runAction(() => runKeeperApi("/api/keeper/maintenance", "执行 Market + Reward")));
+        $("runAllKeeperButton").addEventListener("click", () => runAction(() => runKeeperApi("/api/keeper/run-all", "执行全部 Keeper")));
+
+        $("updateGlobalLpButton").addEventListener("click", () => runAction(() =>
+          sendTx("keeperUpdateGlobalLpValue", [parseEtherInput($("manualGlobalLp").value, "Global LP")], "更新 Global LP")
+        ));
+        $("updatePriceButton").addEventListener("click", () => runAction(() =>
+          sendTx("keeperUpdateKntPrices", [
+            parseEtherInput($("manualKntPrice").value, "KNT Price"),
+            parseEtherInput($("manualKntPrice24h").value, "24h Price"),
+          ], "更新价格")
+        ));
+        $("adminUpdatePoolButton").addEventListener("click", () => runAction(() => sendTx("adminUpdatePool", [], "更新奖励池")));
+        $("processBurnQueueButton").addEventListener("click", () => runAction(() => sendTx("processBurnQueue", [20], "处理燃烧队列")));
+
+        if (window.ethereum) {
+          window.ethereum.on?.("accountsChanged", () => runAction(connectWallet));
+          window.ethereum.on?.("chainChanged", () => runAction(refreshAll));
+        }
+      }
+
+      async function runAction(action) {
+        try {
+          await action();
+        } catch (error) {
+          setNotice(error.shortMessage || error.message || "操作失败", "error");
+        }
+      }
+
+      bindEvents();
+      runAction(refreshAll);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,189 @@
+{
+  "network": "bscTestnet",
+  "chainId": 97,
+  "testedAt": "2026-05-05T03:39:04.270Z",
+  "deployment": {
+    "network": "bscTestnet",
+    "chainId": 97,
+    "deployedAt": "2026-05-05T03:24:55.621Z",
+    "deployer": "0x744447d8580EB900b199e852C132F626247a36F7",
+    "router": "0xD99D1c33F9fC3444f8101754aBC46c52416550D1",
+    "factory": "0x6725F303b657a9451d8BA641348b6761A6CC7a17",
+    "KNTAllInOne": "0x5e23c00276d4454072b181eBA5079440cA6ce83f",
+    "LABUBU": "0x202C8095F5D52EDF56EaFF8c36aA930e2C414181",
+    "USDT": "0xacD944e910952c020eb129C50921f180c62c3291",
+    "usdtSource": "configured",
+    "deployedAtBlock": 105576192,
+    "pair": "0x3B77d4f0BEFC697ae51c39158e4161328FDeFC40",
+    "labubuPair": "0x3B77d4f0BEFC697ae51c39158e4161328FDeFC40",
+    "labubuUsdtPair": "0x3d15C36a566c99bC740d2f2fA6F602B384476f9b",
+    "liquidity": {
+      "KNT_LABUBU": {
+        "KNT": "200000.0",
+        "LABUBU": "600000.0",
+        "tx": "0x86dcb9402c269a3e0e5a546044ede492f30e47357c27b286063316247ff93f0c"
+      },
+      "LABUBU_USDT": {
+        "LABUBU": "500000.0",
+        "USDT": "500000.0",
+        "tx": "0x917821dfdecc3d53b681b53da97392f82482c8e75234fda3e49e1ee37791a04e"
+      }
+    },
+    "wallets": {
+      "foundationWallet": "0x744447d8580EB900b199e852C132F626247a36F7",
+      "dexSettlementWallet": "0x744447d8580EB900b199e852C132F626247a36F7",
+      "projectSinkWallet": "0x744447d8580EB900b199e852C132F626247a36F7",
+      "ecosystemWallet": "0x744447d8580EB900b199e852C132F626247a36F7"
+    },
+    "roles": {
+      "admins": [],
+      "managers": [],
+      "keepers": []
+    }
+  },
+  "operator": "0x744447d8580EB900b199e852C132F626247a36F7",
+  "depositAmount": "50.0",
+  "testAccounts": {
+    "A": "0xA9f97d498A2fC2FAf735676e78f230C0Ba2828B8",
+    "B": "0xA2FbA26b8A13a94561a296d8d703B5a2a998540f",
+    "C": "0xb3058d16f50cfAdB638E08356bd975DdC54642F1",
+    "D": "0x1E1C1740Dfc21276CE615c77e2628CafDe7622A5",
+    "E": "0x67167d0b55121ef69248aACee5106411C9B7AA02"
+  },
+  "before": {
+    "totalLpValueUsdt": "5000.0",
+    "totalPower": "30000.0",
+    "rewardPool": "188999991.666666666666666666",
+    "currentDay": "0"
+  },
+  "results": [
+    {
+      "name": "A-E referral binding",
+      "status": "PASS",
+      "expected": "B/C/D/E referrer = A",
+      "actual": {
+        "B": "0xA9f97d498A2fC2FAf735676e78f230C0Ba2828B8",
+        "C": "0xA9f97d498A2fC2FAf735676e78f230C0Ba2828B8",
+        "D": "0xA9f97d498A2fC2FAf735676e78f230C0Ba2828B8",
+        "E": "0xA9f97d498A2fC2FAf735676e78f230C0Ba2828B8"
+      },
+      "tx": [
+        "0xebd32c76ce10977896b1cb284d0cfa8bb5c1f9d047aad83760573e43ebf3bf16",
+        "0xc4f9500bed2b939826da004d44458c0005aaa15c22e188d12bfcd4a1c7a6da11",
+        "0xb78ef3d4ed311b1b934e3d57a2aba5f3e10492c82993b6893288b04feb6851ac",
+        "0x6c9985e42b022ae48a11079400fb7e51744feedc28b9ad8168666993752d1b11",
+        "0x20b99f9f317947b556ebcdbbc0017c259bfc04f49db71cddfc637430fede25ff",
+        "0xe7c1e00791411c0fcd9bf7322a6055e69acf43837bcc96a5382f4b4d6e5a5177",
+        "0x3c3ffa3ce9ffd7cefd8d825b614cde8a08c079d0765b75bdf14dd04f15ecf288",
+        "0x7c64e6a5d3262dab2dbe13c1c7b191b093d8bb3710be2939170c348a09aee9e4"
+      ]
+    },
+    {
+      "name": "A-E 50U deposits create LP value and power",
+      "status": "PASS",
+      "expected": "each account: 50U LP value and 300 power",
+      "actual": {
+        "A": {
+          "lpTokenAmount": "14.028812721387184496",
+          "lpValueUsdt": "50.0",
+          "power": "300.0",
+          "event": {
+            "usdtAmount": "50.0",
+            "kntUsed": "8.069114228140550098",
+            "labubuUsed": "24.398160304933055837",
+            "lpAmount": "14.028812721387184496",
+            "lpValueUsdt": "50.0"
+          }
+        },
+        "B": {
+          "lpTokenAmount": "14.031432250490825119",
+          "lpValueUsdt": "50.0",
+          "power": "300.0",
+          "event": {
+            "usdtAmount": "50.0",
+            "kntUsed": "8.07029532828206017",
+            "labubuUsed": "24.403702082764421744",
+            "lpAmount": "14.031432250490825119",
+            "lpValueUsdt": "50.0"
+          }
+        },
+        "C": {
+          "lpTokenAmount": "14.028090522477902293",
+          "lpValueUsdt": "50.0",
+          "power": "300.0",
+          "event": {
+            "usdtAmount": "50.0",
+            "kntUsed": "8.068047882198472672",
+            "labubuUsed": "24.398875656861687651",
+            "lpAmount": "14.028090522477902293",
+            "lpValueUsdt": "50.0"
+          }
+        },
+        "D": {
+          "lpTokenAmount": "14.024750022703713295",
+          "lpValueUsdt": "50.0",
+          "power": "300.0",
+          "event": {
+            "usdtAmount": "50.0",
+            "kntUsed": "8.065801401240755574",
+            "labubuUsed": "24.394050663173243684",
+            "lpAmount": "14.024750022703713295",
+            "lpValueUsdt": "50.0"
+          }
+        },
+        "E": {
+          "lpTokenAmount": "14.021410750547743078",
+          "lpValueUsdt": "50.0",
+          "power": "300.0",
+          "event": {
+            "usdtAmount": "50.0",
+            "kntUsed": "8.063555884842132165",
+            "labubuUsed": "24.389227101132342393",
+            "lpAmount": "14.021410750547743078",
+            "lpValueUsdt": "50.0"
+          }
+        }
+      },
+      "tx": [
+        "0x2d91b73101b8025416f3ff843430c650ded41bf0657e6dc8ce939bb62fe78b5c",
+        "0xef4c1e5003c1d308b0c9f87719ac98adebd62185bdcf60595def7b7684d54d0a",
+        "0x93be8b9dbf3d5fb5c4762f277c1bd8d21ae6be35d44fbf640ff082ac4dc93ad8",
+        "0x6fc01e1996817a03f68d2ccf8c9c8bcb4fc1fbc8c2abd53fbe54d69ea30e9d29",
+        "0x8ba986931a34f0410dce51495f9ea10ba60162448f4844d8a75348e920c6270b"
+      ]
+    },
+    {
+      "name": "50U referrals stay below effective-direct/node threshold",
+      "status": "PASS",
+      "expected": "A direct LP = 200U, effective direct count = 0, isNode = false",
+      "actual": {
+        "directLpValueUsdt": "200.0",
+        "directEffectiveCount": "0",
+        "isNode": false
+      },
+      "tx": null
+    },
+    {
+      "name": "Aggregate totals increased by five 50U deposits",
+      "status": "PASS",
+      "expected": "LP +250U, power +1500",
+      "actual": {
+        "totalLpValueUsdt": "5250.0",
+        "totalPower": "31500.0",
+        "rewardPool": "188999991.666666666666666666",
+        "currentDay": "0",
+        "totalLpValueUsdtDelta": "250.0",
+        "totalPowerDelta": "1500.0"
+      },
+      "tx": null
+    }
+  ],
+  "after": {
+    "totalLpValueUsdt": "5250.0",
+    "totalPower": "31500.0",
+    "rewardPool": "188999991.666666666666666666",
+    "currentDay": "0",
+    "totalLpValueUsdtDelta": "250.0",
+    "totalPowerDelta": "1500.0"
+  }
+}

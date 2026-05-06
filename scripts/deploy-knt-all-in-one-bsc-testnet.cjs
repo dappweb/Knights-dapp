@@ -9,6 +9,13 @@ async function wait(txPromise, label) {
   return receipt;
 }
 
+function addressList(value) {
+  return String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 async function main() {
   const isLocalNetwork = hre.network.name === "hardhat" || hre.network.name === "localhost";
   if (!isLocalNetwork && !process.env.PRIVATE_KEY) {
@@ -30,16 +37,44 @@ async function main() {
 
   const foundationWallet = process.env.FOUNDATION_WALLET || deployerAddress;
   const dexSettlementWallet = process.env.DEX_SETTLEMENT_WALLET || deployerAddress;
+  const projectSinkWallet = process.env.PROJECT_SINK_WALLET || foundationWallet;
+  const ecosystemWallet = process.env.ECOSYSTEM_WALLET || foundationWallet;
+  const pancakeRouter = process.env.PANCAKE_V2_ROUTER || "0x0000000000000000000000000000000000000000";
+  const usdtToken = process.env.USDT_TOKEN || "0x0000000000000000000000000000000000000000";
+  const labubuToken = process.env.LABUBU_TOKEN || "0x0000000000000000000000000000000000000000";
+  const adminWallets = addressList(process.env.ADMIN_WALLETS || process.env.ADMIN_WALLET);
+  const managerWallets = addressList(process.env.MANAGER_WALLETS || process.env.MANAGER_WALLET);
+  const keeperWallets = addressList(process.env.KEEPER_WALLETS || process.env.KEEPER_WALLET);
   const initialRewardFund = hre.ethers.parseEther(process.env.KNT_INITIAL_REWARD_FUND || "189000000");
 
   console.log(`Deploying KNTAllInOne to ${hre.network.name} from ${deployerAddress}`);
   console.log(`Deployer balance: ${hre.ethers.formatEther(balance)} BNB`);
 
   const KNTAllInOne = await hre.ethers.getContractFactory("KNTAllInOne");
-  const knt = await KNTAllInOne.deploy(deployerAddress, foundationWallet, dexSettlementWallet);
+  const knt = await KNTAllInOne.deploy(deployerAddress, foundationWallet, dexSettlementWallet, pancakeRouter, usdtToken, labubuToken);
   await knt.waitForDeployment();
   const kntAddress = await knt.getAddress();
   console.log(`KNTAllInOne: ${kntAddress}`);
+
+  if (projectSinkWallet.toLowerCase() !== foundationWallet.toLowerCase()) {
+    await wait(knt.setProjectSinkWallet(projectSinkWallet), "set project sink wallet");
+  }
+
+  if (ecosystemWallet.toLowerCase() !== foundationWallet.toLowerCase()) {
+    await wait(knt.setEcosystemWallet(ecosystemWallet), "set ecosystem wallet");
+  }
+
+  for (const adminWallet of adminWallets) {
+    await wait(knt.setAdmin(adminWallet, true), `set admin ${adminWallet}`);
+  }
+
+  for (const managerWallet of managerWallets) {
+    await wait(knt.setManager(managerWallet, true), `set manager ${managerWallet}`);
+  }
+
+  for (const keeperWallet of keeperWallets) {
+    await wait(knt.setKeeper(keeperWallet, true), `set keeper ${keeperWallet}`);
+  }
 
   if (initialRewardFund > 0n) {
     await wait(knt.fundRewardPool(initialRewardFund), "fund initial reward pool");
@@ -50,17 +85,28 @@ async function main() {
     chainId: Number(network.chainId),
     deployedAt: new Date().toISOString(),
     deployer: deployerAddress,
+    contractVerification: {
+      enabled: false,
+      sourceCodeVerification: "disabled",
+    },
     KNTAllInOne: kntAddress,
     wallets: {
       foundationWallet,
       dexSettlementWallet,
+      projectSinkWallet,
+      ecosystemWallet,
+    },
+    roles: {
+      admins: adminWallets,
+      managers: managerWallets,
+      keepers: keeperWallets,
     },
     interaction: {
-      deposit: `transfer KNT to ${kntAddress}; the contract records the sender's deposit automatically`,
-      referral: "A transfers 0 KNT to B, then B transfers 0 KNT to A; B is bound under A",
+      deposit: "transfer USDT to the KNT contract; keeper scans the USDT Transfer event and calls processUsdtDeposit(account, amount, depositId, ...). The contract swaps all USDT to LABUBU, swaps half LABUBU to KNT, then adds LABUBU/KNT LP directly to the user wallet while immediately crediting KNT accounting power.",
+      referral: "Admin can setReferralSignalAmount(N); A transfers N KNT to B, then B transfers N KNT to A, binding B under A. bindReferrer(A) is also supported.",
       burnQueue: "transfer KNT to 0x000000000000000000000000000000000000dEaD or call burnAndQueue(amount)",
-      claim: "call claim()",
-      withdrawDeposit: "call withdrawDeposit(amount, lpValueUsdt)",
+      rewards: "users do not call claim(); keeper distributes pending rewards during processUsdtDeposit(...) or keeperDistributeRewards(accounts)",
+      lpExit: "users remove wallet-held LABUBU/KNT LP on Pancake; keeper scans LP exits, calls keeperReduceUserLp/keeperReduceUserLpAmountFromSource to update accounting, and burns KNT received from the pair",
     },
   };
 

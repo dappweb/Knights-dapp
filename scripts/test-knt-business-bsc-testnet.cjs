@@ -51,8 +51,27 @@ async function main() {
     ["function balanceOf(address) view returns(uint256)", "function totalSupply() view returns(uint256)"],
     provider
   );
-  const pair = new hre.ethers.Contract(
-    deployment.pair,
+  const usdt = new hre.ethers.Contract(
+    deployment.USDT,
+    [
+      "event Transfer(address indexed from,address indexed to,uint256 value)",
+      "function balanceOf(address) view returns(uint256)",
+      "function transfer(address,uint256) returns(bool)",
+    ],
+    deployer
+  );
+  const labubuPair = new hre.ethers.Contract(
+    deployment.labubuPair || deployment.pair,
+    [
+      "function token0() view returns(address)",
+      "function token1() view returns(address)",
+      "function getReserves() view returns(uint112,uint112,uint32)",
+      "function totalSupply() view returns(uint256)",
+    ],
+    provider
+  );
+  const labubuUsdtPair = new hre.ethers.Contract(
+    deployment.labubuUsdtPair,
     [
       "function token0() view returns(address)",
       "function token1() view returns(address)",
@@ -79,10 +98,10 @@ async function main() {
   );
 
   const [token0, token1, reserves, lpSupply] = await Promise.all([
-    pair.token0(),
-    pair.token1(),
-    pair.getReserves(),
-    pair.totalSupply(),
+    labubuPair.token0(),
+    labubuPair.token1(),
+    labubuPair.getReserves(),
+    labubuPair.totalSupply(),
   ]);
   const pairHasTokens =
     [token0.toLowerCase(), token1.toLowerCase()].includes(deployment.KNTAllInOne.toLowerCase()) &&
@@ -105,77 +124,140 @@ async function main() {
         })
   );
 
-  const walletA = hre.ethers.Wallet.createRandom().connect(provider);
-  const walletB = hre.ethers.Wallet.createRandom().connect(provider);
-  report.testAccounts = {
-    referrerA: walletA.address,
-    userB: walletB.address,
-  };
-
-  await wait(deployer.sendTransaction({ to: walletA.address, value: ether("0.01") }), "fund A gas");
-  await wait(deployer.sendTransaction({ to: walletB.address, value: ether("0.01") }), "fund B gas");
-  await wait(knt.transfer(walletA.address, ether("2500")), "fund A KNT");
-  await wait(knt.transfer(walletB.address, ether("6000")), "fund B KNT");
-
-  const kntA = knt.connect(walletA);
-  const kntB = knt.connect(walletB);
-
-  const sig1 = await wait(kntA.transfer(walletB.address, 0), "A sends 0 KNT to B");
-  const sig2 = await wait(kntB.transfer(walletA.address, 0), "B sends 0 KNT to A");
-  const bReferrer = await knt.referrerOf(walletB.address);
+  const [labubuUsdtToken0, labubuUsdtToken1, labubuUsdtReserves, labubuUsdtLpSupply] = await Promise.all([
+    labubuUsdtPair.token0(),
+    labubuUsdtPair.token1(),
+    labubuUsdtPair.getReserves(),
+    labubuUsdtPair.totalSupply(),
+  ]);
+  const labubuUsdtPairHasTokens =
+    [labubuUsdtToken0.toLowerCase(), labubuUsdtToken1.toLowerCase()].includes(deployment.LABUBU.toLowerCase()) &&
+    [labubuUsdtToken0.toLowerCase(), labubuUsdtToken1.toLowerCase()].includes(deployment.USDT.toLowerCase());
   report.results.push(
-    bReferrer.toLowerCase() === walletA.address.toLowerCase()
-      ? pass("Referral binding by two zero transfers", `B referrer = ${walletA.address}`, bReferrer, [sig1.hash, sig2.hash])
-      : diff("Referral binding by two zero transfers", `B referrer = ${walletA.address}`, bReferrer, [sig1.hash, sig2.hash])
+    labubuUsdtPairHasTokens && labubuUsdtLpSupply > 0n
+      ? pass("Pancake LABUBU/USDT pair created", "pair has LABUBU and USDT with LP supply > 0", {
+          token0: labubuUsdtToken0,
+          token1: labubuUsdtToken1,
+          reserve0: labubuUsdtReserves[0].toString(),
+          reserve1: labubuUsdtReserves[1].toString(),
+          lpSupply: labubuUsdtLpSupply.toString(),
+        })
+      : diff("Pancake LABUBU/USDT pair created", "pair has LABUBU and USDT with LP supply > 0", {
+          token0: labubuUsdtToken0,
+          token1: labubuUsdtToken1,
+          reserve0: labubuUsdtReserves[0].toString(),
+          reserve1: labubuUsdtReserves[1].toString(),
+          lpSupply: labubuUsdtLpSupply.toString(),
+        })
   );
 
-  const aDeposit = await wait(kntA.transfer(deployment.KNTAllInOne, ether("1000")), "A deposits 1000 KNT");
-  const bDeposit = await wait(kntB.transfer(deployment.KNTAllInOne, ether("3000")), "B deposits 3000 KNT");
-  const userA = await knt.users(walletA.address);
-  const userB = await knt.users(walletB.address);
+  const labels = ["A", "B", "C", "D", "E"];
+  const wallets = Object.fromEntries(labels.map((label) => [label, hre.ethers.Wallet.createRandom().connect(provider)]));
+  const childLabels = labels.slice(1);
+  report.testAccounts = Object.fromEntries(labels.map((label) => [label, wallets[label].address]));
 
-  const depositOk =
-    userA.depositAmount >= ether("1000") &&
-    userA.lpValueUsdt >= ether("1000") &&
-    userA.power >= ether("6000") &&
-    userB.depositAmount >= ether("3000") &&
-    userB.power >= ether("18000");
+  for (const label of labels) {
+    await wait(deployer.sendTransaction({ to: wallets[label].address, value: ether("0.02") }), `fund ${label} gas`);
+  }
+  await wait(knt.transfer(wallets.A.address, ether("10000")), "fund A KNT");
+  await wait(knt.transfer(wallets.B.address, ether("6000")), "fund B KNT");
+  for (const label of ["C", "D", "E"]) {
+    await wait(knt.transfer(wallets[label].address, ether("2500")), `fund ${label} KNT`);
+  }
+  for (const label of labels) {
+    await wait(usdt.transfer(wallets[label].address, ether("1000")), `fund ${label} USDT`);
+  }
+
+  const kntByLabel = Object.fromEntries(labels.map((label) => [label, knt.connect(wallets[label])]));
+  const usdtByLabel = Object.fromEntries(labels.map((label) => [label, usdt.connect(wallets[label])]));
+
+  const referralSignalAmount = ether(process.env.REFERRAL_SIGNAL_AMOUNT || "1");
+  await wait(knt.setReferralSignalAmount(referralSignalAmount), "set referral signal amount");
+
+  const referralTxs = [];
+  for (const label of childLabels) {
+    const sig1 = await wait(kntByLabel.A.transfer(wallets[label].address, referralSignalAmount), `A sends referral signal KNT to ${label}`);
+    const sig2 = await wait(kntByLabel[label].transfer(wallets.A.address, referralSignalAmount), `${label} returns referral signal KNT to A`);
+    referralTxs.push(sig1.hash, sig2.hash);
+  }
+
+  const referrers = {};
+  for (const label of childLabels) {
+    referrers[label] = await knt.referrerOf(wallets[label].address);
+  }
+  const referralsOk = childLabels.every((label) => referrers[label].toLowerCase() === wallets.A.address.toLowerCase());
+  report.results.push(
+    referralsOk
+      ? pass("A-E referral binding by mutual N KNT transfers", "B/C/D/E referrer = A", referrers, referralTxs)
+      : diff("A-E referral binding by mutual N KNT transfers", "B/C/D/E referrer = A", referrers, referralTxs)
+  );
+
+  const deadline = Math.floor(Date.now() / 1000) + 20 * 60;
+  const coder = hre.ethers.AbiCoder.defaultAbiCoder();
+  function depositIdFromReceipt(receipt) {
+    const transferLog = receipt.logs.find((log) => {
+      if (String(log.address).toLowerCase() !== String(deployment.USDT).toLowerCase()) return false;
+      try {
+        const parsed = usdt.interface.parseLog(log);
+        return parsed?.name === "Transfer" && parsed.args.to.toLowerCase() === deployment.KNTAllInOne.toLowerCase();
+      } catch (_error) {
+        return false;
+      }
+    });
+    if (!transferLog) throw new Error(`USDT transfer log not found in ${receipt.hash}`);
+    return hre.ethers.keccak256(coder.encode(["bytes32", "uint256"], [receipt.hash, transferLog.index]));
+  }
+
+  const depositReceipts = {};
+  for (const label of labels) {
+    const transferReceipt = await wait(usdtByLabel[label].transfer(deployment.KNTAllInOne, ether("1000")), `${label} transfers 1000 USDT to KNT contract`);
+    const depositId = depositIdFromReceipt(transferReceipt);
+    depositReceipts[label] = await wait(
+      knt.processUsdtDeposit(wallets[label].address, ether("1000"), depositId, 0, 0, 0, 0, 0, deadline),
+      `keeper processes ${label} USDT deposit`
+    );
+  }
+
+  const users = {};
+  for (const label of labels) {
+    users[label] = await knt.users(wallets[label].address);
+  }
+
+  const depositOk = labels.every((label) =>
+    users[label].lpValueUsdt >= ether("1000") &&
+    users[label].power >= ether("6000")
+  );
+  const depositActual = Object.fromEntries(labels.map((label) => [label, {
+    lpTokenAmount: fmt(users[label].depositAmount),
+    lpValueUsdt: fmt(users[label].lpValueUsdt),
+    power: fmt(users[label].power),
+  }]));
   report.results.push(
     depositOk
-      ? pass("Transfer KNT to contract auto-deposits and creates power", "A: 1000 deposit/6000 power; B: 3000 deposit/18000 power", {
-          aDepositAmount: fmt(userA.depositAmount),
-          aPower: fmt(userA.power),
-          bDepositAmount: fmt(userB.depositAmount),
-          bPower: fmt(userB.power),
-        }, [aDeposit.hash, bDeposit.hash])
-      : diff("Transfer KNT to contract auto-deposits and creates power", "A: 1000 deposit/6000 power; B: 3000 deposit/18000 power", {
-          aDepositAmount: fmt(userA.depositAmount),
-          aPower: fmt(userA.power),
-          bDepositAmount: fmt(userB.depositAmount),
-          bPower: fmt(userB.power),
-        }, [aDeposit.hash, bDeposit.hash])
+      ? pass("A-E USDT deposits buy LABUBU, swap half to KNT, add LP, and create power", "each account: 1000U LP value and >=6000 power", depositActual, Object.values(depositReceipts).map((item) => item.hash))
+      : diff("A-E USDT deposits buy LABUBU, swap half to KNT, add LP, and create power", "each account: 1000U LP value and >=6000 power", depositActual, Object.values(depositReceipts).map((item) => item.hash))
   );
 
   const nodeOk =
-    userA.isNode &&
-    userA.directLpValueUsdt >= ether("3000") &&
-    userA.directEffectiveCount >= 1n;
+    users.A.isNode &&
+    users.A.directLpValueUsdt >= ether("3000") &&
+    users.A.directEffectiveCount >= 1n;
   report.results.push(
     nodeOk
-      ? pass("Node qualification", "A has >=1000 self LP, >=3000 direct LP, >=1 effective account", {
-          isNode: userA.isNode,
-          directLpValueUsdt: fmt(userA.directLpValueUsdt),
-          directEffectiveCount: userA.directEffectiveCount.toString(),
+      ? pass("Node qualification from A-E deposits", "A has >=1000 self LP, >=3000 direct LP, >=1 effective account", {
+          isNode: users.A.isNode,
+          directLpValueUsdt: fmt(users.A.directLpValueUsdt),
+          directEffectiveCount: users.A.directEffectiveCount.toString(),
         })
-      : diff("Node qualification", "A has >=1000 self LP, >=3000 direct LP, >=1 effective account", {
-          isNode: userA.isNode,
-          directLpValueUsdt: fmt(userA.directLpValueUsdt),
-          directEffectiveCount: userA.directEffectiveCount.toString(),
+      : diff("Node qualification from A-E deposits", "A has >=1000 self LP, >=3000 direct LP, >=1 effective account", {
+          isNode: users.A.isNode,
+          directLpValueUsdt: fmt(users.A.directLpValueUsdt),
+          directEffectiveCount: users.A.directEffectiveCount.toString(),
         })
   );
 
   const queueBefore = await knt.burnQueueLength();
-  const burnTx = await wait(kntB.transfer(DEAD, ether("10")), "B sends 10 KNT to dead");
+  const burnTx = await wait(kntByLabel.B.transfer(DEAD, ether("10")), "B sends 10 KNT to dead");
   const queueAfter = await knt.burnQueueLength();
   report.results.push(
     queueAfter === queueBefore + 1n
@@ -203,41 +285,67 @@ async function main() {
         }, processTx.hash)
   );
 
-  const recordTx = await wait(knt.recordBuy(walletB.address, ether("100"), ether("100")), "record B buy cost");
-  const foundationBefore = await knt.balanceOf(deployment.wallets.foundationWallet);
-  const dexBefore = await knt.balanceOf(deployment.wallets.dexSettlementWallet);
+  const recordTx = await wait(knt.recordBuy(wallets.B.address, ether("100"), ether("100")), "record B buy cost");
+  const ecosystemWallet = deployment.wallets.ecosystemWallet || deployment.wallets.foundationWallet;
+  const autoSellPair = deployment.labubuPair || deployment.pair;
+  const observedWallets = [
+    autoSellPair,
+    deployment.wallets.foundationWallet,
+    deployment.wallets.dexSettlementWallet,
+    ecosystemWallet,
+  ];
+  const uniqueObservedWallets = [...new Set(observedWallets.map((item) => item.toLowerCase()))];
+  const addressByLower = Object.fromEntries(observedWallets.map((item) => [item.toLowerCase(), item]));
+  const balancesBefore = {};
+  for (const addressLower of uniqueObservedWallets) {
+    balancesBefore[addressLower] = await knt.balanceOf(addressByLower[addressLower]);
+  }
   const burnedBefore = await knt.totalBurned();
-  const sellTx = await wait(kntB.settleSell(ether("100"), ether("150"), ether("150"), ether("150")), "B settles profitable sell");
-  const foundationAfter = await knt.balanceOf(deployment.wallets.foundationWallet);
-  const dexAfter = await knt.balanceOf(deployment.wallets.dexSettlementWallet);
+  const rewardPoolBefore = await knt.rewardPool();
+  await wait(knt.keeperUpdateKntPrices(ether("1.5"), ether("1.5")), "keeper updates KNT price for auto sell tax");
+  const sellTx = await wait(kntByLabel.B.transfer(autoSellPair, ether("100")), "B transfers 100 KNT to AMM pair");
+  const balancesAfter = {};
+  for (const addressLower of uniqueObservedWallets) {
+    balancesAfter[addressLower] = await knt.balanceOf(addressByLower[addressLower]);
+  }
   const burnedAfter = await knt.totalBurned();
-  const foundationDelta = foundationAfter - foundationBefore;
-  const dexDelta = dexAfter - dexBefore;
+  const rewardPoolAfter = await knt.rewardPool();
   const burnedDelta = burnedAfter - burnedBefore;
+  const rewardPoolDelta = rewardPoolAfter - rewardPoolBefore;
 
-  const sameSettlementWallet =
-    deployment.wallets.foundationWallet.toLowerCase() === deployment.wallets.dexSettlementWallet.toLowerCase();
-  const taxOk = sameSettlementWallet
-    ? foundationDelta === ether("93.000000000000000001") && dexDelta === ether("93.000000000000000001") && burnedDelta === ether("3.333333333333333333")
-    : foundationDelta === ether("8.000000000000000001") && dexDelta === ether("85") && burnedDelta === ether("3.333333333333333333");
+  const expectedDeltas = {};
+  function addExpected(address, amount) {
+    const key = address.toLowerCase();
+    expectedDeltas[key] = (expectedDeltas[key] || 0n) + amount;
+  }
+  addExpected(autoSellPair, ether("85"));
+  addExpected(deployment.wallets.foundationWallet, ether("3"));
+  addExpected(ecosystemWallet, ether("5.000000000000000001"));
+
+  const balanceDeltas = {};
+  for (const addressLower of uniqueObservedWallets) {
+    balanceDeltas[addressByLower[addressLower]] = fmt(balancesAfter[addressLower] - balancesBefore[addressLower]);
+  }
+  const taxOk = uniqueObservedWallets.every((addressLower) => {
+    const actual = balancesAfter[addressLower] - balancesBefore[addressLower];
+    return actual === (expectedDeltas[addressLower] || 0n);
+  }) && burnedDelta === ether("3.333333333333333333") && rewardPoolDelta === ether("3.666666666666666666");
   report.results.push(
     taxOk
-      ? pass("Sell tax + profit tax distribution", "100 KNT sell at 150U after 100U cost; same foundation/dex wallet receives combined 93.000000000000000001 KNT", {
-          sameSettlementWallet,
-          foundationDelta: fmt(foundationDelta),
-          dexDelta: fmt(dexDelta),
+      ? pass("Automatic AMM sell tax + profit tax distribution", "100 KNT sent to AMM pair at 150U after 100U cost; pair receives 85 KNT and taxes are distributed", {
+          balanceDeltas,
           burnedDelta: fmt(burnedDelta),
+          rewardPoolDelta: fmt(rewardPoolDelta),
         }, [recordTx.hash, sellTx.hash])
-      : diff("Sell tax + profit tax distribution", "100 KNT sell at 150U after 100U cost; same foundation/dex wallet receives combined 93.000000000000000001 KNT", {
-          sameSettlementWallet,
-          foundationDelta: fmt(foundationDelta),
-          dexDelta: fmt(dexDelta),
+      : diff("Automatic AMM sell tax + profit tax distribution", "100 KNT sent to AMM pair at 150U after 100U cost; pair receives 85 KNT and taxes are distributed", {
+          balanceDeltas,
           burnedDelta: fmt(burnedDelta),
+          rewardPoolDelta: fmt(rewardPoolDelta),
         }, [recordTx.hash, sellTx.hash])
   );
 
   const migrationId = await knt.nextMigrationId();
-  const migrationTx = await wait(knt.mintMigration(walletB.address, ether("1000")), "mint B migration position");
+  const migrationTx = await wait(knt.mintMigration(wallets.B.address, ether("1000")), "mint B migration position");
   const claimableNow = await knt.migrationClaimable(migrationId);
   report.results.push(
     claimableNow === 0n
@@ -247,8 +355,7 @@ async function main() {
 
   report.results.push(skip("Daily static reward and 1.2% power compounding", "requires one or more real days on BSC Testnet", "not time-traveled on public testnet"));
   report.results.push(skip("Migration 0.1%/0.3% daily release payout", "requires one or more real days on BSC Testnet", "same-day claimable verified as 0"));
-  report.results.push(skip("Native USDT -> LABUBU/KNT -> LP deposit workflow", "XMind describes auto split and LP creation from U", "current contract supports KNT transfer deposit; Pancake test pool exists separately"));
-  report.results.push(skip("Automatic Pancake sell tax hook", "taxes should trigger on swap sell automatically", "current implementation uses explicit settleSell()"));
+  report.results.push(skip("KNT transfer deposit workflow", "users should enter with USDT only", "removed as a business entry path"));
   report.results.push(skip("ERC721 migration NFT form", "migration position should be NFT asset", "current implementation uses internal MigrationPosition"));
 
   const outDir = path.join(__dirname, "..", "deployments", "bscTestnet");

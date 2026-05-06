@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>KNT Keeper Logs</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Arial, "Microsoft YaHei", sans-serif;
+        background: #f5f7fb;
+        color: #16202f;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+      }
+
+      header {
+        background: #ffffff;
+        border-bottom: 1px solid #d8dee8;
+        padding: 16px 24px;
+      }
+
+      h1 {
+        font-size: 20px;
+        line-height: 1.25;
+        margin: 0;
+      }
+
+      h2 {
+        font-size: 16px;
+        margin: 22px 0 10px;
+      }
+
+      main {
+        padding: 18px 24px 28px;
+      }
+
+      .chain {
+        color: #5c6b80;
+        font-size: 13px;
+        margin-top: 6px;
+      }
+
+      .summary {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        margin-bottom: 18px;
+      }
+
+      .metric {
+        background: #ffffff;
+        border: 1px solid #d8dee8;
+        border-radius: 6px;
+        min-height: 78px;
+        padding: 11px 12px;
+      }
+
+      .metric span {
+        color: #5c6b80;
+        display: block;
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .metric strong {
+        color: #111827;
+        display: block;
+        font-size: 20px;
+        line-height: 1.25;
+        margin-top: 7px;
+        overflow-wrap: anywhere;
+      }
+
+      .table-wrap {
+        background: #ffffff;
+        border: 1px solid #d8dee8;
+        border-radius: 6px;
+        overflow-x: auto;
+      }
+
+      table {
+        border-collapse: collapse;
+        min-width: 960px;
+        width: 100%;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid #e6eaf1;
+        font-size: 13px;
+        line-height: 1.35;
+        padding: 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #eef2f7;
+        color: #344256;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      code {
+        color: #263244;
+        font-family: Consolas, "SFMono-Regular", monospace;
+        font-size: 12px;
+        overflow-wrap: anywhere;
+      }
+
+      .muted {
+        color: #6b778a;
+      }
+
+      .status {
+        border-radius: 999px;
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 600;
+        min-width: 72px;
+        padding: 3px 8px;
+        text-align: center;
+      }
+
+      .processed,
+      .valued {
+        background: #dcfce7;
+        color: #166534;
+      }
+
+      .failed,
+      .zero {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+
+      .skipped,
+      .missing {
+        background: #fef3c7;
+        color: #92400e;
+      }
+
+      .detected {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+
+      .mono-list {
+        display: grid;
+        gap: 4px;
+      }
+
+      @media (max-width: 720px) {
+        header,
+        main {
+          padding-left: 14px;
+          padding-right: 14px;
+        }
+
+        .metric strong {
+          font-size: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>KNT Keeper Logs</h1>
+      <div class="chain" id="chainInfo">Loading...</div>
+    </header>
+    <main>
+      <section class="summary" id="summary"></section>
+
+      <h2>Latest LP Pools</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Pool</th>
+              <th>Valuation</th>
+              <th>Token 0 Reserve</th>
+              <th>Token 1 Reserve</th>
+              <th>LP Value USDT</th>
+            </tr>
+          </thead>
+          <tbody id="pairRows">
+            <tr><td colspan="6">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Keeper Maintenance</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Total LP</th>
+              <th>Emission</th>
+              <th>KNT Price</th>
+              <th>24h Price</th>
+              <th>Burn Queue</th>
+              <th>TXs / Error</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody id="maintenanceRows">
+            <tr><td colspan="8">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>USDT Deposit Processing</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>User</th>
+              <th>USDT</th>
+              <th>KNT Used</th>
+              <th>LABUBU Used</th>
+              <th>LP Amount</th>
+              <th>KNT Burned</th>
+              <th>Reward Sent</th>
+              <th>Source / Process</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody id="depositRows">
+            <tr><td colspan="10">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+    <script>
+      const logUrl = "../deployments/bscTestnet/admin-keeper-log.json";
+
+      function escapeHtml(value) {
+        return String(value ?? "-")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function shortHash(value) {
+        if (!value) return "-";
+        const text = String(value);
+        if (!text.startsWith("0x") || text.length <= 18) return escapeHtml(text);
+        return `${escapeHtml(text.slice(0, 10))}...${escapeHtml(text.slice(-8))}`;
+      }
+
+      function statusBadge(status) {
+        const safeStatus = escapeHtml(status || "detected");
+        return `<span class="status ${safeStatus}">${safeStatus}</span>`;
+      }
+
+      function metric(label, value) {
+        return `<div class="metric"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value ?? "-")}</strong></div>`;
+      }
+
+      function txList(txs) {
+        const entries = Object.entries(txs || {});
+        if (!entries.length) return "-";
+        return entries.map(([name, hash]) => `<div><span class="muted">${escapeHtml(name)}</span> <code title="${escapeHtml(hash)}">${shortHash(hash)}</code></div>`).join("");
+      }
+
+      function pairReserve(token) {
+        if (!token) return "-";
+        return `<div>${escapeHtml(token.symbol || "-")}: ${escapeHtml(token.reserve || "-")}</div><code title="${escapeHtml(token.address || "")}">${shortHash(token.address)}</code>`;
+      }
+
+      async function loadLogs() {
+        const response = await fetch(logUrl, { cache: "no-store" });
+        if (!response.ok) throw new Error(`Failed to load ${logUrl}`);
+
+        const data = await response.json();
+        const deposits = data.deposits || [];
+        const maintenance = data.maintenance || [];
+        const latestMaintenance = maintenance[maintenance.length - 1] || {};
+        const processed = deposits.filter((item) => item.status === "processed").length;
+        const failed = deposits.filter((item) => item.status === "failed").length;
+        const queue = latestMaintenance.burnQueue || {};
+
+        document.getElementById("chainInfo").innerHTML = [
+          `${escapeHtml(data.network || "-")} / chain ${escapeHtml(data.chainId || "-")}`,
+          `contract <code title="${escapeHtml(data.contract || "")}">${shortHash(data.contract)}</code>`,
+        ].join(" · ");
+
+        document.getElementById("summary").innerHTML = [
+          metric("Last scanned block", data.lastScannedBlock || "-"),
+          metric("Deposits processed", `${processed}/${deposits.length}`),
+          metric("Deposit failures", failed),
+          metric("Total LP USDT", latestMaintenance.totalLpValue || "-"),
+          metric("KNT price", latestMaintenance.priceNow || "-"),
+          metric("24h price source", latestMaintenance.price24hSource || "-"),
+          metric("Emission steps added", latestMaintenance.emissionStepsAdded || "0"),
+          metric("Burn queue", queue.length ? `${queue.nextPayoutIndex || 0}/${queue.length}` : "-"),
+        ].join("");
+
+        const pairRows = (latestMaintenance.pairs || []).map((item) => `
+          <tr>
+            <td>${statusBadge(item.status)}</td>
+            <td>${escapeHtml(item.label || item.key || "-")}<br><code title="${escapeHtml(item.address || "")}">${shortHash(item.address)}</code></td>
+            <td>${escapeHtml(item.valuation || item.basis || "-")}</td>
+            <td>${pairReserve(item.token0)}</td>
+            <td>${pairReserve(item.token1)}</td>
+            <td>${escapeHtml(item.value || "-")}</td>
+          </tr>
+        `);
+        document.getElementById("pairRows").innerHTML = pairRows.length ? pairRows.join("") : '<tr><td colspan="6">No LP maintenance data</td></tr>';
+
+        const maintenanceRows = maintenance.slice().reverse().map((item) => {
+          const burnQueue = item.burnQueue || {};
+          const paid = (burnQueue.paid || []).length;
+          const queueText = burnQueue.length
+            ? `${escapeHtml(burnQueue.nextPayoutIndex || 0)}/${escapeHtml(burnQueue.length)} paid ${escapeHtml(paid)}`
+            : "-";
+          const txOrError = item.error ? escapeHtml(item.error) : txList(item.txs);
+          return `
+            <tr>
+              <td>${statusBadge(item.status)}</td>
+              <td>${escapeHtml(item.totalLpValue || "-")}<br><span class="muted">+${escapeHtml(item.lpValueDelta || "0")} USDT</span></td>
+              <td>${escapeHtml(item.dailyEmissionAfterUpdate || "-")}<br><span class="muted">steps +${escapeHtml(item.emissionStepsAdded || "0")}</span></td>
+              <td>${escapeHtml(item.priceNow || "-")}</td>
+              <td>${escapeHtml(item.price24hAgo || "-")}<br><span class="muted">${escapeHtml(item.price24hSource || "-")}</span></td>
+              <td>${queueText}<br><span class="muted">pool ${escapeHtml(burnQueue.rewardPool || "-")}</span></td>
+              <td><div class="mono-list">${txOrError}</div></td>
+              <td>${escapeHtml(item.finishedAt || item.startedAt || "-")}</td>
+            </tr>
+          `;
+        });
+        document.getElementById("maintenanceRows").innerHTML = maintenanceRows.length ? maintenanceRows.join("") : '<tr><td colspan="8">No maintenance runs</td></tr>';
+
+        const depositRows = deposits.slice().reverse().map((item) => {
+          const processText = item.processTx || item.error || item.reason || "-";
+          const rewards = (item.rewardsDistributed || []).map((reward) => `${reward.amount} KNT`).join("<br>") || "-";
+          return `
+            <tr>
+              <td>${statusBadge(item.status)}</td>
+              <td><code title="${escapeHtml(item.user || "")}">${shortHash(item.user)}</code></td>
+              <td>${escapeHtml(item.amount || "-")}</td>
+              <td>${escapeHtml(item.kntUsed || "-")}</td>
+              <td>${escapeHtml(item.labubuUsed || "-")}</td>
+              <td>${escapeHtml(item.lpAmount || "-")}</td>
+              <td>${escapeHtml(item.liquidityKntBurned || "0")}</td>
+              <td>${rewards}</td>
+              <td>
+                <div><span class="muted">src</span> <code title="${escapeHtml(item.txHash || "")}">${shortHash(item.txHash)}</code></div>
+                <div><span class="muted">out</span> <code title="${escapeHtml(processText)}">${shortHash(processText)}</code></div>
+              </td>
+              <td>${escapeHtml(item.processedAt || item.detectedAt || "-")}</td>
+            </tr>
+          `;
+        });
+        document.getElementById("depositRows").innerHTML = depositRows.length ? depositRows.join("") : '<tr><td colspan="10">No deposits</td></tr>';
+      }
+
+      loadLogs().catch((error) => {
+        const message = escapeHtml(error.message);
+        document.getElementById("pairRows").innerHTML = `<tr><td colspan="6">${message}</td></tr>`;
+        document.getElementById("maintenanceRows").innerHTML = `<tr><td colspan="8">${message}</td></tr>`;
+        document.getElementById("depositRows").innerHTML = `<tr><td colspan="10">${message}</td></tr>`;
+      });
+    </script>
+  </body>
+</html>

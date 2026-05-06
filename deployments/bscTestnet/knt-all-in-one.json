@@ -1,0 +1,25 @@
+{
+  "network": "bscTestnet",
+  "chainId": 97,
+  "deployedAt": "2026-05-05T03:03:19.994Z",
+  "deployer": "0x744447d8580EB900b199e852C132F626247a36F7",
+  "KNTAllInOne": "0xb21F7de1675B22BeDEee2Be903063CF17693f41F",
+  "wallets": {
+    "foundationWallet": "0x744447d8580EB900b199e852C132F626247a36F7",
+    "dexSettlementWallet": "0x744447d8580EB900b199e852C132F626247a36F7",
+    "projectSinkWallet": "0x744447d8580EB900b199e852C132F626247a36F7",
+    "ecosystemWallet": "0x744447d8580EB900b199e852C132F626247a36F7"
+  },
+  "roles": {
+    "admins": [],
+    "managers": [],
+    "keepers": []
+  },
+  "interaction": {
+    "deposit": "transfer USDT to the KNT contract; keeper scans the USDT Transfer event and calls processUsdtDeposit(account, amount, depositId, ...)",
+    "referral": "Admin can setReferralSignalAmount(N); A transfers N KNT to B, then B transfers N KNT to A, binding B under A. bindReferrer(A) is also supported.",
+    "burnQueue": "transfer KNT to 0x000000000000000000000000000000000000dEaD or call burnAndQueue(amount)",
+    "rewards": "users do not call claim(); keeper distributes pending rewards during processUsdtDeposit(...) or keeperDistributeRewards(accounts)",
+    "withdrawDeposit": "call withdrawDeposit(amount, lpValueUsdt)"
+  }
+}

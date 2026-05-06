@@ -8,8 +8,24 @@
     "deploy:knt:all-in-one:bsc:testnet": "hardhat run scripts/deploy-knt-all-in-one-bsc-testnet.cjs --network bscTestnet",
     "deploy:knt:all-in-one:local": "hardhat run scripts/deploy-knt-all-in-one-bsc-testnet.cjs",
     "deploy:pancake:test-pool:bsc:testnet": "hardhat run scripts/deploy-pancake-test-pool-bsc-testnet.cjs --network bscTestnet",
+    "deploy:knt:upgradeable:migrate:bsc:testnet": "hardhat run scripts/deploy-knt-upgradeable-migrate-bsc-testnet.cjs --network bscTestnet",
+    "upgrade:knt:upgradeable:bsc:testnet": "hardhat run scripts/upgrade-knt-upgradeable-bsc-testnet.cjs --network bscTestnet",
+    "admin:freeze-legacy:bsc:testnet": "hardhat run scripts/freeze-legacy-knt-bsc-testnet.cjs --network bscTestnet",
+    "test:local": "hardhat test",
     "test:knt:business:bsc:testnet": "hardhat run scripts/test-knt-business-bsc-testnet.cjs --network bscTestnet",
-    "admin:update-pool:bsc:testnet": "hardhat run scripts/admin-update-pool-bsc-testnet.cjs --network bscTestnet"
+    "test:knt:rewards:local": "hardhat run scripts/test-knt-reward-tax-local.cjs",
+    "test:knt:upgradeable:local": "hardhat run scripts/test-knt-upgradeable-local.cjs",
+    "test:knt:upgradeable:rewards:bsc:testnet": "hardhat run scripts/test-knt-upgradeable-rewards-bsc-testnet.cjs --network bscTestnet",
+    "test:knt:50-deposits:bsc:testnet": "hardhat run scripts/test-knt-50-usdt-deposit-bsc-testnet.cjs --network bscTestnet",
+    "admin:update-pool:bsc:testnet": "hardhat run scripts/admin-update-pool-bsc-testnet.cjs --network bscTestnet",
+    "keeper:process-usdt:bsc:testnet": "hardhat run scripts/keeper-process-usdt-deposits-bsc-testnet.cjs --network bscTestnet",
+    "keeper:maintenance:bsc:testnet": "hardhat run scripts/keeper-maintenance-bsc-testnet.cjs --network bscTestnet",
+    "dev:cloudflare": "wrangler dev",
+    "dev:cloudflare:production": "wrangler dev --env production",
+    "deploy:cloudflare": "wrangler deploy --env production",
+    "deploy:cloudflare:testnet": "wrangler deploy",
+    "deploy:cloudflare:production": "wrangler deploy --env production",
+    "cf:kv:create": "wrangler kv namespace create KNT_ADMIN_STATE"
   },
   "dependencies": {
     "@openzeppelin/contracts": "5.2.0",
@@ -19,6 +35,7 @@
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "^3.1.2",
-    "hardhat": "^2.27.0"
+    "hardhat": "^2.27.0",
+    "wrangler": "^4.0.0"
   }
 }

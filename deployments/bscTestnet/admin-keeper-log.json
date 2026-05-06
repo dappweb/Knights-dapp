@@ -1,0 +1,1029 @@
+{
+  "network": "bscTestnet",
+  "chainId": 97,
+  "contract": "0x14Dc8a0E97815128304883DEaEc89D6773937dc0",
+  "usdt": "0xacD944e910952c020eb129C50921f180c62c3291",
+  "lastScannedBlock": 105586019,
+  "runs": [
+    {
+      "startedAt": "2026-05-05T03:54:57.262Z",
+      "keeper": "0x744447d8580EB900b199e852C132F626247a36F7",
+      "fromBlock": 105579072,
+      "toBlock": 105579120,
+      "discovered": 3,
+      "processed": 0,
+      "skipped": 3,
+      "failed": 0,
+      "finishedAt": "2026-05-05T03:54:58.323Z"
+    },
+    {
+      "startedAt": "2026-05-05T03:55:10.384Z",
+      "keeper": "0x744447d8580EB900b199e852C132F626247a36F7",
+      "fromBlock": 105579121,
+      "toBlock": 105579817,
+      "discovered": 47,
+      "processed": 0,
+      "skipped": 47,
+      "failed": 0,
+      "finishedAt": "2026-05-05T03:55:27.740Z"
+    },
+    {
+      "startedAt": "2026-05-05T05:05:52.776Z",
+      "keeper": "0x744447d8580EB900b199e852C132F626247a36F7",
+      "fromBlock": 105585919,
+      "toBlock": 105586018,
+      "discovered": 0,
+      "processed": 0,
+      "skipped": 0,
+      "failed": 0,
+      "finishedAt": "2026-05-05T05:05:52.777Z"
+    }
+  ],
+  "deposits": [
+    {
+      "detectedAt": "2026-05-05T03:54:57.264Z",
+      "status": "skipped",
+      "depositId": "0x5847dd8a019d61dcd8c07ed51c05a75b2b8cebc6e1679e130c7c224b8659d06f",
+      "user": "0x2360CA8b4AB282bC35FbA778D9f2242d45505D41",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0xbf2371b2017d1076572e4a303eeb333e9b23d3208efeb1746b3f23dacb663e2c",
+      "blockNumber": 105579072,
+      "logIndex": 57,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:54:57.618Z",
+      "status": "skipped",
+      "depositId": "0xd97c8b1e96855fe4c63294c1998133893df51a80923e6d9b5b593bbded14aca5",
+      "user": "0xDe4896982DB284710820F4720BdF39F67351f0b5",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0x1a8476e545412ba26f98919626bd466b8253b60fb23f4e855359ff124086f042",
+      "blockNumber": 105579091,
+      "logIndex": 2,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:54:57.959Z",
+      "status": "skipped",
+      "depositId": "0xf5dc3f1843a5077435dfc8b7a999f439af33a63cfd30e135dcb63a60ff4dc4bc",
+      "user": "0x10f904eD8C7edd00F2b230400836F2AA28FdA608",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0x4568156d1563131d3e7ca6a84ed01cf8680207389aee814c41b176e83568229d",
+      "blockNumber": 105579104,
+      "logIndex": 35,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:10.389Z",
+      "status": "skipped",
+      "depositId": "0xeee424c6e90b57228af7c4b1d083b6afd8a6918aa4193463ee5f66097bd16e59",
+      "user": "0xfaf813025B080130b7D88607789d9d346026a6D0",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0x9587817cb9e4e4aa9a3574ab4bffe1d0210c46a8d5e052893a21e17e478722a7",
+      "blockNumber": 105579121,
+      "logIndex": 0,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:10.745Z",
+      "status": "skipped",
+      "depositId": "0x2b4b309c93228fcd914449fb3ced55410d318ae8959724879634c4c206b474d8",
+      "user": "0x4A6D0a1dbF4b09CD04fE6Cd0C88e931e177fe51D",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0xc55ad9f6854ad1374bb7def864bab4d407f350d4af3f383ae9de6a7c0ea53a80",
+      "blockNumber": 105579134,
+      "logIndex": 35,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:11.094Z",
+      "status": "skipped",
+      "depositId": "0xa37e2ba580fd5f886d45b24df7aedcdf28b37f900d46b72bda603b40a8e4a0c7",
+      "user": "0x2360CA8b4AB282bC35FbA778D9f2242d45505D41",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0x30510392f0fbb1c1512a991ed7c9f6d430da2714eaebd43a6420d4fea0738e39",
+      "blockNumber": 105579150,
+      "logIndex": 3,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:11.439Z",
+      "status": "skipped",
+      "depositId": "0x300a787871b9ab4d9805f2c534b5beaec350d61022c2fb317f83da7d4f34cbe3",
+      "user": "0xDe4896982DB284710820F4720BdF39F67351f0b5",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0xa02c382d4f4e023e01d730819a66fa8ebae14fcbc36b80602f6310805bf776e8",
+      "blockNumber": 105579167,
+      "logIndex": 0,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:11.793Z",
+      "status": "skipped",
+      "depositId": "0x50b60b07dfba890853359198dde933f99aed771418b62963621d286a150400b3",
+      "user": "0x10f904eD8C7edd00F2b230400836F2AA28FdA608",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0x7fc817d273b0e2863f30ab0760bbd431b84f66910ebe4f228f459387b098b0bb",
+      "blockNumber": 105579181,
+      "logIndex": 0,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:12.147Z",
+      "status": "skipped",
+      "depositId": "0x52b550d7329e8f6e71d001c4e45c9b54d17cebdd01369458731394da61d787d1",
+      "user": "0xfaf813025B080130b7D88607789d9d346026a6D0",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0xb43c94c5e95d7ae19ff767a706c828f37ede8965fc88bcd5bbbbe335fb0c81b6",
+      "blockNumber": 105579194,
+      "logIndex": 6,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:12.495Z",
+      "status": "skipped",
+      "depositId": "0x218e0f99e37f79df3f5ccdfa5f41a32b557dfcd52230e7a1f8ab2c3b4607494c",
+      "user": "0x4A6D0a1dbF4b09CD04fE6Cd0C88e931e177fe51D",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0x62d163bab0fc2d54325264d984c2bbd1505ccb20b2d3282a01d39fe9117749d7",
+      "blockNumber": 105579216,
+      "logIndex": 25,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:12.839Z",
+      "status": "skipped",
+      "depositId": "0x2c10e79344bfe7f4e1febdc4f603a8927b847af18275f3d9f78ec14ef41484c0",
+      "user": "0x2360CA8b4AB282bC35FbA778D9f2242d45505D41",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0x98d8e5a9de045c97bf43af5072306b9050cca1792f90239af7c568f2438e0875",
+      "blockNumber": 105579229,
+      "logIndex": 0,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:13.198Z",
+      "status": "skipped",
+      "depositId": "0xbdfd37d211f9c813f6a2a8841effcd7f32c914bb9acde089fa688aa028000a74",
+      "user": "0xDe4896982DB284710820F4720BdF39F67351f0b5",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0x223523b63ae102fcf8cb25f85dc1c1f7e4a650ca0be75607f3cf3018fac368f1",
+      "blockNumber": 105579245,
+      "logIndex": 35,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:13.558Z",
+      "status": "skipped",
+      "depositId": "0xe871153d8f7d3672e492fc90fe4f1a566cd64063c5bc391c5a2c46c2517dc4a5",
+      "user": "0x10f904eD8C7edd00F2b230400836F2AA28FdA608",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0x9925d25e2e6aa5ce79cf747d77f54d345b581c4735aad1b519ba8f53d65461e4",
+      "blockNumber": 105579258,
+      "logIndex": 0,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:13.902Z",
+      "status": "skipped",
+      "depositId": "0xe0ac94b54b043d8021f464186f36332fb4e52bbfce1c4cd94ad29ce5cd70d71f",
+      "user": "0xfaf813025B080130b7D88607789d9d346026a6D0",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0xc943a210e8c8523ec43b40905d458185008cd09ef26fd4d1ac0e3d04641dcc28",
+      "blockNumber": 105579274,
+      "logIndex": 0,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:14.255Z",
+      "status": "skipped",
+      "depositId": "0xdc332bf7f43a685d7ebb3afcead8e28a3a26fdd11e07b0c6976ed0d9f07c860b",
+      "user": "0x4A6D0a1dbF4b09CD04fE6Cd0C88e931e177fe51D",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0x99583ba36409c29d5782b2e9f78e021738231fead3ac41b4ad769bc185a43961",
+      "blockNumber": 105579294,
+      "logIndex": 0,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:14.596Z",
+      "status": "skipped",
+      "depositId": "0x95270bbaed2ce93ce44aca2a1b0d3c5a69778478749a75ae98e05df15dc4f85c",
+      "user": "0x2360CA8b4AB282bC35FbA778D9f2242d45505D41",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0x72bb4b81b75b0b9e2e6e0cd9fc83efc1b27b8d5d1203b8d7c379652dd6a57819",
+      "blockNumber": 105579309,
+      "logIndex": 10,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:14.941Z",
+      "status": "skipped",
+      "depositId": "0x7edb8d13523a22d811a9be0e24ea221ba64746047f6874aa3d18892d970cc47f",
+      "user": "0xDe4896982DB284710820F4720BdF39F67351f0b5",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0xd3c08ec7bf11855eb1434fb506c3822d7d60368b505b482fe65965299f8022cd",
+      "blockNumber": 105579320,
+      "logIndex": 2,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:15.279Z",
+      "status": "skipped",
+      "depositId": "0x2c2d6c1698306652d7021fa5b853cc781e7daf105cd176acce007c09e3214996",
+      "user": "0x10f904eD8C7edd00F2b230400836F2AA28FdA608",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0xa26b20b03d3137f2954389e90392ff260a396ecfac160c20c1a0075c5bd63b10",
+      "blockNumber": 105579334,
+      "logIndex": 0,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:15.627Z",
+      "status": "skipped",
+      "depositId": "0xc1dd034a49900f26bddd1ec2991083400576d2376e7d905e10bafaa92082abce",
+      "user": "0xfaf813025B080130b7D88607789d9d346026a6D0",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0x6722a20a2c57fc2b6c95c490941aaf8227e365821ea06e6f3a2bc0cfbb9e7a3c",
+      "blockNumber": 105579351,
+      "logIndex": 15,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:15.974Z",
+      "status": "skipped",
+      "depositId": "0xff0dc8a9f5c6680ffe3aff409ccce411bc029204ec33688e234303d5f4d41e52",
+      "user": "0x4A6D0a1dbF4b09CD04fE6Cd0C88e931e177fe51D",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0xb606be1bad991391d44645ac0548d526363a2a659ccbccc0bd49da98e8a09466",
+      "blockNumber": 105579367,
+      "logIndex": 0,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:16.325Z",
+      "status": "skipped",
+      "depositId": "0xeab53fe90dfff14f5d68bf4115f12c93fc336ef10d0f5a38262641a81cc6f314",
+      "user": "0x2360CA8b4AB282bC35FbA778D9f2242d45505D41",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0xa913b2786e63c0c3f4b483c18b6a9748c271215cc3ab71bcc72d47028b835756",
+      "blockNumber": 105579383,
+      "logIndex": 0,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:16.680Z",
+      "status": "skipped",
+      "depositId": "0x09a7a9d456d505409d672579032a4f1c2904ada1e7a5dafc29d7ffb68856e8da",
+      "user": "0xDe4896982DB284710820F4720BdF39F67351f0b5",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0xfbd7e13606fe18a9c1a6881234771b4f3d4aaed3ecfa99ea8a4c5110f2ca791d",
+      "blockNumber": 105579393,
+      "logIndex": 10,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:17.043Z",
+      "status": "skipped",
+      "depositId": "0x90d4c6a3fed2218acc2fde62c089b64c0ac71b3e6aab476e2a383415f29a0bee",
+      "user": "0x10f904eD8C7edd00F2b230400836F2AA28FdA608",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0x8e0bed7ba8e5da585f8dda3c25683a0a6c2bdab7c15b539c2a2f418e5926276b",
+      "blockNumber": 105579404,
+      "logIndex": 0,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:17.389Z",
+      "status": "skipped",
+      "depositId": "0x948fe73f44088580455e3d01d0abd899cac3e0660cd234638663b542bab5f527",
+      "user": "0xfaf813025B080130b7D88607789d9d346026a6D0",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0x604d83c857ce3d097d80ea6006b6792dcaf7c8e815e6658078a70b1cbd0eeb8b",
+      "blockNumber": 105579418,
+      "logIndex": 1,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:17.741Z",
+      "status": "skipped",
+      "depositId": "0x10be0a356447798b8c64696e5a24ce7da69a4561850d55189a848683cd6dd180",
+      "user": "0x4A6D0a1dbF4b09CD04fE6Cd0C88e931e177fe51D",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0x822b2645543b0c536f2ec1484491a3eb175c2978f926632493d807689641f337",
+      "blockNumber": 105579439,
+      "logIndex": 0,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:18.085Z",
+      "status": "skipped",
+      "depositId": "0x8297f9377fa494408cbb99f532a311097074a42d8cfe51dc2ebf9a733b00dd67",
+      "user": "0x2360CA8b4AB282bC35FbA778D9f2242d45505D41",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0xa7069341d44c0b849cfe6366223b2615dc0d421858d5534151263fbcc35cb875",
+      "blockNumber": 105579451,
+      "logIndex": 30,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:18.431Z",
+      "status": "skipped",
+      "depositId": "0x599269b4a85d5edf2c401d988bd65b0b9cc5854fa98293a3cb1cc6d2973e84ee",
+      "user": "0xDe4896982DB284710820F4720BdF39F67351f0b5",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0xd5f244c3e6fcd2e4923ccb7bee892ccd4769ca2c7f259cb1c16ea6100bf3f4ef",
+      "blockNumber": 105579463,
+      "logIndex": 6,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:18.778Z",
+      "status": "skipped",
+      "depositId": "0x25d7296e8235b95ab01f8cf4b1f06742f61f7e47d1c703f522db771ef571ad82",
+      "user": "0x10f904eD8C7edd00F2b230400836F2AA28FdA608",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0xb1320fb38d78469576f48c7b6b33211bbdd245b1ceebebebaea926fc7a6ba4ca",
+      "blockNumber": 105579478,
+      "logIndex": 0,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:19.130Z",
+      "status": "skipped",
+      "depositId": "0x867cf218c6f1b3aed82850387d69b5291cfc6f54efb709b7711d93ac01f5e623",
+      "user": "0xfaf813025B080130b7D88607789d9d346026a6D0",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0xba43d39dab9c043128cb365df254b5c1f2b32f545cb403b72a3d3258c1bfc787",
+      "blockNumber": 105579492,
+      "logIndex": 5,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:19.476Z",
+      "status": "skipped",
+      "depositId": "0x7108c718bc468a9463c591da0ba1f9562b9e307d0417148b01233269e2dc8d9d",
+      "user": "0x4A6D0a1dbF4b09CD04fE6Cd0C88e931e177fe51D",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0xe73768be8a86c1aa21808a92baa6545e6b1ac265fb635e840a29bc1d4e42e39f",
+      "blockNumber": 105579511,
+      "logIndex": 0,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:19.845Z",
+      "status": "skipped",
+      "depositId": "0x8a7c4df0f59658cbee90cfe6c88b1658a248da574819cdcc356ddfac81a1b9ac",
+      "user": "0x2360CA8b4AB282bC35FbA778D9f2242d45505D41",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0xe9e177ed9a70465af1e02f3b0c1dd661381a701294d7cd28df9e4430ec5acca0",
+      "blockNumber": 105579528,
+      "logIndex": 0,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:20.201Z",
+      "status": "skipped",
+      "depositId": "0xb2d531a433b7d4a25bd901fce4db8d7ab401af5dcd5d96411dd4e21b5e709a9f",
+      "user": "0xDe4896982DB284710820F4720BdF39F67351f0b5",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0x2deea78437c8cdd178b07786f48bec639b1c63a9f533963030b30b61af40f76b",
+      "blockNumber": 105579538,
+      "logIndex": 6,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:20.557Z",
+      "status": "skipped",
+      "depositId": "0x2f2689339850c1af0277f9614c36c802e009451c1041a6817dac8c21d5e9c3bf",
+      "user": "0x10f904eD8C7edd00F2b230400836F2AA28FdA608",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0x804983d11c373d6e6d0469dc28d1663fe875949ab0c14638dbc20dbc507dc91b",
+      "blockNumber": 105579552,
+      "logIndex": 25,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:20.916Z",
+      "status": "skipped",
+      "depositId": "0xcbd6448f1fb58f012706529383e9ddb251bc95cb745c1a157b6094c530752291",
+      "user": "0xfaf813025B080130b7D88607789d9d346026a6D0",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0xe6d60499cbe3fd1dadeaeef3a27e8703ebda26d5107434ec3d5bf105ec514979",
+      "blockNumber": 105579566,
+      "logIndex": 0,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:21.271Z",
+      "status": "skipped",
+      "depositId": "0x5b720ecc70244405326542aaa0f3eba518bdd5e275ddaed955e0ff6268455580",
+      "user": "0x4A6D0a1dbF4b09CD04fE6Cd0C88e931e177fe51D",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0xef99c8831d63d8a46c4f10c59300d8af1317cd2f035f0066388720323cdaba87",
+      "blockNumber": 105579583,
+      "logIndex": 0,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:21.625Z",
+      "status": "skipped",
+      "depositId": "0x91b7ed39dc3873e155fe21be98572359e6246ef217634d9a1a0f348c34ffc8e6",
+      "user": "0x2360CA8b4AB282bC35FbA778D9f2242d45505D41",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0x8ac5cb22b87e15fbe98434e74810e98a012b3fbc1d29a646f5e2e9cdaf9b76e2",
+      "blockNumber": 105579600,
+      "logIndex": 0,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:21.990Z",
+      "status": "skipped",
+      "depositId": "0x18d2c3cefecb1e03d0a75f9880d5730606b15eeff84805ca7e9914416b1a75ec",
+      "user": "0xDe4896982DB284710820F4720BdF39F67351f0b5",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0x4a0a9641058eb57a8ed86abf79f149498e2afbec838341e273767e3d5bdc89e9",
+      "blockNumber": 105579616,
+      "logIndex": 0,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:22.346Z",
+      "status": "skipped",
+      "depositId": "0x4896bd29400c3ac384c2009bfc5091d38853afbd13db92de771a7de39181230e",
+      "user": "0x10f904eD8C7edd00F2b230400836F2AA28FdA608",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0xf546d70fc15e1eddb68c8ce82b52667a1a921b98bdef0a27a168fb8cab7d4493",
+      "blockNumber": 105579630,
+      "logIndex": 73,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:22.708Z",
+      "status": "skipped",
+      "depositId": "0x29ab5c2333d763e48d29c27ec828037f32d80fbef16ba26f252c33c87974d52b",
+      "user": "0xfaf813025B080130b7D88607789d9d346026a6D0",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0x64e4416895344f57a168e3b8879e922a1db612d2666116bb2da9246212f26405",
+      "blockNumber": 105579653,
+      "logIndex": 202,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:23.064Z",
+      "status": "skipped",
+      "depositId": "0xd3ea0635a9e9171e61494a2c38f4860d5a6a6670fc9b048a171d2548955c8d49",
+      "user": "0x4A6D0a1dbF4b09CD04fE6Cd0C88e931e177fe51D",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0x6f04417c34f62ea7b9f7293be5b9f123026ba447673aeda27bd8b9d59c7bf1cd",
+      "blockNumber": 105579665,
+      "logIndex": 0,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:23.424Z",
+      "status": "skipped",
+      "depositId": "0x367b1c2ce4f196dbf4b84dcedc902973789556d848d20ca7fe57c897bcb66abf",
+      "user": "0x2360CA8b4AB282bC35FbA778D9f2242d45505D41",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0x8af599304331c8e0ba346ff0a56349f30441cde050f3229a88cfbef85386f439",
+      "blockNumber": 105579681,
+      "logIndex": 6,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:23.775Z",
+      "status": "skipped",
+      "depositId": "0x77739c473c232283b5bf509de962cc53dd977e20d70f56c60d1c38b5555de1e6",
+      "user": "0xDe4896982DB284710820F4720BdF39F67351f0b5",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0xe2cb9399b32e9e8f792ead28b02f7dd2b9b2ffc45b83173cc41ff33bfeccb0ff",
+      "blockNumber": 105579693,
+      "logIndex": 8,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:24.133Z",
+      "status": "skipped",
+      "depositId": "0x57276564443d7f6758fe6d367fd4ca2b8554f1d138b174e90cbf85f11ecd27ac",
+      "user": "0x10f904eD8C7edd00F2b230400836F2AA28FdA608",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0x7346b8c557d3f53d9b10b2ec4ab00419c67eb716fe56c252300f38640b8826f7",
+      "blockNumber": 105579706,
+      "logIndex": 25,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:24.484Z",
+      "status": "skipped",
+      "depositId": "0xb6beece326eb8223f0422ac64649ac4f72e11a9558964823d42302c37e432a4a",
+      "user": "0xfaf813025B080130b7D88607789d9d346026a6D0",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0x52840f3e177a6c38953aaa55f86c905034cda4f870390585d320a02974c52d74",
+      "blockNumber": 105579728,
+      "logIndex": 10,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:24.838Z",
+      "status": "skipped",
+      "depositId": "0x0815883f5a52a21adee5e64ff41ef4617bd61683b1b564bcbac16fb3c9c28ab2",
+      "user": "0x4A6D0a1dbF4b09CD04fE6Cd0C88e931e177fe51D",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0xff61e1cd0f38e4c984d076540e5b6a4142b783b7c61bcb254bc9c49646757cdc",
+      "blockNumber": 105579745,
+      "logIndex": 0,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:25.177Z",
+      "status": "skipped",
+      "depositId": "0x3514a57e9f4f2b6f5e73af90017e0353a2ff50eface58c1dac02bb4f14d44a10",
+      "user": "0x2360CA8b4AB282bC35FbA778D9f2242d45505D41",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0x0e5988b56d582ebbd21924f346fa8379bb11db7cd80b4e4af7eae6cb5a6ff85f",
+      "blockNumber": 105579760,
+      "logIndex": 0,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:25.532Z",
+      "status": "skipped",
+      "depositId": "0x21567e97cd31b5444346aeff02a097e2fe09c2c8b1cf2ecee575b67b5ff3ab3d",
+      "user": "0xDe4896982DB284710820F4720BdF39F67351f0b5",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0x43daf2d1e4be80d2eb6a32ebd9e54da6c1b4b0c1dc9c5f7c0a088a3db84d6f9c",
+      "blockNumber": 105579776,
+      "logIndex": 6,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:25.895Z",
+      "status": "skipped",
+      "depositId": "0xe71cb6059bf3d489998b125bf58268f8cb5df5374df8396e120f6f4d140db855",
+      "user": "0x10f904eD8C7edd00F2b230400836F2AA28FdA608",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0x7ea7cf65d122af871c668d7d16051eecd1fd13703da6b1cbbaf5d0d1b85f051d",
+      "blockNumber": 105579792,
+      "logIndex": 19,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:26.250Z",
+      "status": "skipped",
+      "depositId": "0xf1d17f5142d15ee45d3f8fad57c14895ea05f03180d6fe1cd0f4f1e7812a35f2",
+      "user": "0xfaf813025B080130b7D88607789d9d346026a6D0",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0xc4f9d73401b6b4385647dd0535b7efa90b7f2c007d152e94b6bd975721077c98",
+      "blockNumber": 105579803,
+      "logIndex": 1,
+      "reason": "already processed on-chain"
+    },
+    {
+      "detectedAt": "2026-05-05T03:55:27.389Z",
+      "status": "skipped",
+      "depositId": "0xb1be263ad7a101060e1a5241669cee69c272fae9d764c5036de19981f84001d5",
+      "user": "0x4A6D0a1dbF4b09CD04fE6Cd0C88e931e177fe51D",
+      "amount": "100.0",
+      "rawAmount": "100000000000000000000",
+      "txHash": "0xdb2fe6e4dc1dd94741298715d25d310d703333307fc040a55464455073c60ceb",
+      "blockNumber": 105579817,
+      "logIndex": 0,
+      "reason": "already processed on-chain"
+    }
+  ],
+  "maintenance": [
+    {
+      "startedAt": "2026-05-05T03:27:27.940Z",
+      "keeper": "0x744447d8580EB900b199e852C132F626247a36F7",
+      "contract": "0x5e23c00276d4454072b181eBA5079440cA6ce83f",
+      "priceNow": "3.085423579833396952",
+      "priceNowRaw": "3085423579833396952",
+      "price24hAgo": "3.085423579833396952",
+      "price24hAgoRaw": "3085423579833396952",
+      "price24hSource": "current-no-24h-snapshot",
+      "price24hSnapshotAt": null,
+      "pairs": [
+        {
+          "key": "LABUBU_USDT",
+          "label": "LABUBU/USDT",
+          "address": "0x3d15C36a566c99bC740d2f2fA6F602B384476f9b",
+          "valuation": "USDT reserve x 2",
+          "status": "valued",
+          "token0": {
+            "address": "0x202C8095F5D52EDF56EaFF8c36aA930e2C414181",
+            "symbol": "LABUBU",
+            "reserveRaw": "495059347084165381653158",
+            "reserve": "495059.347084165381653158"
+          },
+          "token1": {
+            "address": "0xacD944e910952c020eb129C50921f180c62c3291",
+            "symbol": "USDx5",
+            "reserveRaw": "505000000000000000000000",
+            "reserve": "505000.0"
+          },
+          "basis": "usdtReserve",
+          "value": "1010000.0",
+          "valueRaw": "1010000000000000000000000"
+        },
+        {
+          "key": "LABUBU_KNT",
+          "label": "LABUBU/KNT",
+          "address": "0x3B77d4f0BEFC697ae51c39158e4161328FDeFC40",
+          "valuation": "KNT reserve x derived KNT price x 2",
+          "status": "valued",
+          "token0": {
+            "address": "0x202C8095F5D52EDF56EaFF8c36aA930e2C414181",
+            "symbol": "LABUBU",
+            "reserveRaw": "604937735806102858517754",
+            "reserve": "604937.735806102858517754"
+          },
+          "token1": {
+            "address": "0x5e23c00276d4454072b181eBA5079440cA6ce83f",
+            "symbol": "KNT",
+            "reserveRaw": "200000000000000000000000",
+            "reserve": "200000.0"
+          },
+          "basis": "kntReserve",
+          "value": "1234169.4319333587808",
+          "valueRaw": "1234169431933358780800000"
+        }
+      ],
+      "totalLpValue": "2244169.4319333587808",
+      "totalLpValueRaw": "2244169431933358780800000",
+      "previousGlobalLpValue": "0.0",
+      "previousGlobalLpValueRaw": "0",
+      "lpValueDelta": "2244169.4319333587808",
+      "emissionStepsBefore": "0",
+      "emissionStepsAfter": "224",
+      "emissionStepsAdded": "224",
+      "currentDay": "0",
+      "txs": {
+        "updatePrice": "0x3e954fb97fc3faf9ef896b0df91052249ceee62e0f5aa403fe3f066d8ab1a266",
+        "updateLp": "0x9dbe7869a051492482c41b647d1d9dbd184e28bcd0ecb5809c790387f738dfb5",
+        "updatePool": "0x54fc78a6b2e294f2b1da4c607207d90d11d79761429efb63f1019fb92ee89827",
+        "processBurnQueue": "0xe902141bae09be4adda40cb1bdfe926551f9e350f8deea36b03dd97bbddadfd3"
+      },
+      "burnQueue": {
+        "maxCount": 20,
+        "expectedPaidCount": "0",
+        "paid": [],
+        "nextPayoutIndex": "1",
+        "length": "1",
+        "rewardPool": "188999991.666666666666666666"
+      },
+      "dailyEmissionAfterUpdate": "3360.0",
+      "dailyEmissionAfterUpdateRaw": "3360000000000000000000",
+      "onChain": {
+        "globalLpValue": "2244169.4319333587808",
+        "latestKntPrice": "3.085423579833396952",
+        "price24hAgo": "3.085423579833396952"
+      },
+      "status": "processed",
+      "finishedAt": "2026-05-05T03:27:42.901Z"
+    },
+    {
+      "startedAt": "2026-05-05T03:53:20.875Z",
+      "keeper": "0x744447d8580EB900b199e852C132F626247a36F7",
+      "contract": "0x5e23c00276d4454072b181eBA5079440cA6ce83f",
+      "priceNow": "3.173590800977452165",
+      "priceNowRaw": "3173590800977452165",
+      "price24hAgo": "3.173590800977452165",
+      "price24hAgoRaw": "3173590800977452165",
+      "price24hSource": "current-no-24h-snapshot",
+      "price24hSnapshotAt": null,
+      "pairs": [
+        {
+          "key": "LABUBU_USDT",
+          "label": "LABUBU/USDT",
+          "address": "0x3d15C36a566c99bC740d2f2fA6F602B384476f9b",
+          "valuation": "USDT reserve x 2",
+          "status": "valued",
+          "token0": {
+            "address": "0x202C8095F5D52EDF56EaFF8c36aA930e2C414181",
+            "symbol": "LABUBU",
+            "reserveRaw": "489975778782748035885970",
+            "reserve": "489975.77878274803588597"
+          },
+          "token1": {
+            "address": "0xacD944e910952c020eb129C50921f180c62c3291",
+            "symbol": "USDx5",
+            "reserveRaw": "510250000000000000000000",
+            "reserve": "510250.0"
+          },
+          "basis": "usdtReserve",
+          "value": "1020500.0",
+          "valueRaw": "1020500000000000000000000"
+        },
+        {
+          "key": "LABUBU_KNT",
+          "label": "LABUBU/KNT",
+          "address": "0x3B77d4f0BEFC697ae51c39158e4161328FDeFC40",
+          "valuation": "KNT reserve x derived KNT price x 2",
+          "status": "valued",
+          "token0": {
+            "address": "0x202C8095F5D52EDF56EaFF8c36aA930e2C414181",
+            "symbol": "LABUBU",
+            "reserveRaw": "609968060928871824192180",
+            "reserve": "609968.06092887182419218"
+          },
+          "token1": {
+            "address": "0x5e23c00276d4454072b181eBA5079440cA6ce83f",
+            "symbol": "KNT",
+            "reserveRaw": "200154135638483104914940",
+            "reserve": "200154.13563848310491494"
+          },
+          "basis": "kntReserve",
+          "value": "1270414.647279766401854054",
+          "valueRaw": "1270414647279766401854054"
+        }
+      ],
+      "totalLpValue": "2290914.647279766401854054",
+      "totalLpValueRaw": "2290914647279766401854054",
+      "previousGlobalLpValue": "10250.0",
+      "previousGlobalLpValueRaw": "10250000000000000000000",
+      "lpValueDelta": "2280664.647279766401854054",
+      "emissionStepsBefore": "1",
+      "emissionStepsAfter": "229",
+      "emissionStepsAdded": "228",
+      "currentDay": "0",
+      "txs": {
+        "updatePrice": "0x1b4e6cf21953c9301799f5dbd2cd97572b298a7c40eac770e27fa3003a03083f",
+        "updateLp": "0xc5f2c3d28b0fe225ddd7c5af00208b5a314001c9543887819a2c4fec8994402f",
+        "updatePool": "0x2c22834c66674a85fb09ef68856cb187cadca5373378dfab19e8eecdc892e390",
+        "processBurnQueue": "0xd65e71f7808dd69c757736cb13cbbcdee04d285866c060a36de2cb2da1b69260"
+      },
+      "burnQueue": {
+        "maxCount": 20,
+        "expectedPaidCount": "0",
+        "paid": [],
+        "nextPayoutIndex": "2",
+        "length": "2",
+        "rewardPool": "188999983.333333333333333332"
+      },
+      "dailyEmissionAfterUpdate": "3360.0",
+      "dailyEmissionAfterUpdateRaw": "3360000000000000000000",
+      "onChain": {
+        "globalLpValue": "2290914.647279766401854054",
+        "latestKntPrice": "3.173590800977452165",
+        "price24hAgo": "3.173590800977452165"
+      },
+      "status": "processed",
+      "finishedAt": "2026-05-05T03:53:35.046Z"
+    },
+    {
+      "startedAt": "2026-05-05T04:39:10.527Z",
+      "keeper": "0x744447d8580EB900b199e852C132F626247a36F7",
+      "contract": "0x14Dc8a0E97815128304883DEaEc89D6773937dc0",
+      "priceNow": "3.124134021079283292",
+      "priceNowRaw": "3124134021079283292",
+      "price24hAgo": "3.124134021079283292",
+      "price24hAgoRaw": "3124134021079283292",
+      "price24hSource": "current-no-24h-snapshot",
+      "price24hSnapshotAt": null,
+      "pairs": [
+        {
+          "key": "LABUBU_USDT",
+          "label": "LABUBU/USDT",
+          "address": "0x3d15C36a566c99bC740d2f2fA6F602B384476f9b",
+          "valuation": "USDT reserve x 2",
+          "status": "valued",
+          "token0": {
+            "address": "0x202C8095F5D52EDF56EaFF8c36aA930e2C414181",
+            "symbol": "LABUBU",
+            "reserveRaw": "489975778782748035885970",
+            "reserve": "489975.77878274803588597"
+          },
+          "token1": {
+            "address": "0xacD944e910952c020eb129C50921f180c62c3291",
+            "symbol": "USDx5",
+            "reserveRaw": "510250000000000000000000",
+            "reserve": "510250.0"
+          },
+          "basis": "usdtReserve",
+          "value": "1020500.0",
+          "valueRaw": "1020500000000000000000000"
+        },
+        {
+          "key": "LABUBU_KNT",
+          "label": "LABUBU/KNT",
+          "address": "0x3C6934609378293B0698c1242a661a875B5f0c18",
+          "valuation": "KNT reserve x derived KNT price x 2",
+          "status": "valued",
+          "token0": {
+            "address": "0x14Dc8a0E97815128304883DEaEc89D6773937dc0",
+            "symbol": "KNT",
+            "reserveRaw": "100000000000000000000000",
+            "reserve": "100000.0"
+          },
+          "token1": {
+            "address": "0x202C8095F5D52EDF56EaFF8c36aA930e2C414181",
+            "symbol": "LABUBU",
+            "reserveRaw": "300000000000000000000000",
+            "reserve": "300000.0"
+          },
+          "basis": "kntReserve",
+          "value": "624826.8042158566584",
+          "valueRaw": "624826804215856658400000"
+        }
+      ],
+      "totalLpValue": "1645326.8042158566584",
+      "totalLpValueRaw": "1645326804215856658400000",
+      "previousGlobalLpValue": "0.0",
+      "previousGlobalLpValueRaw": "0",
+      "lpValueDelta": "1645326.8042158566584",
+      "emissionStepsBefore": "0",
+      "emissionStepsAfter": "164",
+      "emissionStepsAdded": "164",
+      "currentDay": "0",
+      "txs": {
+        "updatePrice": "0xc5fc6572234fd06d687e45735d029ad53a07baeddc7c4b2088fe7cd22a20a83f",
+        "updateLp": "0x1ee7f5dd6a1c8f368204a80d6509e826538cc5daf70046c4f36585fa1757700e",
+        "updatePool": "0x163ffc9960f5ff316f89afbfb645eea503dc14f14bb0f3a45f60d11e9746caf6",
+        "processBurnQueue": "0xcb4e29876d9dc4ef3b143c389b0f4c9be765d4d566ec126f91ae4d3fa0089815"
+      },
+      "burnQueue": {
+        "maxCount": 20,
+        "expectedPaidCount": "0",
+        "paid": [],
+        "nextPayoutIndex": "0",
+        "length": "0",
+        "rewardPool": "189000000.0"
+      },
+      "dailyEmissionAfterUpdate": "3360.0",
+      "dailyEmissionAfterUpdateRaw": "3360000000000000000000",
+      "onChain": {
+        "globalLpValue": "1645326.8042158566584",
+        "latestKntPrice": "3.124134021079283292",
+        "price24hAgo": "3.124134021079283292"
+      },
+      "status": "processed",
+      "finishedAt": "2026-05-05T04:39:28.572Z"
+    },
+    {
+      "startedAt": "2026-05-05T05:03:37.815Z",
+      "keeper": "0x744447d8580EB900b199e852C132F626247a36F7",
+      "contract": "0x14Dc8a0E97815128304883DEaEc89D6773937dc0",
+      "priceNow": "3.124134021079283292",
+      "priceNowRaw": "3124134021079283292",
+      "price24hAgo": "3.124134021079283292",
+      "price24hAgoRaw": "3124134021079283292",
+      "price24hSource": "current-no-24h-snapshot",
+      "price24hSnapshotAt": null,
+      "pairs": [
+        {
+          "key": "LABUBU_USDT",
+          "label": "LABUBU/USDT",
+          "address": "0x3d15C36a566c99bC740d2f2fA6F602B384476f9b",
+          "valuation": "USDT reserve x 2",
+          "status": "valued",
+          "token0": {
+            "address": "0x202C8095F5D52EDF56EaFF8c36aA930e2C414181",
+            "symbol": "LABUBU",
+            "reserveRaw": "489975778782748035885970",
+            "reserve": "489975.77878274803588597"
+          },
+          "token1": {
+            "address": "0xacD944e910952c020eb129C50921f180c62c3291",
+            "symbol": "USDx5",
+            "reserveRaw": "510250000000000000000000",
+            "reserve": "510250.0"
+          },
+          "basis": "usdtReserve",
+          "value": "1020500.0",
+          "valueRaw": "1020500000000000000000000"
+        },
+        {
+          "key": "LABUBU_KNT",
+          "label": "LABUBU/KNT",
+          "address": "0x3C6934609378293B0698c1242a661a875B5f0c18",
+          "valuation": "KNT reserve x derived KNT price x 2",
+          "status": "valued",
+          "token0": {
+            "address": "0x14Dc8a0E97815128304883DEaEc89D6773937dc0",
+            "symbol": "KNT",
+            "reserveRaw": "100000000000000000000000",
+            "reserve": "100000.0"
+          },
+          "token1": {
+            "address": "0x202C8095F5D52EDF56EaFF8c36aA930e2C414181",
+            "symbol": "LABUBU",
+            "reserveRaw": "300000000000000000000000",
+            "reserve": "300000.0"
+          },
+          "basis": "kntReserve",
+          "value": "624826.8042158566584",
+          "valueRaw": "624826804215856658400000"
+        }
+      ],
+      "totalLpValue": "1645326.8042158566584",
+      "totalLpValueRaw": "1645326804215856658400000",
+      "previousGlobalLpValue": "1645326.8042158566584",
+      "previousGlobalLpValueRaw": "1645326804215856658400000",
+      "lpValueDelta": "0.0",
+      "emissionStepsBefore": "164",
+      "emissionStepsAfter": "164",
+      "emissionStepsAdded": "0",
+      "currentDay": "2",
+      "txs": {
+        "updatePrice": "0x4ae7b59502333091d18e4d16bc8e312ec1b7da47ecc6a726b3031265bf1bb448",
+        "updateLp": "0xbc1e47d1dc9bfcf1bd4daaf493b03663d62463bb853122e81807cf3823f0c499",
+        "updatePool": "0xa3fb8c11376f43fd38e0e15b7a5eefa3559a70ef8aedc4ba422587f225a8128e",
+        "processBurnQueue": "0x44264eece4e6b8343642e6752d7977ea6992ca98c790bf903cd279c78b58b9a5"
+      },
+      "burnQueue": {
+        "maxCount": 20,
+        "expectedPaidCount": "0",
+        "paid": [],
+        "nextPayoutIndex": "0",
+        "length": "0",
+        "rewardPool": "188993280.0"
+      },
+      "dailyEmissionAfterUpdate": "3360.0",
+      "dailyEmissionAfterUpdateRaw": "3360000000000000000000",
+      "onChain": {
+        "globalLpValue": "1645326.8042158566584",
+        "latestKntPrice": "3.124134021079283292",
+        "price24hAgo": "3.124134021079283292"
+      },
+      "status": "processed",
+      "finishedAt": "2026-05-05T05:03:54.243Z"
+    }
+  ],
+  "labubu": "0x202C8095F5D52EDF56EaFF8c36aA930e2C414181",
+  "priceSnapshots": [
+    {
+      "at": "2026-05-05T03:27:27.000Z",
+      "timestamp": 1777951647,
+      "priceNow": "3.085423579833396952",
+      "priceNowRaw": "3085423579833396952"
+    },
+    {
+      "at": "2026-05-05T03:53:20.000Z",
+      "timestamp": 1777953200,
+      "priceNow": "3.173590800977452165",
+      "priceNowRaw": "3173590800977452165"
+    },
+    {
+      "at": "2026-05-05T04:39:10.000Z",
+      "timestamp": 1777955950,
+      "priceNow": "3.124134021079283292",
+      "priceNowRaw": "3124134021079283292"
+    },
+    {
+      "at": "2026-05-05T05:03:37.000Z",
+      "timestamp": 1777957417,
+      "priceNow": "3.124134021079283292",
+      "priceNowRaw": "3124134021079283292"
+    }
+  ]
+}
