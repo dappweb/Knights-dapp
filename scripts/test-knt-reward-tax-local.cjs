@@ -24,19 +24,31 @@ function assertEq(name, actual, expected) {
 
 async function deployKnt() {
   const [owner, a, b, c, d, e, pair, foundation, dex, ecosystem, taxUser] = await hre.ethers.getSigners();
+  const TestToken = await hre.ethers.getContractFactory("TestToken");
+  const TestPancakeRouter = await hre.ethers.getContractFactory("TestPancakeRouter");
+
+  const usdt = await TestToken.deploy("Tether USD Test Token", "USDT", 18, owner.address);
+  await usdt.waitForDeployment();
+  const labubu = await TestToken.deploy("LABUBU Test Token", "LABUBU", 18, owner.address);
+  await labubu.waitForDeployment();
+  const router = await TestPancakeRouter.deploy();
+  await router.waitForDeployment();
+
   const KNTAllInOne = await hre.ethers.getContractFactory("KNTAllInOne");
   const knt = await KNTAllInOne.deploy(
     owner.address,
     foundation.address,
     dex.address,
-    hre.ethers.ZeroAddress,
-    hre.ethers.ZeroAddress,
-    hre.ethers.ZeroAddress
+    await router.getAddress(),
+    await usdt.getAddress(),
+    await labubu.getAddress()
   );
   await knt.waitForDeployment();
   await knt.setEcosystemWallet(ecosystem.address);
-  await knt.setAmmPair(pair.address, true);
-  return { knt, owner, a, b, c, d, e, pair, foundation, dex, ecosystem, taxUser };
+  await knt.setLiquidityConfig(await router.getAddress(), await usdt.getAddress(), await labubu.getAddress(), pair.address);
+  await labubu.mint(await router.getAddress(), ether("1000000"));
+  await router.setSwapOutput(await knt.getAddress(), await labubu.getAddress(), ether("3"));
+  return { knt, labubu, router, owner, a, b, c, d, e, pair, foundation, dex, ecosystem, taxUser };
 }
 
 async function balanceMap(knt, accounts) {
@@ -50,7 +62,7 @@ function deltaMap(before, after) {
 }
 
 async function main() {
-  const { knt, owner, a, b, c, d, e, pair, foundation, ecosystem, taxUser } = await deployKnt();
+  const { knt, labubu, owner, a, b, c, d, e, pair, foundation, ecosystem, taxUser } = await deployKnt();
   const contract = await knt.getAddress();
 
   await knt.fundRewardPool(ether("1000000"));
@@ -100,32 +112,38 @@ async function main() {
 
   const observed = { pair, foundation, ecosystem };
   const sellBefore = await balanceMap(knt, observed);
+  const foundationLabubuBeforeSell = await labubu.balanceOf(foundation.address);
   const burnedBeforeSell = await knt.totalBurned();
   const rewardPoolBeforeSell = await knt.rewardPool();
   await knt.recordBuy(taxUser.address, ether("100"), ether("100"));
   await knt.keeperUpdateKntPrices(ether("1.5"), ether("1.5"));
   const profitSellReceipt = await (await knt.connect(taxUser).transfer(pair.address, ether("100"))).wait();
   const sellAfter = await balanceMap(knt, observed);
+  const foundationLabubuAfterSell = await labubu.balanceOf(foundation.address);
   const burnedAfterSell = await knt.totalBurned();
   const rewardPoolAfterSell = await knt.rewardPool();
 
   assertEq("profit sell pair net", sellAfter.pair - sellBefore.pair, ether("85"));
-  assertEq("profit sell foundation tax", sellAfter.foundation - sellBefore.foundation, ether("3"));
+  assertEq("profit sell foundation KNT tax", sellAfter.foundation - sellBefore.foundation, 0n);
+  assertEq("profit sell foundation LABUBU tax", foundationLabubuAfterSell - foundationLabubuBeforeSell, ether("3"));
   assertEq("profit sell ecosystem tax", sellAfter.ecosystem - sellBefore.ecosystem, ether("5.000000000000000001"));
   assertEq("profit sell burn", burnedAfterSell - burnedBeforeSell, ether("3.333333333333333333"));
   assertEq("profit sell reward pool", rewardPoolAfterSell - rewardPoolBeforeSell, ether("3.666666666666666666"));
 
   const dumpBefore = await balanceMap(knt, observed);
+  const foundationLabubuBeforeDump = await labubu.balanceOf(foundation.address);
   const burnedBeforeDump = await knt.totalBurned();
   const rewardPoolBeforeDump = await knt.rewardPool();
   await knt.keeperUpdateKntPrices(ether("0.875"), ether("1"));
   const dumpSellReceipt = await (await knt.connect(taxUser).transfer(pair.address, ether("100"))).wait();
   const dumpAfter = await balanceMap(knt, observed);
+  const foundationLabubuAfterDump = await labubu.balanceOf(foundation.address);
   const burnedAfterDump = await knt.totalBurned();
   const rewardPoolAfterDump = await knt.rewardPool();
 
   assertEq("dump sell pair net", dumpAfter.pair - dumpBefore.pair, ether("82.5"));
-  assertEq("dump sell foundation tax", dumpAfter.foundation - dumpBefore.foundation, ether("3"));
+  assertEq("dump sell foundation KNT tax", dumpAfter.foundation - dumpBefore.foundation, 0n);
+  assertEq("dump sell foundation LABUBU tax", foundationLabubuAfterDump - foundationLabubuBeforeDump, ether("3"));
   assertEq("dump sell ecosystem tax", dumpAfter.ecosystem - dumpBefore.ecosystem, 0n);
   assertEq("dump sell burn", burnedAfterDump - burnedBeforeDump, ether("6.25"));
   assertEq("dump sell reward pool", rewardPoolAfterDump - rewardPoolBeforeDump, ether("8.25"));
@@ -162,7 +180,8 @@ async function main() {
       profitSell: {
         tx: profitSellReceipt.hash,
         pairNet: fmt(sellAfter.pair - sellBefore.pair),
-        foundationTax: fmt(sellAfter.foundation - sellBefore.foundation),
+        foundationKntTax: fmt(sellAfter.foundation - sellBefore.foundation),
+        foundationLabubuTax: fmt(foundationLabubuAfterSell - foundationLabubuBeforeSell),
         ecosystemTax: fmt(sellAfter.ecosystem - sellBefore.ecosystem),
         burned: fmt(burnedAfterSell - burnedBeforeSell),
         rewardPoolAdded: fmt(rewardPoolAfterSell - rewardPoolBeforeSell),
@@ -170,7 +189,8 @@ async function main() {
       dumpSell: {
         tx: dumpSellReceipt.hash,
         pairNet: fmt(dumpAfter.pair - dumpBefore.pair),
-        foundationTax: fmt(dumpAfter.foundation - dumpBefore.foundation),
+        foundationKntTax: fmt(dumpAfter.foundation - dumpBefore.foundation),
+        foundationLabubuTax: fmt(foundationLabubuAfterDump - foundationLabubuBeforeDump),
         ecosystemTax: fmt(dumpAfter.ecosystem - dumpBefore.ecosystem),
         burned: fmt(burnedAfterDump - burnedBeforeDump),
         rewardPoolAdded: fmt(rewardPoolAfterDump - rewardPoolBeforeDump),

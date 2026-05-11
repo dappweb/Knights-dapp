@@ -29,6 +29,8 @@ interface IPancakeV2Router {
 contract KNTAllInOneUpgradeable {
     using SafeERC20 for IERC20;
 
+    error KntError();
+
     uint256 public constant BASIS_POINTS = 10_000;
     uint256 public constant TOTAL_SUPPLY = 210_000_000 ether;
 
@@ -157,6 +159,7 @@ contract KNTAllInOneUpgradeable {
     uint256 public nextMigrationId = 1;
     mapping(uint256 => MigrationPosition) public migrationPositions;
     mapping(bytes32 => bool) public processedKeeperActions;
+    address public labubuSwapIntermediateToken;
 
     event ReferralSignal(address indexed from, address indexed to, uint256 amount);
     event ReferrerBound(address indexed user, address indexed referrer);
@@ -179,6 +182,7 @@ contract KNTAllInOneUpgradeable {
     event QueuePaid(address indexed user, uint256 indexed index, uint256 rewardAmount);
     event BuyRecorded(address indexed account, uint256 kntAmount, uint256 usdtSpent);
     event SellSettled(address indexed account, uint256 grossAmount, uint256 netAmount, uint256 sellTax, uint256 profitTax, uint256 dumpTax);
+    event FoundationTaxConverted(address indexed foundationWallet, uint256 kntAmount, uint256 labubuAmount);
     event DynamicSunk(address indexed source, uint256 amount);
     event LiquidityKntBurned(address indexed account, uint256 amount);
     event UserLpCredited(address indexed account, uint256 lpAmount, uint256 lpValueUsdt);
@@ -201,36 +205,40 @@ contract KNTAllInOneUpgradeable {
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     modifier initializer() {
-        require(!initialized, "Already initialized");
+        _require(!initialized);
         initialized = true;
         _;
     }
 
     modifier onlyOwner() {
-        require(msg.sender == contractOwner, "Not owner");
+        _require(_isAdminOrOwner(msg.sender));
         _;
     }
 
     modifier onlyAdminOrOwner() {
-        require(_isAdminOrOwner(msg.sender), "Not admin");
+        _require(_isAdminOrOwner(msg.sender));
         _;
     }
 
     modifier onlyManagerOrAbove() {
-        require(_isManagerOrAbove(msg.sender), "Not manager");
+        _require(_isManagerOrAbove(msg.sender));
         _;
     }
 
     modifier onlyKeeperOrAbove() {
-        require(_isKeeperOrAbove(msg.sender), "Not keeper");
+        _require(_isKeeperOrAbove(msg.sender));
         _;
     }
 
     modifier nonReentrant() {
-        require(reentrancyStatus != 2, "Reentrant");
+        _require(reentrancyStatus != 2);
         reentrancyStatus = 2;
         _;
         reentrancyStatus = 1;
+    }
+
+    function _require(bool condition) internal pure {
+        if (!condition) revert KntError();
     }
 
     function initialize(
@@ -241,8 +249,8 @@ contract KNTAllInOneUpgradeable {
         address usdtToken_,
         address labubuToken_
     ) external initializer {
-        require(foundationWallet_ != address(0) && dexSettlementWallet_ != address(0), "Zero wallet");
-        require(initialOwner != address(0), "Zero owner");
+        _require(foundationWallet_ != address(0) && dexSettlementWallet_ != address(0));
+        _require(initialOwner != address(0));
 
         tokenName = "Knight Token";
         tokenSymbol = "KNT";
@@ -294,7 +302,7 @@ contract KNTAllInOneUpgradeable {
     }
 
     function transferOwnership(address newOwner) external onlyOwner {
-        require(newOwner != address(0), "Zero owner");
+        _require(newOwner != address(0));
         address oldOwner = contractOwner;
         contractOwner = newOwner;
         emit OwnershipTransferred(oldOwner, newOwner);
@@ -384,7 +392,7 @@ contract KNTAllInOneUpgradeable {
     }
 
     function bindReferrer(address referrer) external {
-        require(referrer != address(0), "Zero referrer");
+        _require(referrer != address(0));
         if (!users[msg.sender].registered) {
             _register(msg.sender, referrer);
         } else {
@@ -456,11 +464,11 @@ contract KNTAllInOneUpgradeable {
         uint256 minLpAmount,
         uint256 deadline
     ) external nonReentrant onlyKeeperOrAbove returns (uint256 liquidity) {
-        require(account != address(0), "Zero account");
-        require(amount > 0, "Zero amount");
-        require(depositId != bytes32(0), "Zero deposit id");
-        require(!processedUsdtDeposits[depositId], "Deposit processed");
-        require(IERC20(usdtToken).balanceOf(address(this)) >= amount, "Insufficient USDT");
+        _require(account != address(0));
+        _require(amount > 0);
+        _require(depositId != bytes32(0));
+        _require(!processedUsdtDeposits[depositId]);
+        _require(IERC20(usdtToken).balanceOf(address(this)) >= amount);
         processedUsdtDeposits[depositId] = true;
         liquidity = _processUsdtDeposit(account, amount, minKntBought, minLabubuBought, minKntToLp, minLabubuToLp, minLpAmount, deadline);
         _distributePendingLineage(account);
@@ -468,7 +476,7 @@ contract KNTAllInOneUpgradeable {
     }
 
     function fundRewardPool(uint256 amount) external nonReentrant {
-        require(amount > 0, "Zero amount");
+        _require(amount > 0);
         systemTransfer = true;
         _transfer(msg.sender, address(this), amount);
         systemTransfer = false;
@@ -491,13 +499,13 @@ contract KNTAllInOneUpgradeable {
     }
 
     function burnAndQueue(uint256 amount) external nonReentrant {
-        require(amount > 0, "Zero amount");
+        _require(amount > 0);
         _burnAndQueue(msg.sender, amount);
     }
 
     function keeperBurnFrom(address account, uint256 amount) external nonReentrant onlyKeeperOrAbove {
-        require(account != address(0) && account != address(this) && !ammPairs[account], "Invalid burn account");
-        require(amount > 0, "Zero amount");
+        _require(account != address(0) && account != address(this) && !ammPairs[account]);
+        _require(amount > 0);
         _burn(account, amount);
         emit KeeperBurned(account, msg.sender, amount);
     }
@@ -508,16 +516,16 @@ contract KNTAllInOneUpgradeable {
         onlyKeeperOrAbove
     {
         bytes32 actionId = _useKeeperAction(account, sourceTxHash, sourceLogIndex, keccak256("KNT_BURN"));
-        require(account != address(0) && account != address(this) && !ammPairs[account], "Invalid burn account");
-        require(amount > 0, "Zero amount");
+        _require(account != address(0) && account != address(this) && !ammPairs[account]);
+        _require(amount > 0);
         _burn(account, amount);
         emit KeeperBurned(account, msg.sender, amount);
         emit KeeperActionProcessed(actionId, sourceTxHash, sourceLogIndex, account, keccak256("KNT_BURN"));
     }
 
     function keeperReduceUserLp(address account, uint256 amount, uint256 lpValueUsdt) external nonReentrant onlyKeeperOrAbove {
-        require(account != address(0), "Zero account");
-        require(amount > 0 && lpValueUsdt > 0, "Zero amount");
+        _require(account != address(0));
+        _require(amount > 0 && lpValueUsdt > 0);
         _updatePool();
         _settleAccount(account);
         _removeDeposit(account, amount, lpValueUsdt);
@@ -530,8 +538,8 @@ contract KNTAllInOneUpgradeable {
         onlyKeeperOrAbove
     {
         bytes32 actionId = _useKeeperAction(account, sourceTxHash, sourceLogIndex, keccak256("LP_REDUCE"));
-        require(account != address(0), "Zero account");
-        require(amount > 0 && lpValueUsdt > 0, "Zero amount");
+        _require(account != address(0));
+        _require(amount > 0 && lpValueUsdt > 0);
         _updatePool();
         _settleAccount(account);
         _removeDeposit(account, amount, lpValueUsdt);
@@ -545,14 +553,14 @@ contract KNTAllInOneUpgradeable {
         onlyKeeperOrAbove
     {
         bytes32 actionId = _useKeeperAction(account, sourceTxHash, sourceLogIndex, keccak256("LP_REDUCE"));
-        require(account != address(0), "Zero account");
-        require(amount > 0, "Zero amount");
+        _require(account != address(0));
+        _require(amount > 0);
         _updatePool();
         _settleAccount(account);
         UserInfo storage user = users[account];
-        require(user.depositAmount >= amount && user.depositAmount > 0, "Insufficient deposit");
+        _require(user.depositAmount >= amount && user.depositAmount > 0);
         uint256 lpValueUsdt = (user.lpValueUsdt * amount) / user.depositAmount;
-        require(lpValueUsdt > 0, "Zero LP value");
+        _require(lpValueUsdt > 0);
         _removeDeposit(account, amount, lpValueUsdt);
         emit KeeperLpReduced(account, msg.sender, amount, lpValueUsdt);
         emit KeeperActionProcessed(actionId, sourceTxHash, sourceLogIndex, account, keccak256("LP_REDUCE"));
@@ -582,8 +590,8 @@ contract KNTAllInOneUpgradeable {
     }
 
     function recordBuy(address account, uint256 kntAmount, uint256 usdtSpent) external {
-        require(taxRecorders[msg.sender] || _isAdminOrOwner(msg.sender), "Not recorder");
-        require(account != address(0) && kntAmount > 0 && usdtSpent > 0, "Invalid buy");
+        _require(taxRecorders[msg.sender] || _isAdminOrOwner(msg.sender));
+        _require(account != address(0) && kntAmount > 0 && usdtSpent > 0);
         costBasisOf[account].boughtKnt += kntAmount;
         costBasisOf[account].spentUsdt += usdtSpent;
         emit BuyRecorded(account, kntAmount, usdtSpent);
@@ -594,7 +602,7 @@ contract KNTAllInOneUpgradeable {
         nonReentrant
         returns (uint256 netAmount)
     {
-        require(amount > 0 && currentValueUsdt > 0, "Zero amount");
+        _require(amount > 0 && currentValueUsdt > 0);
         systemTransfer = true;
         _transfer(msg.sender, address(this), amount);
         systemTransfer = false;
@@ -603,7 +611,7 @@ contract KNTAllInOneUpgradeable {
         uint256 profitTax = _profitTax(msg.sender, amount, currentValueUsdt);
         uint256 dumpTax = _dumpTax(amount, priceNowUsdt_, price24hAgoUsdt_);
         uint256 totalTax = sellTax + profitTax + dumpTax;
-        require(totalTax <= amount, "Tax exceeds amount");
+        _require(totalTax <= amount);
 
         _distributeSellTax(sellTax);
         _distributeProfitTax(profitTax);
@@ -620,7 +628,7 @@ contract KNTAllInOneUpgradeable {
     }
 
     function mintMigration(address account, uint256 amount) external onlyAdminOrOwner returns (uint256 id) {
-        require(account != address(0) && amount > 0, "Invalid migration");
+        _require(account != address(0) && amount > 0);
         id = nextMigrationId++;
         migrationPositions[id] = MigrationPosition({
             owner: account,
@@ -633,10 +641,10 @@ contract KNTAllInOneUpgradeable {
 
     function claimMigration(uint256 id) external nonReentrant {
         MigrationPosition storage position = migrationPositions[id];
-        require(position.owner == msg.sender, "Not owner");
+        _require(position.owner == msg.sender);
         uint256 amount = migrationClaimable(id);
-        require(amount > 0, "Nothing claimable");
-        require(_freeBalance() >= amount, "Insufficient pool");
+        _require(amount > 0);
+        _require(_freeBalance() >= amount);
 
         position.claimedAmount += amount;
         position.lastClaimDay = currentDay();
@@ -663,7 +671,7 @@ contract KNTAllInOneUpgradeable {
         external
         onlyAdminOrOwner
     {
-        require(accounts.length == amounts.length && accounts.length == lpValuesUsdt.length && accounts.length == referrers.length, "Length mismatch");
+        _require(accounts.length == amounts.length && accounts.length == lpValuesUsdt.length && accounts.length == referrers.length);
         _updatePool();
         for (uint256 i = 0; i < accounts.length; i++) {
             _depositImported(accounts[i], amounts[i], lpValuesUsdt[i], referrers[i]);
@@ -671,36 +679,36 @@ contract KNTAllInOneUpgradeable {
     }
 
     function adminSetReferrer(address account, address referrer) external onlyAdminOrOwner {
-        require(account != address(0) && referrer != address(0), "Zero address");
-        require(!users[account].registered || users[account].referrer == address(0), "Already bound");
+        _require(account != address(0) && referrer != address(0));
+        _require(!users[account].registered || users[account].referrer == address(0));
         _register(account, referrer);
     }
 
     function setAdmin(address admin, bool enabled) external onlyAdminOrOwner {
-        require(admin != address(0), "Zero admin");
+        _require(admin != address(0));
         admins[admin] = enabled;
         emit AdminUpdated(admin, enabled);
     }
 
     function setManager(address manager, bool enabled) external onlyAdminOrOwner {
-        require(manager != address(0), "Zero manager");
+        _require(manager != address(0));
         managers[manager] = enabled;
         emit ManagerUpdated(manager, enabled);
     }
 
     function setTaxRecorder(address recorder, bool enabled) external onlyManagerOrAbove {
-        require(recorder != address(0), "Zero recorder");
+        _require(recorder != address(0));
         taxRecorders[recorder] = enabled;
     }
 
     function setKeeper(address keeper, bool enabled) external onlyManagerOrAbove {
-        require(keeper != address(0), "Zero keeper");
+        _require(keeper != address(0));
         keepers[keeper] = enabled;
         emit KeeperUpdated(keeper, enabled);
     }
 
     function setAmmPair(address pair, bool enabled) external onlyManagerOrAbove {
-        require(pair != address(0), "Zero pair");
+        _require(pair != address(0));
         ammPairs[pair] = enabled;
         emit AmmPairUpdated(pair, enabled);
     }
@@ -712,7 +720,7 @@ contract KNTAllInOneUpgradeable {
     }
 
     function keeperUpdateKntPrices(uint256 priceNowUsdt_, uint256 price24hAgoUsdt_) external onlyKeeperOrAbove {
-        require(priceNowUsdt_ > 0, "Zero price");
+        _require(priceNowUsdt_ > 0);
         latestKntPriceUsdt = priceNowUsdt_;
         price24hAgoUsdt = price24hAgoUsdt_;
         latestPriceUpdatedAt = block.timestamp;
@@ -720,23 +728,25 @@ contract KNTAllInOneUpgradeable {
     }
 
     function setWallets(address foundationWallet_, address dexSettlementWallet_) external onlyAdminOrOwner {
-        require(foundationWallet_ != address(0) && dexSettlementWallet_ != address(0), "Zero wallet");
+        _require(foundationWallet_ != address(0) && dexSettlementWallet_ != address(0));
         foundationWallet = foundationWallet_;
         dexSettlementWallet = dexSettlementWallet_;
     }
 
     function setProjectSinkWallet(address projectSinkWallet_) external onlyAdminOrOwner {
-        require(projectSinkWallet_ != address(0), "Zero wallet");
+        _require(projectSinkWallet_ != address(0));
         projectSinkWallet = projectSinkWallet_;
     }
 
     function setEcosystemWallet(address ecosystemWallet_) external onlyAdminOrOwner {
-        require(ecosystemWallet_ != address(0), "Zero wallet");
+        _require(ecosystemWallet_ != address(0));
         ecosystemWallet = ecosystemWallet_;
     }
 
     function setLiquidityConfig(address pancakeRouter_, address usdtToken_, address labubuToken_, address labubuKntPair_) external onlyManagerOrAbove {
-        require(pancakeRouter_ != address(0) && usdtToken_ != address(0) && labubuToken_ != address(0), "Zero liquidity config");
+        _require(pancakeRouter_ != address(0) && usdtToken_ != address(0) && labubuToken_ != address(0));
+        _require(
+            labubuSwapIntermediateToken == address(0) || (labubuSwapIntermediateToken != usdtToken_ && labubuSwapIntermediateToken != labubuToken_));
         pancakeRouter = pancakeRouter_;
         usdtToken = usdtToken_;
         labubuToken = labubuToken_;
@@ -748,8 +758,13 @@ contract KNTAllInOneUpgradeable {
         emit LiquidityConfigUpdated(pancakeRouter_, usdtToken_, labubuToken_, labubuKntPair_);
     }
 
+    function setLabubuSwapIntermediateToken(address intermediateToken_) external onlyManagerOrAbove {
+        _require(intermediateToken_ == address(0) || (intermediateToken_ != usdtToken && intermediateToken_ != labubuToken));
+        labubuSwapIntermediateToken = intermediateToken_;
+    }
+
     function setBurnQueueRewardBP(uint256 rewardBP) external onlyManagerOrAbove {
-        require(rewardBP >= BASIS_POINTS && rewardBP <= 30_000, "Invalid reward");
+        _require(rewardBP >= BASIS_POINTS && rewardBP <= 30_000);
         burnQueueRewardBP = rewardBP;
     }
 
@@ -758,7 +773,7 @@ contract KNTAllInOneUpgradeable {
     }
 
     function setRewardPeriodSeconds(uint256 periodSeconds) external onlyManagerOrAbove {
-        require(periodSeconds >= 10 minutes && periodSeconds <= 1 days, "Invalid period");
+        _require(periodSeconds >= 10 minutes && periodSeconds <= 1 days);
         _updatePool();
         uint256 oldPeriodSeconds = rewardPeriodSeconds;
         rewardPeriodSeconds = periodSeconds;
@@ -778,7 +793,7 @@ contract KNTAllInOneUpgradeable {
     }
 
     function _depositImported(address account, uint256 amount, uint256 lpValueUsdt, address referrer) internal {
-        require(account != address(0) && amount > 0 && lpValueUsdt > 0, "Invalid deposit");
+        _require(account != address(0) && amount > 0 && lpValueUsdt > 0);
         if (!users[account].registered) _register(account, referrer);
         _settleAccount(account);
         _applyDeposit(account, amount, lpValueUsdt);
@@ -794,11 +809,9 @@ contract KNTAllInOneUpgradeable {
         uint256 minLpAmount,
         uint256 deadline
     ) internal returns (uint256 liquidity) {
-        require(
-            pancakeRouter != address(0) && usdtToken != address(0) && labubuToken != address(0) && labubuKntPair != address(0),
-            "Liquidity not configured"
-        );
-        require(deadline >= block.timestamp, "Expired");
+        _require(
+            pancakeRouter != address(0) && usdtToken != address(0) && labubuToken != address(0) && labubuKntPair != address(0));
+        _require(deadline >= block.timestamp);
 
         _updatePool();
         if (!users[account].registered) _register(account, address(0));
@@ -806,9 +819,15 @@ contract KNTAllInOneUpgradeable {
 
         IERC20(usdtToken).forceApprove(pancakeRouter, amount);
 
-        address[] memory labubuPath = new address[](2);
+        address intermediateToken = labubuSwapIntermediateToken;
+        address[] memory labubuPath = new address[](intermediateToken == address(0) ? 2 : 3);
         labubuPath[0] = usdtToken;
-        labubuPath[1] = labubuToken;
+        if (intermediateToken == address(0)) {
+            labubuPath[1] = labubuToken;
+        } else {
+            labubuPath[1] = intermediateToken;
+            labubuPath[2] = labubuToken;
+        }
         uint256[] memory labubuAmounts = IPancakeV2Router(pancakeRouter).swapExactTokensForTokens(
             amount,
             minLabubuBought,
@@ -820,7 +839,7 @@ contract KNTAllInOneUpgradeable {
         uint256 labubuBought = labubuAmounts[labubuAmounts.length - 1];
         uint256 labubuToKnt = labubuBought / 2;
         uint256 labubuToLp = labubuBought - labubuToKnt;
-        require(labubuToKnt > 0 && labubuToLp > 0, "Insufficient LABUBU");
+        _require(labubuToKnt > 0 && labubuToLp > 0);
 
         IERC20(labubuToken).forceApprove(pancakeRouter, labubuToKnt);
 
@@ -855,7 +874,7 @@ contract KNTAllInOneUpgradeable {
             deadline
         );
         systemTransfer = false;
-        require(liquidity >= minLpAmount, "Insufficient LP");
+        _require(liquidity >= minLpAmount);
 
         uint256 kntRefund = kntBought - kntUsed;
         uint256 labubuRefund = labubuToLp - labubuUsed;
@@ -894,7 +913,7 @@ contract KNTAllInOneUpgradeable {
 
     function _removeDeposit(address account, uint256 amount, uint256 lpValueUsdt) internal {
         UserInfo storage user = users[account];
-        require(user.depositAmount >= amount && user.lpValueUsdt >= lpValueUsdt, "Insufficient deposit");
+        _require(user.depositAmount >= amount && user.lpValueUsdt >= lpValueUsdt);
 
         bool wasEffective = user.lpValueUsdt >= EFFECTIVE_DIRECT_LP_USDT;
         uint256 removedPower = lpValueUsdt == user.lpValueUsdt ? user.power : (user.power * lpValueUsdt) / user.lpValueUsdt;
@@ -912,9 +931,9 @@ contract KNTAllInOneUpgradeable {
     }
 
     function _useKeeperAction(address account, bytes32 sourceTxHash, uint256 sourceLogIndex, bytes32 actionType) internal returns (bytes32 actionId) {
-        require(sourceTxHash != bytes32(0), "Zero source");
+        _require(sourceTxHash != bytes32(0));
         actionId = keccak256(abi.encode(actionType, sourceTxHash, sourceLogIndex, account));
-        require(!processedKeeperActions[actionId], "Keeper action processed");
+        _require(!processedKeeperActions[actionId]);
         processedKeeperActions[actionId] = true;
     }
 
@@ -932,7 +951,7 @@ contract KNTAllInOneUpgradeable {
     }
 
     function _register(address account, address referrer) internal {
-        require(!users[account].registered, "Already registered");
+        _require(!users[account].registered);
         if (referrer == address(0) && account != owner()) referrer = owner();
         users[account].registered = true;
         users[account].lastPowerUpdateDay = currentDay();
@@ -940,9 +959,9 @@ contract KNTAllInOneUpgradeable {
     }
 
     function _bindReferrer(address account, address referrer) internal {
-        require(account != referrer, "Self referrer");
-        require(users[account].referrer == address(0), "Already bound");
-        require(!_wouldCreateReferralCycle(account, referrer), "Referral cycle");
+        _require(account != referrer);
+        _require(users[account].referrer == address(0));
+        _require(!_wouldCreateReferralCycle(account, referrer));
         users[account].referrer = referrer;
         directReferrals[referrer].push(account);
         emit ReferrerBound(account, referrer);
@@ -1142,7 +1161,7 @@ contract KNTAllInOneUpgradeable {
     }
 
     function _burnAndQueue(address account, uint256 amount) internal {
-        require(amount > 0, "Zero amount");
+        _require(amount > 0);
         _burn(account, amount);
         _createBurnQueueEntry(account, amount);
     }
@@ -1172,19 +1191,18 @@ contract KNTAllInOneUpgradeable {
         uint256 profitTax = currentValueUsdt == 0 ? 0 : _profitTax(account, amount, currentValueUsdt);
         uint256 dumpTax = _dumpTax(amount, latestKntPriceUsdt, price24hAgoUsdt);
         uint256 totalTax = sellTax + profitTax + dumpTax;
-        require(totalTax <= amount, "Tax exceeds amount");
+        _require(totalTax <= amount);
 
         uint256 netAmount = amount - totalTax;
         if (totalTax > 0) {
             _rawUpdate(account, address(this), totalTax);
         }
-        if (netAmount > 0) {
-            _rawUpdate(account, pair, netAmount);
-        }
-
         _distributeSellTax(sellTax);
         _distributeProfitTax(profitTax);
         _distributeDumpTax(dumpTax);
+        if (netAmount > 0) {
+            _rawUpdate(account, pair, netAmount);
+        }
         if (currentValueUsdt > 0) {
             _consumeCostBasis(account, amount);
         }
@@ -1212,10 +1230,29 @@ contract KNTAllInOneUpgradeable {
         uint256 toFoundation = amount - toQueue;
         rewardPool += toQueue;
         if (toFoundation > 0) {
-            systemTransfer = true;
-            _transfer(address(this), foundationWallet, toFoundation);
-            systemTransfer = false;
+            _swapFoundationTaxToLabubu(toFoundation);
         }
+    }
+
+    function _swapFoundationTaxToLabubu(uint256 kntAmount) internal {
+        _require(pancakeRouter != address(0) && labubuToken != address(0));
+        IERC20(address(this)).forceApprove(pancakeRouter, kntAmount);
+
+        address[] memory path = new address[](2);
+        path[0] = address(this);
+        path[1] = labubuToken;
+
+        systemTransfer = true;
+        uint256[] memory amounts = IPancakeV2Router(pancakeRouter).swapExactTokensForTokens(
+            kntAmount,
+            0,
+            path,
+            foundationWallet,
+            block.timestamp
+        );
+        systemTransfer = false;
+
+        emit FoundationTaxConverted(foundationWallet, kntAmount, amounts[amounts.length - 1]);
     }
 
     function _distributeProfitTax(uint256 amount) internal {
@@ -1255,17 +1292,17 @@ contract KNTAllInOneUpgradeable {
     }
 
     function _transfer(address from, address to, uint256 value) internal {
-        require(from != address(0) && to != address(0), "Invalid transfer");
+        _require(from != address(0) && to != address(0));
         _update(from, to, value);
     }
 
     function _mint(address account, uint256 value) internal {
-        require(account != address(0), "Mint zero");
+        _require(account != address(0));
         _update(address(0), account, value);
     }
 
     function _burn(address account, uint256 value) internal {
-        require(account != address(0), "Burn zero");
+        _require(account != address(0));
         _update(account, address(0), value);
     }
 
@@ -1274,7 +1311,7 @@ contract KNTAllInOneUpgradeable {
             tokenTotalSupply += value;
         } else {
             uint256 fromBalance = tokenBalances[from];
-            require(fromBalance >= value, "Balance");
+            _require(fromBalance >= value);
             unchecked {
                 tokenBalances[from] = fromBalance - value;
             }
@@ -1292,7 +1329,7 @@ contract KNTAllInOneUpgradeable {
     function _spendAllowance(address owner_, address spender, uint256 value) internal {
         uint256 currentAllowance = tokenAllowances[owner_][spender];
         if (currentAllowance != type(uint256).max) {
-            require(currentAllowance >= value, "Allowance");
+            _require(currentAllowance >= value);
             unchecked {
                 tokenAllowances[owner_][spender] = currentAllowance - value;
             }

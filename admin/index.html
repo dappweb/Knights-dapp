@@ -871,6 +871,13 @@
               <input id="labubuKntPair" placeholder="0x..." autocomplete="off" />
               <span class="field-help">主交易对地址。填入后会同时作为 AMM Pair 启用，用于识别买入、卖出和税费逻辑。</span>
             </label>
+            <label class="span-6">LABUBU Swap Hop
+              <input id="labubuSwapIntermediateToken" placeholder="0x..." autocomplete="off" />
+              <span class="field-help">Optional intermediate token for USDT to LABUBU swaps. Leave empty for a direct pool; set WBNB on mainnet.</span>
+            </label>
+            <div class="span-6 button-row">
+              <button id="setLabubuSwapIntermediateButton" type="button">Set Swap Hop</button>
+            </div>
             <div class="span-12 button-row">
               <button id="setLiquidityButton" type="button">设置流动性配置</button>
             </div>
@@ -1379,6 +1386,7 @@
         "function setProjectSinkWallet(address)",
         "function setEcosystemWallet(address)",
         "function setLiquidityConfig(address,address,address,address)",
+        "function setLabubuSwapIntermediateToken(address)",
         "function setAmmPair(address,bool)",
         "function setBurnQueueRewardBP(uint256)",
         "function setReferralSignalAmount(uint256)",
@@ -1389,6 +1397,7 @@
         "function keeperBurnFrom(address,uint256)",
         "function adminUpdatePool()",
         "function processBurnQueue(uint256) returns(uint256)",
+        "function labubuSwapIntermediateToken() view returns(address)",
       ];
 
       const state = {
@@ -1992,6 +2001,7 @@
         $("usdtToken").value = liquidity.usdtToken || state.config?.usdt || "";
         $("labubuToken").value = liquidity.labubuToken || state.config?.labubu || "";
         $("labubuKntPair").value = liquidity.labubuKntPair || state.config?.labubuPair || "";
+        $("labubuSwapIntermediateToken").value = liquidity.labubuSwapIntermediateToken || state.config?.labubuSwapIntermediateToken || "";
         $("ammPair").value = state.config?.labubuPair || "";
         $("burnQueueRewardBP").value = params.burnQueueRewardBP || "";
         $("referralSignalAmount").value = params.referralSignalAmount || "";
@@ -3027,6 +3037,11 @@
             validateAddress($("labubuToken").value, "LABUBU Token"),
             optionalAddress($("labubuKntPair").value),
           ], "设置流动性配置")
+        ));
+        $("setLabubuSwapIntermediateButton").addEventListener("click", () => runAction(() =>
+          sendTx("setLabubuSwapIntermediateToken", [
+            optionalAddress($("labubuSwapIntermediateToken").value),
+          ], "Set LABUBU swap hop")
         ));
         $("setAmmPairButton").addEventListener("click", () => runAction(() =>
           sendTx("setAmmPair", [

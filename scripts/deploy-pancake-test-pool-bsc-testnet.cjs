@@ -85,6 +85,9 @@ async function main() {
   const managerWallets = addressList(process.env.MANAGER_WALLETS || process.env.MANAGER_WALLET);
   const keeperWallets = addressList(process.env.KEEPER_WALLETS || process.env.KEEPER_WALLET);
   const configuredUsdtAddress = process.env.USDT_TOKEN || process.env.USDT_TOKEN_ADDRESS || "";
+  const labubuSwapIntermediateToken = process.env.LABUBU_SWAP_INTERMEDIATE_TOKEN
+    ? hre.ethers.getAddress(process.env.LABUBU_SWAP_INTERMEDIATE_TOKEN)
+    : ZERO_ADDRESS;
   const initialRewardFund = hre.ethers.parseEther(process.env.KNT_INITIAL_REWARD_FUND || "189000000");
   const kntLabubuLiquidityAmount = hre.ethers.parseEther(process.env.KNT_LABUBU_LP_KNT_AMOUNT || process.env.KNT_LP_AMOUNT || "200000");
   const labubuLiquidityAmount = hre.ethers.parseEther(process.env.KNT_LABUBU_LP_LABUBU_AMOUNT || process.env.LABUBU_LP_AMOUNT || "600000");
@@ -220,6 +223,9 @@ async function main() {
   }
   console.log(`KNT/LABUBU Pair: ${labubuPairAddress}`);
   await wait(knt.setLiquidityConfig(routerAddress, usdtAddress, labubuAddress, labubuPairAddress), "set KNT liquidity config");
+  if (labubuSwapIntermediateToken !== ZERO_ADDRESS) {
+    await wait(knt.setLabubuSwapIntermediateToken(labubuSwapIntermediateToken), "set LABUBU swap intermediate");
+  }
 
   const addLabubuUsdtReceipt = await wait(
     router.addLiquidity(
@@ -266,6 +272,9 @@ async function main() {
     pair: labubuPairAddress,
     labubuPair: labubuPairAddress,
     labubuUsdtPair: labubuUsdtPairAddress,
+    labubuSwapIntermediateToken: labubuSwapIntermediateToken === ZERO_ADDRESS ? "" : labubuSwapIntermediateToken,
+    labubuWbnbPair: process.env.LABUBU_WBNB_PAIR || "",
+    wbnbUsdtPair: process.env.WBNB_USDT_PAIR || "",
     liquidity: {
       KNT_LABUBU: {
         KNT: hre.ethers.formatEther(kntLabubuLiquidityAmount),
@@ -306,6 +315,7 @@ async function main() {
   console.log(`VITE_PANCAKE_V2_FACTORY=${factoryAddress}`);
   console.log(`VITE_KNT_LABUBU_PAIR=${labubuPairAddress}`);
   console.log(`VITE_LABUBU_USDT_PAIR=${labubuUsdtPairAddress}`);
+  console.log(`VITE_LABUBU_SWAP_INTERMEDIATE_TOKEN=${labubuSwapIntermediateToken === ZERO_ADDRESS ? "" : labubuSwapIntermediateToken}`);
 }
 
 main().catch((error) => {

@@ -65,6 +65,7 @@ const KNT_ABI = [
   "function usdtToken() view returns(address)",
   "function labubuToken() view returns(address)",
   "function labubuKntPair() view returns(address)",
+  "function labubuSwapIntermediateToken() view returns(address)",
   "function burnQueueRewardBP() view returns(uint256)",
   "function referralSignalAmount() view returns(uint256)",
   "function balanceOf(address) view returns(uint256)",
@@ -252,6 +253,9 @@ function getDeployment(env) {
     labubuPair: env.KNT_LABUBU_PAIR || "",
     kntUsdtPair: env.KNT_USDT_PAIR || "",
     labubuUsdtPair: env.LABUBU_USDT_PAIR || "",
+    labubuSwapIntermediateToken: env.LABUBU_SWAP_INTERMEDIATE_TOKEN || env.WBNB_TOKEN_ADDRESS || "",
+    labubuWbnbPair: env.LABUBU_WBNB_PAIR || "",
+    wbnbUsdtPair: env.WBNB_USDT_PAIR || "",
   };
 }
 
@@ -364,50 +368,122 @@ function reserveOf(pair, token) {
 }
 
 function trackedPairs(deployment) {
-  return [
-    {
+  const pairs = [];
+  if (ethers.isAddress(deployment.labubuUsdtPair || "") && !isZeroAddress(deployment.labubuUsdtPair)) {
+    pairs.push({
       key: "LABUBU_USDT",
       label: "LABUBU/USDT",
       address: deployment.labubuUsdtPair,
       valuation: "USDT reserve x 2",
-    },
-    {
-      key: "LABUBU_KNT",
-      label: "LABUBU/KNT",
-      address: deployment.labubuPair,
-      valuation: "KNT reserve x derived KNT price x 2",
-    },
-  ];
+    });
+  } else {
+    pairs.push({
+      key: "LABUBU_WBNB",
+      label: "LABUBU/WBNB",
+      address: deployment.labubuWbnbPair,
+      valuation: "WBNB reserve x derived WBNB price x 2",
+    });
+    pairs.push({
+      key: "WBNB_USDT",
+      label: "WBNB/USDT",
+      address: deployment.wbnbUsdtPair,
+      valuation: "USDT reserve x 2 (price reference only)",
+      countsTowardTotal: false,
+    });
+  }
+  pairs.push({
+    key: "LABUBU_KNT",
+    label: "LABUBU/KNT",
+    address: deployment.labubuPair,
+    valuation: "KNT reserve x derived KNT price x 2",
+  });
+  return pairs;
 }
 
-async function computeKntPrice(deployment, provider, metaCache) {
-  if (!ethers.isAddress(deployment.labubuUsdtPair)) throw new Error("LABUBU_USDT_PAIR is not configured");
+function configuredLabubuBaseToken(deployment) {
+  return deployment.labubuSwapIntermediateToken || "";
+}
+
+async function computeLabubuPriceUsdt(deployment, provider, metaCache) {
   if (!ethers.isAddress(deployment.labubuPair)) throw new Error("KNT_LABUBU_PAIR is not configured");
-  const [labubuUsdtPair, labubuKntPair, labubuMeta, usdtMeta, kntMeta] = await Promise.all([
-    pairReserves(deployment.labubuUsdtPair, provider),
-    pairReserves(deployment.labubuPair, provider),
+
+  const [labubuMeta, usdtMeta] = await Promise.all([
     tokenMeta(deployment.labubu, provider, metaCache),
     tokenMeta(deployment.usdt, provider, metaCache),
-    tokenMeta(deployment.contract, provider, metaCache),
   ]);
-  const labubuUsdtLabubuReserve = scaleTo18(reserveOf(labubuUsdtPair, deployment.labubu), labubuMeta.decimals);
-  const labubuUsdtUsdtReserve = scaleTo18(reserveOf(labubuUsdtPair, deployment.usdt), usdtMeta.decimals);
-  const labubuKntLabubuReserve = scaleTo18(reserveOf(labubuKntPair, deployment.labubu), labubuMeta.decimals);
-  const labubuKntKntReserve = scaleTo18(reserveOf(labubuKntPair, deployment.contract), kntMeta.decimals);
-  if (
-    labubuUsdtLabubuReserve === 0n ||
-    labubuUsdtUsdtReserve === 0n ||
-    labubuKntLabubuReserve === 0n ||
-    labubuKntKntReserve === 0n
-  ) {
-    throw new Error("LABUBU/USDT or LABUBU/KNT pair has empty reserves");
+
+  if (ethers.isAddress(deployment.labubuUsdtPair || "") && !isZeroAddress(deployment.labubuUsdtPair)) {
+    const labubuUsdtPair = await pairReserves(deployment.labubuUsdtPair, provider);
+    const labubuUsdtLabubuReserve = scaleTo18(reserveOf(labubuUsdtPair, deployment.labubu), labubuMeta.decimals);
+    const labubuUsdtUsdtReserve = scaleTo18(reserveOf(labubuUsdtPair, deployment.usdt), usdtMeta.decimals);
+    if (labubuUsdtLabubuReserve === 0n || labubuUsdtUsdtReserve === 0n) {
+      throw new Error("LABUBU/USDT pair has empty reserves");
+    }
+    return {
+      labubuPriceUsdt: (labubuUsdtUsdtReserve * TEN_18) / labubuUsdtLabubuReserve,
+      labubuPricingRoute: "LABUBU/USDT",
+      baseToken: "",
+      baseTokenPriceUsdt: 0n,
+    };
   }
-  const labubuPriceUsdt = (labubuUsdtUsdtReserve * TEN_18) / labubuUsdtLabubuReserve;
-  const kntPriceLabubu = (labubuKntLabubuReserve * TEN_18) / labubuKntKntReserve;
-  return (kntPriceLabubu * labubuPriceUsdt) / TEN_18;
+
+  const baseToken = configuredLabubuBaseToken(deployment);
+  if (
+    !ethers.isAddress(baseToken || "") ||
+    !ethers.isAddress(deployment.labubuWbnbPair || "") ||
+    !ethers.isAddress(deployment.wbnbUsdtPair || "")
+  ) {
+    throw new Error("LABUBU_USDT_PAIR or LABUBU_SWAP_INTERMEDIATE_TOKEN/LABUBU_WBNB_PAIR/WBNB_USDT_PAIR is not configured");
+  }
+
+  const [labubuBasePair, baseUsdtPair, baseMeta] = await Promise.all([
+    pairReserves(deployment.labubuWbnbPair, provider),
+    pairReserves(deployment.wbnbUsdtPair, provider),
+    tokenMeta(baseToken, provider, metaCache),
+  ]);
+  const labubuReserve = scaleTo18(reserveOf(labubuBasePair, deployment.labubu), labubuMeta.decimals);
+  const baseReserveInLabubuPair = scaleTo18(reserveOf(labubuBasePair, baseToken), baseMeta.decimals);
+  const baseReserveInUsdtPair = scaleTo18(reserveOf(baseUsdtPair, baseToken), baseMeta.decimals);
+  const usdtReserveInBasePair = scaleTo18(reserveOf(baseUsdtPair, deployment.usdt), usdtMeta.decimals);
+  if (
+    labubuReserve === 0n ||
+    baseReserveInLabubuPair === 0n ||
+    baseReserveInUsdtPair === 0n ||
+    usdtReserveInBasePair === 0n
+  ) {
+    throw new Error("LABUBU/WBNB or WBNB/USDT pair has empty reserves");
+  }
+
+  const labubuPriceBase = (baseReserveInLabubuPair * TEN_18) / labubuReserve;
+  const baseTokenPriceUsdt = (usdtReserveInBasePair * TEN_18) / baseReserveInUsdtPair;
+  return {
+    labubuPriceUsdt: (labubuPriceBase * baseTokenPriceUsdt) / TEN_18,
+    labubuPricingRoute: "LABUBU/WBNB/WBNB/USDT",
+    baseToken,
+    baseTokenPriceUsdt,
+  };
 }
 
-async function lpValueForPair(definition, deployment, provider, priceNow, metaCache) {
+async function computeMarketPrices(deployment, provider, metaCache) {
+  const labubuPricing = await computeLabubuPriceUsdt(deployment, provider, metaCache);
+  const [labubuKntPair, labubuMeta, kntMeta] = await Promise.all([
+    pairReserves(deployment.labubuPair, provider),
+    tokenMeta(deployment.labubu, provider, metaCache),
+    tokenMeta(deployment.contract, provider, metaCache),
+  ]);
+  const labubuKntLabubuReserve = scaleTo18(reserveOf(labubuKntPair, deployment.labubu), labubuMeta.decimals);
+  const labubuKntKntReserve = scaleTo18(reserveOf(labubuKntPair, deployment.contract), kntMeta.decimals);
+  if (labubuKntLabubuReserve === 0n || labubuKntKntReserve === 0n) {
+    throw new Error("LABUBU/KNT pair has empty reserves");
+  }
+  const kntPriceLabubu = (labubuKntLabubuReserve * TEN_18) / labubuKntKntReserve;
+  return {
+    ...labubuPricing,
+    kntPriceUsdt: (kntPriceLabubu * labubuPricing.labubuPriceUsdt) / TEN_18,
+  };
+}
+
+async function lpValueForPair(definition, deployment, provider, prices, metaCache) {
   if (!ethers.isAddress(definition.address || "")) {
     return { ...definition, status: "missing", value: "0.0", valueRaw: "0" };
   }
@@ -419,6 +495,12 @@ async function lpValueForPair(definition, deployment, provider, priceNow, metaCa
   ]);
   const usdtReserve = reserveOf(pair, deployment.usdt);
   const kntReserve = reserveOf(pair, deployment.contract);
+  const labubuReserve = reserveOf(pair, deployment.labubu);
+  const baseToken = configuredLabubuBaseToken(deployment);
+  const baseTokenReserve = baseToken ? reserveOf(pair, baseToken) : 0n;
+  const kntPriceUsdt = typeof prices === "bigint" ? prices : prices.kntPriceUsdt;
+  const labubuPriceUsdt = typeof prices === "bigint" ? 0n : prices.labubuPriceUsdt;
+  const baseTokenPriceUsdt = typeof prices === "bigint" ? 0n : prices.baseTokenPriceUsdt;
   let value = 0n;
   let basis = "unsupported";
 
@@ -428,8 +510,16 @@ async function lpValueForPair(definition, deployment, provider, priceNow, metaCa
     basis = "usdtReserve";
   } else if (kntReserve > 0n) {
     const kntMeta = pair.token0Lower === normalize(deployment.contract) ? token0Meta : token1Meta;
-    value = ((scaleTo18(kntReserve, kntMeta.decimals) * priceNow) / TEN_18) * 2n;
+    value = ((scaleTo18(kntReserve, kntMeta.decimals) * kntPriceUsdt) / TEN_18) * 2n;
     basis = "kntReserve";
+  } else if (baseTokenReserve > 0n && baseTokenPriceUsdt > 0n) {
+    const baseMeta = pair.token0Lower === normalize(baseToken) ? token0Meta : token1Meta;
+    value = ((scaleTo18(baseTokenReserve, baseMeta.decimals) * baseTokenPriceUsdt) / TEN_18) * 2n;
+    basis = "baseTokenReserve";
+  } else if (labubuReserve > 0n && labubuPriceUsdt > 0n) {
+    const labubuMeta = pair.token0Lower === normalize(deployment.labubu) ? token0Meta : token1Meta;
+    value = ((scaleTo18(labubuReserve, labubuMeta.decimals) * labubuPriceUsdt) / TEN_18) * 2n;
+    basis = "labubuReserve";
   }
 
   return {
@@ -452,6 +542,13 @@ async function lpValueForPair(definition, deployment, provider, priceNow, metaCa
     value: fmt(value),
     valueRaw: value.toString(),
   };
+}
+
+function totalCountedPairValue(pairs) {
+  return pairs.reduce((sum, item) => {
+    if (item.countsTowardTotal === false) return sum;
+    return sum + BigInt(item.valueRaw || "0");
+  }, 0n);
 }
 
 async function kvRead(env, key, fallback) {
@@ -1896,12 +1993,13 @@ async function runMaintenance(env, options = {}) {
   const metaCache = {};
   const startedAt = new Date();
   const nowSeconds = Math.floor(startedAt.getTime() / 1000);
-  const priceNow = await computeKntPrice(deployment, provider, metaCache);
+  const marketPrices = await computeMarketPrices(deployment, provider, metaCache);
+  const priceNow = marketPrices.kntPriceUsdt;
   const snapshot = select24hPriceSnapshot(state, nowSeconds, priceNow);
   const pairValues = await Promise.all(
-    trackedPairs(deployment).map((definition) => lpValueForPair(definition, deployment, provider, priceNow, metaCache))
+    trackedPairs(deployment).map((definition) => lpValueForPair(definition, deployment, provider, marketPrices, metaCache))
   );
-  const totalLpValue = pairValues.reduce((sum, item) => sum + BigInt(item.valueRaw || "0"), 0n);
+  const totalLpValue = totalCountedPairValue(pairValues);
   const previousGlobalLp = await knt.globalLpValueUsdt();
   const lpStepSize = ethers.parseEther("10000");
   const previousEmissionSteps = previousGlobalLp / lpStepSize;
@@ -2062,18 +2160,29 @@ async function loadStatus(env) {
     knt.rewardPeriodSeconds(),
   ]);
 
+  let labubuSwapIntermediateToken = deployment.labubuSwapIntermediateToken || "";
+  try {
+    labubuSwapIntermediateToken = await knt.labubuSwapIntermediateToken();
+  } catch (_error) {
+    labubuSwapIntermediateToken = deployment.labubuSwapIntermediateToken || "";
+  }
+
   let market = { pairs: [], error: null };
   try {
     const metaCache = {};
-    const priceNow = await computeKntPrice(deployment, provider, metaCache);
+    const marketPrices = await computeMarketPrices(deployment, provider, metaCache);
+    const priceNow = marketPrices.kntPriceUsdt;
     const pairs = await Promise.all(
-      trackedPairs(deployment).map((definition) => lpValueForPair(definition, deployment, provider, priceNow, metaCache))
+      trackedPairs(deployment).map((definition) => lpValueForPair(definition, deployment, provider, marketPrices, metaCache))
     );
     market = {
       priceNow: fmt(priceNow),
       priceNowRaw: priceNow.toString(),
+      labubuPriceUsdt: fmt(marketPrices.labubuPriceUsdt),
+      labubuPriceUsdtRaw: marketPrices.labubuPriceUsdt.toString(),
+      labubuPricingRoute: marketPrices.labubuPricingRoute,
       pairs,
-      totalLpValue: fmt(pairs.reduce((sum, item) => sum + BigInt(item.valueRaw || "0"), 0n)),
+      totalLpValue: fmt(totalCountedPairValue(pairs)),
     };
   } catch (error) {
     market = { pairs: [], error: error.shortMessage || error.message };
@@ -2114,6 +2223,7 @@ async function loadStatus(env) {
         usdtToken,
         labubuToken,
         labubuKntPair,
+        labubuSwapIntermediateToken,
       },
       params: {
         burnQueueRewardBP: burnQueueRewardBP.toString(),

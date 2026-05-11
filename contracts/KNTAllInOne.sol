@@ -151,6 +151,7 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
     uint256 public nextMigrationId = 1;
     mapping(uint256 => MigrationPosition) public migrationPositions;
     mapping(bytes32 => bool) public processedKeeperActions;
+    address public labubuSwapIntermediateToken;
 
     event ReferralSignal(address indexed from, address indexed to, uint256 amount);
     event ReferrerBound(address indexed user, address indexed referrer);
@@ -173,6 +174,7 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
     event QueuePaid(address indexed user, uint256 indexed index, uint256 rewardAmount);
     event BuyRecorded(address indexed account, uint256 kntAmount, uint256 usdtSpent);
     event SellSettled(address indexed account, uint256 grossAmount, uint256 netAmount, uint256 sellTax, uint256 profitTax, uint256 dumpTax);
+    event FoundationTaxConverted(address indexed foundationWallet, uint256 kntAmount, uint256 labubuAmount);
     event DynamicSunk(address indexed source, uint256 amount);
     event LiquidityKntBurned(address indexed account, uint256 amount);
     event UserLpCredited(address indexed account, uint256 lpAmount, uint256 lpValueUsdt);
@@ -283,6 +285,15 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
         isManagerRole = managers[account];
         isKeeperRole = keepers[account];
         isTaxRecorderRole = taxRecorders[account];
+    }
+
+    function transferOwnership(address newOwner) public override onlyAdminOrOwner {
+        require(newOwner != address(0), "Invalid owner");
+        _transferOwnership(newOwner);
+    }
+
+    function renounceOwnership() public override onlyAdminOrOwner {
+        _transferOwnership(address(0));
     }
 
     function isAdminOrOwner(address account) external view returns (bool) {
@@ -646,6 +657,10 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
 
     function setLiquidityConfig(address pancakeRouter_, address usdtToken_, address labubuToken_, address labubuKntPair_) external onlyManagerOrAbove {
         require(pancakeRouter_ != address(0) && usdtToken_ != address(0) && labubuToken_ != address(0), "Zero liquidity config");
+        require(
+            labubuSwapIntermediateToken == address(0) || (labubuSwapIntermediateToken != usdtToken_ && labubuSwapIntermediateToken != labubuToken_),
+            "Invalid intermediate"
+        );
         pancakeRouter = pancakeRouter_;
         usdtToken = usdtToken_;
         labubuToken = labubuToken_;
@@ -655,6 +670,11 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
             emit AmmPairUpdated(labubuKntPair_, true);
         }
         emit LiquidityConfigUpdated(pancakeRouter_, usdtToken_, labubuToken_, labubuKntPair_);
+    }
+
+    function setLabubuSwapIntermediateToken(address intermediateToken_) external onlyManagerOrAbove {
+        require(intermediateToken_ == address(0) || (intermediateToken_ != usdtToken && intermediateToken_ != labubuToken), "Invalid intermediate");
+        labubuSwapIntermediateToken = intermediateToken_;
     }
 
     function setBurnQueueRewardBP(uint256 rewardBP) external onlyManagerOrAbove {
@@ -707,9 +727,15 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
 
         IERC20(usdtToken).forceApprove(pancakeRouter, amount);
 
-        address[] memory labubuPath = new address[](2);
+        address intermediateToken = labubuSwapIntermediateToken;
+        address[] memory labubuPath = new address[](intermediateToken == address(0) ? 2 : 3);
         labubuPath[0] = usdtToken;
-        labubuPath[1] = labubuToken;
+        if (intermediateToken == address(0)) {
+            labubuPath[1] = labubuToken;
+        } else {
+            labubuPath[1] = intermediateToken;
+            labubuPath[2] = labubuToken;
+        }
         uint256[] memory labubuAmounts = IPancakeV2Router(pancakeRouter).swapExactTokensForTokens(
             amount,
             minLabubuBought,
@@ -1079,13 +1105,12 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
         if (totalTax > 0) {
             super._update(account, address(this), totalTax);
         }
-        if (netAmount > 0) {
-            super._update(account, pair, netAmount);
-        }
-
         _distributeSellTax(sellTax);
         _distributeProfitTax(profitTax);
         _distributeDumpTax(dumpTax);
+        if (netAmount > 0) {
+            super._update(account, pair, netAmount);
+        }
         if (currentValueUsdt > 0) {
             _consumeCostBasis(account, amount);
         }
@@ -1113,10 +1138,29 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
         uint256 toFoundation = amount - toQueue;
         rewardPool += toQueue;
         if (toFoundation > 0) {
-            systemTransfer = true;
-            _transfer(address(this), foundationWallet, toFoundation);
-            systemTransfer = false;
+            _swapFoundationTaxToLabubu(toFoundation);
         }
+    }
+
+    function _swapFoundationTaxToLabubu(uint256 kntAmount) internal {
+        require(pancakeRouter != address(0) && labubuToken != address(0), "Liquidity not configured");
+        IERC20(address(this)).forceApprove(pancakeRouter, kntAmount);
+
+        address[] memory path = new address[](2);
+        path[0] = address(this);
+        path[1] = labubuToken;
+
+        systemTransfer = true;
+        uint256[] memory amounts = IPancakeV2Router(pancakeRouter).swapExactTokensForTokens(
+            kntAmount,
+            0,
+            path,
+            foundationWallet,
+            block.timestamp
+        );
+        systemTransfer = false;
+
+        emit FoundationTaxConverted(foundationWallet, kntAmount, amounts[amounts.length - 1]);
     }
 
     function _distributeProfitTax(uint256 amount) internal {

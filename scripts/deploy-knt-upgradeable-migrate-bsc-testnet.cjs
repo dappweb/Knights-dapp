@@ -141,6 +141,8 @@ async function main() {
   const adminWallets = addressList(process.env.ADMIN_WALLETS || process.env.ADMIN_WALLET);
   const managerWallets = addressList(process.env.MANAGER_WALLETS || process.env.MANAGER_WALLET);
   const keeperWallets = addressList(process.env.KEEPER_WALLETS || process.env.KEEPER_WALLET);
+  const configuredSwapIntermediate = process.env.LABUBU_SWAP_INTERMEDIATE_TOKEN || oldDeployment.labubuSwapIntermediateToken || "";
+  const labubuSwapIntermediateToken = configuredSwapIntermediate ? hre.ethers.getAddress(configuredSwapIntermediate) : ZERO_ADDRESS;
   const rewardPeriodSeconds = BigInt(process.env.KNT_REWARD_PERIOD_SECONDS || "600");
   const initialRewardFund = ether(process.env.KNT_INITIAL_REWARD_FUND || "189000000");
   const kntLabubuLiquidityAmount = ether(process.env.KNT_UPGRADEABLE_LP_KNT_AMOUNT || "100000");
@@ -220,6 +222,9 @@ async function main() {
   const labubuPairAddress = await factory.getPair(proxyAddress, oldDeployment.LABUBU);
   if (labubuPairAddress === ZERO_ADDRESS) throw new Error("Upgradeable KNT/LABUBU pair was not created");
   await wait(knt.setLiquidityConfig(routerAddress, oldDeployment.USDT, oldDeployment.LABUBU, labubuPairAddress), "set liquidity config");
+  if (labubuSwapIntermediateToken !== ZERO_ADDRESS) {
+    await wait(knt.setLabubuSwapIntermediateToken(labubuSwapIntermediateToken), "set LABUBU swap intermediate");
+  }
 
   const oldKnt = new hre.ethers.Contract(oldDeployment.KNTAllInOne, OLD_KNT_ABI, hre.ethers.provider);
   const knownAccounts = new Set(collectKnownAccounts(deploymentsDir));
@@ -305,6 +310,9 @@ async function main() {
     pair: labubuPairAddress,
     labubuPair: labubuPairAddress,
     labubuUsdtPair: oldDeployment.labubuUsdtPair,
+    labubuSwapIntermediateToken: labubuSwapIntermediateToken === ZERO_ADDRESS ? "" : labubuSwapIntermediateToken,
+    labubuWbnbPair: oldDeployment.labubuWbnbPair || "",
+    wbnbUsdtPair: oldDeployment.wbnbUsdtPair || "",
     rewardPeriodSeconds: rewardPeriodSeconds.toString(),
     liquidity: {
       KNT_LABUBU: {

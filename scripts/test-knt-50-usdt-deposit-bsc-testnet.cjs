@@ -524,6 +524,7 @@ async function main() {
   for (const addressLower of uniqueObservedWallets) {
     balancesBeforeSell[addressLower] = await knt.balanceOf(addressByLower[addressLower]);
   }
+  const foundationLabubuBeforeSell = await labubu.balanceOf(deployment.wallets.foundationWallet);
   const burnedBeforeSell = await knt.totalBurned();
   const rewardPoolBeforeSell = await knt.rewardPool();
   const recordBuyReceipt = await wait(knt.recordBuy(wallets.B.address, sellAmount, ether("100")), "record B buy cost basis");
@@ -532,14 +533,15 @@ async function main() {
   for (const addressLower of uniqueObservedWallets) {
     balancesAfterSell[addressLower] = await knt.balanceOf(addressByLower[addressLower]);
   }
+  const foundationLabubuDeltaSell = (await labubu.balanceOf(deployment.wallets.foundationWallet)) - foundationLabubuBeforeSell;
   const burnedDeltaSell = (await knt.totalBurned()) - burnedBeforeSell;
   const rewardPoolDeltaSell = (await knt.rewardPool()) - rewardPoolBeforeSell;
   const expectedDeltas = {};
   addExpectedDelta(expectedDeltas, autoSellPair, ether("85"));
-  addExpectedDelta(expectedDeltas, deployment.wallets.foundationWallet, ether("3"));
   addExpectedDelta(expectedDeltas, ecosystemWallet, ether("5.000000000000000001"));
   const taxOk =
     uniqueObservedWallets.every((addressLower) => balancesAfterSell[addressLower] - balancesBeforeSell[addressLower] === (expectedDeltas[addressLower] || 0n)) &&
+    foundationLabubuDeltaSell > 0n &&
     burnedDeltaSell === ether("3.333333333333333333") &&
     rewardPoolDeltaSell === ether("3.666666666666666666");
   const balanceDeltas = {};
@@ -548,13 +550,15 @@ async function main() {
   }
   report.results.push(
     taxOk
-      ? pass("Automatic AMM sell tax", "100 KNT sell sends 85 KNT to pair and distributes taxes", {
+      ? pass("Automatic AMM sell tax", "100 KNT sell sends 85 KNT to pair, swaps foundation tax to LABUBU, and distributes taxes", {
           balanceDeltas,
+          foundationLabubuDelta: fmt(foundationLabubuDeltaSell),
           burnedDelta: fmt(burnedDeltaSell),
           rewardPoolDelta: fmt(rewardPoolDeltaSell),
         }, [recordBuyReceipt.hash, sellReceipt.hash])
-      : diff("Automatic AMM sell tax", "100 KNT sell sends 85 KNT to pair and distributes taxes", {
+      : diff("Automatic AMM sell tax", "100 KNT sell sends 85 KNT to pair, swaps foundation tax to LABUBU, and distributes taxes", {
           balanceDeltas,
+          foundationLabubuDelta: fmt(foundationLabubuDeltaSell),
           burnedDelta: fmt(burnedDeltaSell),
           rewardPoolDelta: fmt(rewardPoolDeltaSell),
         }, [recordBuyReceipt.hash, sellReceipt.hash])

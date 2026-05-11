@@ -33,6 +33,8 @@ npx wrangler secret put BSC_RPC_URL --env production
 
 Use `BSC_MAINNET_RPC_URL` locally for Hardhat, and keep `PUBLIC_BSC_RPC_URL` on a public endpoint for wallet network metadata.
 
+Mainnet LABUBU pricing can be configured without a direct LABUBU/USDT pool by setting `LABUBU_SWAP_INTERMEDIATE_TOKEN` to WBNB plus `LABUBU_WBNB_PAIR` and `WBNB_USDT_PAIR`. The Worker then derives LABUBU/USDT through `LABUBU -> WBNB -> USDT`.
+
 ## Deploy
 
 ```powershell

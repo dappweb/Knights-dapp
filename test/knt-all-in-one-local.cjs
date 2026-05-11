@@ -24,8 +24,8 @@ async function deployKnt() {
   return { knt, owner, user, pair, foundation, dex, ecosystem, admin, manager, keeper, taxRecorder };
 }
 
-async function deployUsdtDepositHarness() {
-  const [owner, user, pair, foundation, dex, keeper] = await ethers.getSigners();
+async function deployKntWithFoundationSwap() {
+  const [owner, user, pair, foundation, dex, ecosystem, admin, manager, keeper, taxRecorder] = await ethers.getSigners();
   const TestToken = await ethers.getContractFactory("TestToken");
   const TestPancakeRouter = await ethers.getContractFactory("TestPancakeRouter");
 
@@ -46,10 +46,43 @@ async function deployUsdtDepositHarness() {
     await labubu.getAddress()
   );
   await knt.waitForDeployment();
+  await knt.setEcosystemWallet(ecosystem.address);
+  await knt.setLiquidityConfig(await router.getAddress(), await usdt.getAddress(), await labubu.getAddress(), pair.address);
+
+  await labubu.mint(await router.getAddress(), ether("1000000"));
+  await router.setSwapOutput(await knt.getAddress(), await labubu.getAddress(), ether("3"));
+
+  return { knt, usdt, labubu, router, owner, user, pair, foundation, dex, ecosystem, admin, manager, keeper, taxRecorder };
+}
+
+async function deployUsdtDepositHarness() {
+  const [owner, user, pair, foundation, dex, keeper] = await ethers.getSigners();
+  const TestToken = await ethers.getContractFactory("TestToken");
+  const TestPancakeRouter = await ethers.getContractFactory("TestPancakeRouter");
+
+  const usdt = await TestToken.deploy("Tether USD Test Token", "USDT", 18, owner.address);
+  await usdt.waitForDeployment();
+  const labubu = await TestToken.deploy("LABUBU Test Token", "LABUBU", 18, owner.address);
+  await labubu.waitForDeployment();
+  const wbnb = await TestToken.deploy("Wrapped BNB Test Token", "WBNB", 18, owner.address);
+  await wbnb.waitForDeployment();
+  const router = await TestPancakeRouter.deploy();
+  await router.waitForDeployment();
+
+  const KNTAllInOne = await ethers.getContractFactory("KNTAllInOne");
+  const knt = await KNTAllInOne.deploy(
+    owner.address,
+    foundation.address,
+    dex.address,
+    await router.getAddress(),
+    await usdt.getAddress(),
+    await labubu.getAddress()
+  );
+  await knt.waitForDeployment();
   await knt.setLiquidityConfig(await router.getAddress(), await usdt.getAddress(), await labubu.getAddress(), pair.address);
   await knt.setKeeper(keeper.address, true);
 
-  return { knt, usdt, labubu, router, owner, user, pair, dex, keeper };
+  return { knt, usdt, labubu, wbnb, router, owner, user, pair, dex, keeper };
 }
 
 async function parsedEvents(knt, tx) {
@@ -128,7 +161,7 @@ describe("KNTAllInOne business guards", function () {
   });
 
   it("emits burn and tax events used by accounting records", async function () {
-    const { knt, user, pair } = await deployKnt();
+    const { knt, user, pair } = await deployKntWithFoundationSwap();
     await knt.transfer(user.address, ether("320"));
 
     const burnQueuedEvents = await parsedEvents(knt, knt.connect(user).transfer(ethers.ZeroAddress, ether("10")));
@@ -178,12 +211,14 @@ describe("KNTAllInOne business guards", function () {
   });
 
   it("settles Pancake AMM sells automatically with profit tax and cost-basis consumption", async function () {
-    const { knt, user, pair, foundation, dex, ecosystem } = await deployKnt();
+    const { knt, user, pair, foundation, dex, ecosystem, labubu, router } = await deployKntWithFoundationSwap();
     await knt.transfer(user.address, ether("100"));
     await knt.recordBuy(user.address, ether("100"), ether("100"));
     await knt.keeperUpdateKntPrices(ethers.parseEther("1.5"), ethers.parseEther("1.5"));
 
-    const foundationBefore = await knt.balanceOf(foundation.address);
+    const foundationKntBefore = await knt.balanceOf(foundation.address);
+    const foundationLabubuBefore = await labubu.balanceOf(foundation.address);
+    const routerKntBefore = await knt.balanceOf(await router.getAddress());
     const dexBefore = await knt.balanceOf(dex.address);
     const ecosystemBefore = await knt.balanceOf(ecosystem.address);
     const burnedBefore = await knt.totalBurned();
@@ -192,11 +227,20 @@ describe("KNTAllInOne business guards", function () {
     await knt.connect(user).transfer(pair.address, ether("100"));
 
     assert.equal(await knt.balanceOf(pair.address), ether("85"));
-    assert.equal((await knt.balanceOf(foundation.address)) - foundationBefore, ether("3"));
+    assert.equal((await knt.balanceOf(foundation.address)) - foundationKntBefore, 0n);
+    assert.equal((await labubu.balanceOf(foundation.address)) - foundationLabubuBefore, ether("3"));
+    assert.equal((await knt.balanceOf(await router.getAddress())) - routerKntBefore, ether("3"));
     assert.equal((await knt.balanceOf(dex.address)) - dexBefore, 0n);
     assert.equal((await knt.balanceOf(ecosystem.address)) - ecosystemBefore, ether("5.000000000000000001"));
     assert.equal((await knt.totalBurned()) - burnedBefore, ether("3.333333333333333333"));
     assert.equal((await knt.rewardPool()) - rewardPoolBefore, ether("3.666666666666666666"));
+
+    assert.equal(await router.swapRecordCount(), 1n);
+    const foundationSwap = await router.swapRecord(0);
+    assert.equal(foundationSwap.amountIn, ether("3"));
+    assert.equal(foundationSwap.tokenIn, await knt.getAddress());
+    assert.equal(foundationSwap.tokenOut, await labubu.getAddress());
+    assert.equal(foundationSwap.to, foundation.address);
 
     const basis = await knt.costBasisOf(user.address);
     assert.equal(basis.boughtKnt, 0n);
@@ -354,6 +398,48 @@ describe("KNTAllInOne business guards", function () {
     assert.equal(credited.args.account, user.address);
     assert.equal(credited.args.lpAmount, ether("123"));
     assert.equal(credited.args.lpValueUsdt, ether("1000"));
+  });
+
+  it("uses a configured intermediate token for the USDT to LABUBU swap", async function () {
+    const { knt, usdt, labubu, wbnb, router, user, dex, keeper } = await deployUsdtDepositHarness();
+    const kntAddress = await knt.getAddress();
+    const usdtAddress = await usdt.getAddress();
+    const labubuAddress = await labubu.getAddress();
+    const wbnbAddress = await wbnb.getAddress();
+    const routerAddress = await router.getAddress();
+
+    await assert.rejects(knt.setLabubuSwapIntermediateToken(usdtAddress), /Invalid intermediate/);
+    await assert.rejects(knt.setLabubuSwapIntermediateToken(labubuAddress), /Invalid intermediate/);
+    await knt.setLabubuSwapIntermediateToken(wbnbAddress);
+    assert.equal(await knt.labubuSwapIntermediateToken(), wbnbAddress);
+
+    await usdt.mint(user.address, ether("1000"));
+    await labubu.mint(routerAddress, ether("2000"));
+    await knt.transfer(routerAddress, ether("100"));
+    await knt.connect(dex).approve(kntAddress, ethers.MaxUint256);
+    await router.setSwapOutput(usdtAddress, labubuAddress, ether("2000"));
+    await router.setSwapOutput(labubuAddress, kntAddress, ether("100"));
+    await router.setLiquidityToMint(ether("123"));
+
+    await usdt.connect(user).transfer(kntAddress, ether("1000"));
+    const block = await ethers.provider.getBlock("latest");
+    const depositId = ethers.keccak256(ethers.toUtf8Bytes("deposit-with-hop"));
+    await knt.connect(keeper).processUsdtDeposit(
+      user.address,
+      ether("1000"),
+      depositId,
+      0,
+      0,
+      0,
+      0,
+      0,
+      block.timestamp + 1200
+    );
+
+    const firstSwap = await router.swapRecord(0);
+    assert.equal(firstSwap.tokenIn, usdtAddress);
+    assert.equal(firstSwap.tokenOut, labubuAddress);
+    assert.equal(firstSwap.viaToken, wbnbAddress);
   });
 
   it("time travels across one day for rewards, compounding, and migration release", async function () {
