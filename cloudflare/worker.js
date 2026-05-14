@@ -566,6 +566,22 @@ async function withKeeperLock(env, name, fn, ttlSeconds = 180) {
   if (!env.KNT_ADMIN_STATE) return fn();
   const deployment = requireDeployment(env);
   const key = `keeper-lock:${normalize(deployment.contract)}:${name}`;
+  const token = crypto.randomUUID();
+  if (env.KNT_ADMIN_STATE.acquireLock) {
+    const acquired = await env.KNT_ADMIN_STATE.acquireLock(key, token, ttlSeconds);
+    if (!acquired) {
+      return {
+        status: "skipped",
+        reason: "keeper lock active",
+        lock: name,
+      };
+    }
+    try {
+      return await fn();
+    } finally {
+      await env.KNT_ADMIN_STATE.releaseLock?.(key, token);
+    }
+  }
   const existing = await env.KNT_ADMIN_STATE.get(key);
   if (existing) {
     return {
@@ -574,7 +590,6 @@ async function withKeeperLock(env, name, fn, ttlSeconds = 180) {
       lock: name,
     };
   }
-  const token = crypto.randomUUID();
   await env.KNT_ADMIN_STATE.put(key, token, { expirationTtl: ttlSeconds });
   try {
     return await fn();

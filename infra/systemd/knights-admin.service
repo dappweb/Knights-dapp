@@ -1,0 +1,17 @@
+[Unit]
+Description=Knights Admin API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/knights-dapp
+EnvironmentFile=/etc/knights-admin.env
+ExecStart=/usr/bin/node --no-warnings=ExperimentalWarning src/admin/server.mjs
+Restart=always
+RestartSec=5
+User=knights
+Group=knights
+
+[Install]
+WantedBy=multi-user.target

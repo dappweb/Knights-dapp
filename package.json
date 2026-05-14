@@ -1,6 +1,7 @@
 {
   "name": "knights-dapp-contracts",
   "private": true,
+  "type": "module",
   "version": "0.1.0",
   "scripts": {
     "compile": "hardhat compile",
@@ -20,6 +21,10 @@
     "admin:update-pool:bsc:testnet": "hardhat run scripts/admin-update-pool-bsc-testnet.cjs --network bscTestnet",
     "keeper:process-usdt:bsc:testnet": "hardhat run scripts/keeper-process-usdt-deposits-bsc-testnet.cjs --network bscTestnet",
     "keeper:maintenance:bsc:testnet": "hardhat run scripts/keeper-maintenance-bsc-testnet.cjs --network bscTestnet",
+    "admin:server": "node --no-warnings=ExperimentalWarning src/admin/server.mjs",
+    "admin:import-state": "node --no-warnings=ExperimentalWarning src/admin/import-state.mjs",
+    "deploy:linux": "bash infra/linux/deploy.sh",
+    "keeper:scheduled": "node --no-warnings=ExperimentalWarning src/admin/cron.mjs",
     "dev:cloudflare": "wrangler dev",
     "dev:cloudflare:production": "wrangler dev --env production",
     "deploy:cloudflare": "wrangler deploy --env production",

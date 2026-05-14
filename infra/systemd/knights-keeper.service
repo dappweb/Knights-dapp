@@ -1,0 +1,12 @@
+[Unit]
+Description=Knights scheduled keeper run
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/knights-dapp
+EnvironmentFile=/etc/knights-admin.env
+ExecStart=/usr/bin/node --no-warnings=ExperimentalWarning src/admin/cron.mjs
+User=knights
+Group=knights

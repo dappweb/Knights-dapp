@@ -1,0 +1,14 @@
+admin.example.com {
+    encode zstd gzip
+
+    @api path /api/*
+    handle @api {
+        reverse_proxy 127.0.0.1:3000
+    }
+
+    handle {
+        root * /opt/knights-dapp/admin
+        try_files {path} /index.html
+        file_server
+    }
+}
