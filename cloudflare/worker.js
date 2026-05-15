@@ -2267,15 +2267,22 @@ async function loadStatus(env) {
 async function loadRole(env, account) {
   if (!ethers.isAddress(account || "")) throw new Error("Invalid account address");
   const provider = providerFor(env);
-  const knt = kntContract(env, provider);
-  const role = await knt.roleOf(account);
+  const contractAddress = env.KNT_CONTRACT_ADDRESS;
+  const selector = ethers.id("roleOf(address)").slice(0, 10);
+  const data = selector + ethers.zeroPadValue(account, 32).slice(2);
+  const raw = await provider.call({ to: contractAddress, data });
+  // Older deployed implementations return 4 bools (no taxRecorder).
+  // Newer implementations return 5 bools. Decode by length.
+  const types = raw.length >= 2 + 5 * 64 ? ["bool", "bool", "bool", "bool", "bool"] : ["bool", "bool", "bool", "bool"];
+  const decoded = ethers.AbiCoder.defaultAbiCoder().decode(types, raw);
+  const taxRecorder = types.length >= 5 ? Boolean(decoded[4]) : false;
   return {
     account: ethers.getAddress(account),
-    isOwner: role.isOwnerRole,
-    isAdmin: role.isAdminRole,
-    isManager: role.isManagerRole,
-    isKeeper: role.isKeeperRole,
-    isTaxRecorder: role.isTaxRecorderRole,
+    isOwner: Boolean(decoded[0]),
+    isAdmin: Boolean(decoded[1]),
+    isManager: Boolean(decoded[2]),
+    isKeeper: Boolean(decoded[3]),
+    isTaxRecorder: taxRecorder,
   };
 }
 
