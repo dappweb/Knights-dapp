@@ -1,7 +1,7 @@
 {
   "network": "bscTestnet",
   "chainId": 97,
-  "contract": "0x14Dc8a0E97815128304883DEaEc89D6773937dc0",
+  "contract": "0x6d15543f858E185240841015159427957f390eAF",
   "usdt": "0xacD944e910952c020eb129C50921f180c62c3291",
   "lastScannedBlock": 105586019,
   "runs": [
@@ -997,33 +997,107 @@
       },
       "status": "processed",
       "finishedAt": "2026-05-05T05:03:54.243Z"
+    },
+    {
+      "startedAt": "2026-05-19T12:25:20.205Z",
+      "keeper": "0xAC25dA7FdEEEaDf2943EBF505Fa9739CBD111bD8",
+      "contract": "0x6d15543f858E185240841015159427957f390eAF",
+      "priceNow": "3.0",
+      "priceNowRaw": "3000000000000000000",
+      "labubuPriceUsdt": "1.0",
+      "labubuPriceUsdtRaw": "1000000000000000000",
+      "labubuPricingRoute": "LABUBU/USDT",
+      "price24hAgo": "3.124134021079283292",
+      "price24hAgoRaw": "3124134021079283292",
+      "price24hSource": "snapshot",
+      "price24hSnapshotAt": "2026-05-05T05:03:37.000Z",
+      "pairs": [
+        {
+          "key": "LABUBU_USDT",
+          "label": "LABUBU/USDT",
+          "address": "0x628578cACC1210f8a082bDe659072aCB4Ad11DEA",
+          "valuation": "USDT reserve x 2",
+          "status": "valued",
+          "token0": {
+            "address": "0xacD944e910952c020eb129C50921f180c62c3291",
+            "symbol": "USDx5",
+            "reserveRaw": "1000000000000000000000",
+            "reserve": "1000.0"
+          },
+          "token1": {
+            "address": "0xe8214E6580f81835F13Ac358DCc72ac7d4d78052",
+            "symbol": "LABUBU",
+            "reserveRaw": "1000000000000000000000",
+            "reserve": "1000.0"
+          },
+          "basis": "usdtReserve",
+          "value": "2000.0",
+          "valueRaw": "2000000000000000000000"
+        },
+        {
+          "key": "LABUBU_KNT",
+          "label": "LABUBU/KNT",
+          "address": "0x8A5E41D891b6BE9E470Ab3307dE8E24C8073ff00",
+          "valuation": "KNT reserve x derived KNT price x 2",
+          "status": "valued",
+          "token0": {
+            "address": "0x6d15543f858E185240841015159427957f390eAF",
+            "symbol": "KNT",
+            "reserveRaw": "1000000000000000000000",
+            "reserve": "1000.0"
+          },
+          "token1": {
+            "address": "0xe8214E6580f81835F13Ac358DCc72ac7d4d78052",
+            "symbol": "LABUBU",
+            "reserveRaw": "3000000000000000000000",
+            "reserve": "3000.0"
+          },
+          "basis": "kntReserve",
+          "value": "6000.0",
+          "valueRaw": "6000000000000000000000"
+        }
+      ],
+      "totalLpValue": "8000.0",
+      "totalLpValueRaw": "8000000000000000000000",
+      "previousGlobalLpValue": "0.0",
+      "previousGlobalLpValueRaw": "0",
+      "lpValueDelta": "8000.0",
+      "emissionStepsBefore": "0",
+      "emissionStepsAfter": "0",
+      "emissionStepsAdded": "0",
+      "currentDay": "19",
+      "txs": {
+        "updatePrice": "0x56aa948f4260d23a41bb4ff9ef8e2235ea1115ea7ab1ecd7c4aeeff6596e01ce",
+        "updateLp": "0x01e865a77c76bbfbeaec1357d5dc0278cc0d0d1e804dade0f2a6dca836450dd9",
+        "updatePool": "0x1944bf4839fd658ace73c2b74141af09f8da2954209036ab8d2d8a0fb42ffe83",
+        "processBurnQueue": "0x5ec048c48f93666f63e5d60d5fcc78a0869b7cf2df313d5b40009054952ce058"
+      },
+      "burnQueue": {
+        "maxCount": 20,
+        "expectedPaidCount": "0",
+        "paid": [],
+        "nextPayoutIndex": "0",
+        "length": "0",
+        "rewardPool": "188936160.0"
+      },
+      "dailyEmissionAfterUpdate": "3360.0",
+      "dailyEmissionAfterUpdateRaw": "3360000000000000000000",
+      "onChain": {
+        "globalLpValue": "8000.0",
+        "latestKntPrice": "3.0",
+        "price24hAgo": "3.124134021079283292"
+      },
+      "status": "processed",
+      "finishedAt": "2026-05-19T12:25:44.664Z"
     }
   ],
-  "labubu": "0x202C8095F5D52EDF56EaFF8c36aA930e2C414181",
+  "labubu": "0xe8214E6580f81835F13Ac358DCc72ac7d4d78052",
   "priceSnapshots": [
     {
-      "at": "2026-05-05T03:27:27.000Z",
-      "timestamp": 1777951647,
-      "priceNow": "3.085423579833396952",
-      "priceNowRaw": "3085423579833396952"
-    },
-    {
-      "at": "2026-05-05T03:53:20.000Z",
-      "timestamp": 1777953200,
-      "priceNow": "3.173590800977452165",
-      "priceNowRaw": "3173590800977452165"
-    },
-    {
-      "at": "2026-05-05T04:39:10.000Z",
-      "timestamp": 1777955950,
-      "priceNow": "3.124134021079283292",
-      "priceNowRaw": "3124134021079283292"
-    },
-    {
-      "at": "2026-05-05T05:03:37.000Z",
-      "timestamp": 1777957417,
-      "priceNow": "3.124134021079283292",
-      "priceNowRaw": "3124134021079283292"
+      "at": "2026-05-19T12:25:20.000Z",
+      "timestamp": 1779193520,
+      "priceNow": "3.0",
+      "priceNowRaw": "3000000000000000000"
     }
   ]
 }

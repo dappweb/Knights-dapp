@@ -105,7 +105,7 @@ async function main() {
       deposit: "transfer USDT to the KNT contract; keeper scans the USDT Transfer event and calls processUsdtDeposit(account, amount, depositId, ...). The contract swaps all USDT to LABUBU, swaps half LABUBU to KNT, then adds LABUBU/KNT LP directly to the user wallet while immediately crediting KNT accounting power.",
       referral: "Admin can setReferralSignalAmount(N); A transfers N KNT to B, then B transfers N KNT to A, binding B under A. bindReferrer(A) is also supported.",
       burnQueue: "transfer KNT to 0x000000000000000000000000000000000000dEaD or call burnAndQueue(amount)",
-      rewards: "users do not call claim(); keeper distributes pending rewards during processUsdtDeposit(...) or keeperDistributeRewards(accounts)",
+      rewards: "keeper distributes pending rewards during processUsdtDeposit(...) or keeperDistributeRewards(accounts)",
       lpExit: "users remove wallet-held LABUBU/KNT LP on Pancake; keeper scans LP exits, calls keeperReduceUserLp/keeperReduceUserLpAmountFromSource to update accounting, and burns KNT received from the pair",
     },
   };

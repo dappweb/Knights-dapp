@@ -26,6 +26,15 @@ interface IPancakeV2Router {
 
 }
 
+interface IPancakeProxy {
+    function swapByUsdt(
+        uint256 amountIn,
+        uint256 amountOutMin,
+        address to,
+        uint256 deadline
+    ) external returns (uint256);
+}
+
 contract KNTAllInOneUpgradeable {
     using SafeERC20 for IERC20;
 
@@ -33,7 +42,6 @@ contract KNTAllInOneUpgradeable {
 
     uint256 public constant BASIS_POINTS = 10_000;
     uint256 public constant TOTAL_SUPPLY = 210_000_000 ether;
-
     uint256 public constant BASE_DAILY_EMISSION = 1_560 ether;
     uint256 public constant MAX_DAILY_EMISSION = 3_360 ether;
     uint256 public constant EMISSION_STEP_PER_10K_LP = 100 ether;
@@ -61,7 +69,8 @@ contract KNTAllInOneUpgradeable {
     uint256 public constant PROFIT_TAX_QUEUE_BP = 500;
     uint256 public constant PROFIT_TAX_BURN_BP = 1_000;
     uint256 public constant MIGRATION_RELEASE_BP = 10;
-    uint256 public constant MIGRATION_BOOST_RELEASE_BP = 30;
+    uint256 public constant MIGRATION_ACCEL_RELEASE_BP = 50;
+    uint256 private constant MIGRATION_RELEASE_PERIOD = 1 days;
 
     address public foundationWallet;
     address public dexSettlementWallet;
@@ -147,7 +156,7 @@ contract KNTAllInOneUpgradeable {
     mapping(address => CostBasis) public costBasisOf;
     mapping(address => bool) public admins;
     mapping(address => bool) public managers;
-    mapping(address => bool) public taxRecorders;
+    mapping(address => bool) private taxRecorders; // Deprecated storage slot; buy recording now uses Keeper+.
     mapping(address => bool) public keepers;
     mapping(address => bool) public ammPairs;
     mapping(bytes32 => bool) public processedUsdtDeposits;
@@ -159,7 +168,14 @@ contract KNTAllInOneUpgradeable {
     uint256 public nextMigrationId = 1;
     mapping(uint256 => MigrationPosition) public migrationPositions;
     mapping(bytes32 => bool) public processedKeeperActions;
+    mapping(address => uint256) public directNewLpValueUsdtOf;
+    mapping(address => uint256) private newLpValueUsdtOf;
+    mapping(address => uint256) private migrationBoostStartDayOf;
     address public labubuSwapIntermediateToken;
+    address public pancakeProxy;
+    mapping(address => uint256) private nodeUnits;
+    uint256 private totalNodeUnitCount;
+    mapping(address => uint256) private legacyLpValueUsdtOf;
 
     event ReferralSignal(address indexed from, address indexed to, uint256 amount);
     event ReferrerBound(address indexed user, address indexed referrer);
@@ -183,6 +199,7 @@ contract KNTAllInOneUpgradeable {
     event BuyRecorded(address indexed account, uint256 kntAmount, uint256 usdtSpent);
     event SellSettled(address indexed account, uint256 grossAmount, uint256 netAmount, uint256 sellTax, uint256 profitTax, uint256 dumpTax);
     event FoundationTaxConverted(address indexed foundationWallet, uint256 kntAmount, uint256 labubuAmount);
+    event EcosystemTaxConverted(address indexed ecosystemWallet, uint256 kntAmount, uint256 labubuAmount);
     event DynamicSunk(address indexed source, uint256 amount);
     event LiquidityKntBurned(address indexed account, uint256 amount);
     event UserLpCredited(address indexed account, uint256 lpAmount, uint256 lpValueUsdt);
@@ -192,6 +209,7 @@ contract KNTAllInOneUpgradeable {
     event MigrationMinted(address indexed account, uint256 indexed id, uint256 amount);
     event MigrationClaimed(address indexed account, uint256 indexed id, uint256 amount);
     event LiquidityConfigUpdated(address router, address usdtToken, address labubuToken, address labubuKntPair);
+    event PancakeProxyUpdated(address indexed oldProxy, address indexed newProxy);
     event AdminUpdated(address indexed admin, bool enabled);
     event ManagerUpdated(address indexed manager, bool enabled);
     event KeeperUpdated(address indexed keeper, bool enabled);
@@ -269,7 +287,6 @@ contract KNTAllInOneUpgradeable {
         rewardPeriodSeconds = 1 days;
         startTimestamp = block.timestamp;
         _mint(initialOwner, TOTAL_SUPPLY);
-        taxRecorders[initialOwner] = true;
         emit OwnershipTransferred(address(0), initialOwner);
     }
 
@@ -370,13 +387,12 @@ contract KNTAllInOneUpgradeable {
     function roleOf(address account)
         external
         view
-        returns (bool isOwnerRole, bool isAdminRole, bool isManagerRole, bool isKeeperRole, bool isTaxRecorderRole)
+        returns (bool isOwnerRole, bool isAdminRole, bool isManagerRole, bool isKeeperRole)
     {
         isOwnerRole = account == owner();
         isAdminRole = admins[account];
         isManagerRole = managers[account];
         isKeeperRole = keepers[account];
-        isTaxRecorderRole = taxRecorders[account];
     }
 
     function isAdminOrOwner(address account) external view returns (bool) {
@@ -401,11 +417,7 @@ contract KNTAllInOneUpgradeable {
     }
 
     function nodeCount() external view returns (uint256) {
-        return nodeList.length;
-    }
-
-    function nodes() external view returns (address[] memory) {
-        return nodeList;
+        return totalNodeUnitCount;
     }
 
     function burnQueueLength() external view returns (uint256) {
@@ -415,6 +427,11 @@ contract KNTAllInOneUpgradeable {
     function currentDay() public view returns (uint256) {
         if (block.timestamp <= startTimestamp) return 0;
         return (block.timestamp - startTimestamp) / rewardPeriodSeconds;
+    }
+
+    function _migrationDay() internal view returns (uint256) {
+        if (block.timestamp <= startTimestamp) return 0;
+        return (block.timestamp - startTimestamp) / MIGRATION_RELEASE_PERIOD;
     }
 
     function dailyEmissionForDay(uint256 dayKey) public view returns (uint256) {
@@ -495,6 +512,12 @@ contract KNTAllInOneUpgradeable {
             if (account == address(0)) continue;
             _settleAccount(account);
             _distributePendingReward(account);
+        }
+    }
+
+    function keeperSyncNodeUnits(address[] calldata accounts) external onlyKeeperOrAbove {
+        for (uint256 i = 0; i < accounts.length; i++) {
+            if (accounts[i] != address(0)) _refreshNodeStatus(accounts[i]);
         }
     }
 
@@ -590,7 +613,7 @@ contract KNTAllInOneUpgradeable {
     }
 
     function recordBuy(address account, uint256 kntAmount, uint256 usdtSpent) external {
-        _require(taxRecorders[msg.sender] || _isAdminOrOwner(msg.sender));
+        _require(_isKeeperOrAbove(msg.sender));
         _require(account != address(0) && kntAmount > 0 && usdtSpent > 0);
         costBasisOf[account].boughtKnt += kntAmount;
         costBasisOf[account].spentUsdt += usdtSpent;
@@ -634,35 +657,46 @@ contract KNTAllInOneUpgradeable {
             owner: account,
             originalAmount: amount,
             claimedAmount: 0,
-            lastClaimDay: currentDay()
+            lastClaimDay: _migrationDay()
         });
         emit MigrationMinted(account, id, amount);
     }
 
-    function claimMigration(uint256 id) external nonReentrant {
-        MigrationPosition storage position = migrationPositions[id];
-        _require(position.owner == msg.sender);
-        uint256 amount = migrationClaimable(id);
-        _require(amount > 0);
-        _require(_freeBalance() >= amount);
-
-        position.claimedAmount += amount;
-        position.lastClaimDay = currentDay();
-        systemTransfer = true;
-        _transfer(address(this), msg.sender, amount);
-        systemTransfer = false;
-        emit MigrationClaimed(msg.sender, id, amount);
+    function keeperClaimMigrations(uint256[] calldata ids) external onlyKeeperOrAbove {
+        for (uint256 i = 0; i < ids.length;) {
+            MigrationPosition storage position = migrationPositions[ids[i]];
+            uint256 releaseDay = _migrationDay();
+            if (position.owner != address(0) && position.lastClaimDay > releaseDay) {
+                position.lastClaimDay = releaseDay;
+            }
+            uint256 amount = migrationClaimable(ids[i]);
+            if (amount > 0) {
+                if (_freeBalance() < amount) break;
+                _claimMigration(position, ids[i], amount);
+            }
+            unchecked {
+                i++;
+            }
+        }
     }
 
     function migrationClaimable(uint256 id) public view returns (uint256) {
         MigrationPosition storage position = migrationPositions[id];
         if (position.owner == address(0) || position.claimedAmount >= position.originalAmount) return 0;
-        uint256 elapsedDays = currentDay() - position.lastClaimDay;
-        if (elapsedDays == 0) return 0;
-        uint256 bp = users[position.owner].directLpValueUsdt >= NODE_DIRECT_LP_USDT
-            ? MIGRATION_BOOST_RELEASE_BP
-            : MIGRATION_RELEASE_BP;
-        uint256 amount = (position.originalAmount * bp * elapsedDays) / BASIS_POINTS;
+        uint256 dayNow = _migrationDay();
+        if (position.lastClaimDay >= dayNow) return 0;
+        uint256 elapsedDays = dayNow - position.lastClaimDay;
+        uint256 boostStartDay = migrationBoostStartDayOf[position.owner];
+        uint256 baseDays = elapsedDays;
+        uint256 accelDays;
+        if (directNewLpValueUsdtOf[position.owner] >= NODE_DIRECT_LP_USDT && boostStartDay < dayNow) {
+            uint256 accelStart = boostStartDay > position.lastClaimDay ? boostStartDay : position.lastClaimDay;
+            accelDays = dayNow - accelStart;
+            baseDays = elapsedDays - accelDays;
+        }
+        uint256 amount = (
+            position.originalAmount * ((MIGRATION_RELEASE_BP * baseDays) + (MIGRATION_ACCEL_RELEASE_BP * accelDays))
+        ) / BASIS_POINTS;
         uint256 remaining = position.originalAmount - position.claimedAmount;
         return amount > remaining ? remaining : amount;
     }
@@ -674,7 +708,7 @@ contract KNTAllInOneUpgradeable {
         _require(accounts.length == amounts.length && accounts.length == lpValuesUsdt.length && accounts.length == referrers.length);
         _updatePool();
         for (uint256 i = 0; i < accounts.length; i++) {
-            _depositImported(accounts[i], amounts[i], lpValuesUsdt[i], referrers[i]);
+            _depositImported(accounts[i], amounts[i], lpValuesUsdt[i], _powerForLpValue(lpValuesUsdt[i]), referrers[i]);
         }
     }
 
@@ -694,11 +728,6 @@ contract KNTAllInOneUpgradeable {
         _require(manager != address(0));
         managers[manager] = enabled;
         emit ManagerUpdated(manager, enabled);
-    }
-
-    function setTaxRecorder(address recorder, bool enabled) external onlyManagerOrAbove {
-        _require(recorder != address(0));
-        taxRecorders[recorder] = enabled;
     }
 
     function setKeeper(address keeper, bool enabled) external onlyManagerOrAbove {
@@ -763,6 +792,12 @@ contract KNTAllInOneUpgradeable {
         labubuSwapIntermediateToken = intermediateToken_;
     }
 
+    function setPancakeProxy(address pancakeProxy_) external onlyManagerOrAbove {
+        address oldProxy = pancakeProxy;
+        pancakeProxy = pancakeProxy_;
+        emit PancakeProxyUpdated(oldProxy, pancakeProxy_);
+    }
+
     function setBurnQueueRewardBP(uint256 rewardBP) external onlyManagerOrAbove {
         _require(rewardBP >= BASIS_POINTS && rewardBP <= 30_000);
         burnQueueRewardBP = rewardBP;
@@ -792,11 +827,29 @@ contract KNTAllInOneUpgradeable {
         return _isManagerOrAbove(account) || keepers[account];
     }
 
-    function _depositImported(address account, uint256 amount, uint256 lpValueUsdt, address referrer) internal {
-        _require(account != address(0) && amount > 0 && lpValueUsdt > 0);
+    function _depositImported(address account, uint256 amount, uint256 lpValueUsdt, uint256 power, address referrer) internal {
+        _require(account != address(0) && amount > 0 && lpValueUsdt > 0 && power > 0);
+        (amount, power) = _unpackImportedAmount(amount, power);
         if (!users[account].registered) _register(account, referrer);
         _settleAccount(account);
-        _applyDeposit(account, amount, lpValueUsdt);
+        _applyDeposit(account, amount, lpValueUsdt, power, false);
+        legacyLpValueUsdtOf[account] += lpValueUsdt;
+    }
+
+    function _claimMigration(MigrationPosition storage position, uint256 id, uint256 amount) internal {
+        position.claimedAmount += amount;
+        position.lastClaimDay = _migrationDay();
+        systemTransfer = true;
+        _transfer(address(this), position.owner, amount);
+        systemTransfer = false;
+        emit MigrationClaimed(position.owner, id, amount);
+    }
+
+    function _unpackImportedAmount(uint256 amount, uint256 defaultPower) internal pure returns (uint256 lpAmount, uint256 power) {
+        if (amount <= type(uint128).max) return (amount, defaultPower);
+        lpAmount = uint128(amount);
+        power = amount >> 128;
+        _require(lpAmount > 0 && power > 0);
     }
 
     function _processUsdtDeposit(
@@ -810,33 +863,42 @@ contract KNTAllInOneUpgradeable {
         uint256 deadline
     ) internal returns (uint256 liquidity) {
         _require(
-            pancakeRouter != address(0) && usdtToken != address(0) && labubuToken != address(0) && labubuKntPair != address(0));
+            pancakeRouter != address(0)
+                && usdtToken != address(0)
+                && labubuToken != address(0)
+                && labubuKntPair != address(0));
         _require(deadline >= block.timestamp);
 
         _updatePool();
         if (!users[account].registered) _register(account, address(0));
         _settleAccount(account);
 
-        IERC20(usdtToken).forceApprove(pancakeRouter, amount);
-
-        address intermediateToken = labubuSwapIntermediateToken;
-        address[] memory labubuPath = new address[](intermediateToken == address(0) ? 2 : 3);
-        labubuPath[0] = usdtToken;
-        if (intermediateToken == address(0)) {
-            labubuPath[1] = labubuToken;
+        uint256 labubuBought;
+        if (pancakeProxy != address(0)) {
+            IERC20(usdtToken).forceApprove(pancakeProxy, amount);
+            labubuBought = IPancakeProxy(pancakeProxy).swapByUsdt(amount, minLabubuBought, address(this), deadline);
         } else {
-            labubuPath[1] = intermediateToken;
-            labubuPath[2] = labubuToken;
-        }
-        uint256[] memory labubuAmounts = IPancakeV2Router(pancakeRouter).swapExactTokensForTokens(
-            amount,
-            minLabubuBought,
-            labubuPath,
-            address(this),
-            deadline
-        );
+            IERC20(usdtToken).forceApprove(pancakeRouter, amount);
 
-        uint256 labubuBought = labubuAmounts[labubuAmounts.length - 1];
+            address intermediateToken = labubuSwapIntermediateToken;
+            address[] memory labubuPath = new address[](intermediateToken == address(0) ? 2 : 3);
+            labubuPath[0] = usdtToken;
+            if (intermediateToken == address(0)) {
+                labubuPath[1] = labubuToken;
+            } else {
+                labubuPath[1] = intermediateToken;
+                labubuPath[2] = labubuToken;
+            }
+            uint256[] memory labubuAmounts = IPancakeV2Router(pancakeRouter).swapExactTokensForTokens(
+                amount,
+                minLabubuBought,
+                labubuPath,
+                address(this),
+                deadline
+            );
+            labubuBought = labubuAmounts[labubuAmounts.length - 1];
+        }
+
         uint256 labubuToKnt = labubuBought / 2;
         uint256 labubuToLp = labubuBought - labubuToKnt;
         _require(labubuToKnt > 0 && labubuToLp > 0);
@@ -886,26 +948,28 @@ contract KNTAllInOneUpgradeable {
             IERC20(labubuToken).safeTransfer(account, labubuRefund);
         }
 
-        _applyDeposit(account, liquidity, amount);
+        _applyDeposit(account, liquidity, amount, _powerForLpValue(amount), true);
         emit UserLpCredited(account, liquidity, amount);
         emit UsdtDeposited(account, amount, kntUsed, labubuUsed, liquidity, amount);
     }
 
-    function _applyDeposit(address account, uint256 amount, uint256 lpValueUsdt) internal {
+    function _applyDeposit(address account, uint256 amount, uint256 lpValueUsdt, uint256 addedPower, bool countsAsNewLp) internal {
         UserInfo storage user = users[account];
         bool wasEffective = user.lpValueUsdt >= EFFECTIVE_DIRECT_LP_USDT;
-        uint256 addedPower = lpValueUsdt * POWER_PER_USDT;
 
         user.depositAmount += amount;
         user.lpValueUsdt += lpValueUsdt;
         user.power += addedPower;
+        if (countsAsNewLp) {
+            newLpValueUsdtOf[account] += lpValueUsdt;
+        }
         if (user.lastPowerUpdateDay == 0) user.lastPowerUpdateDay = currentDay();
 
         reservedDeposits += amount;
         totalLpValueUsdt += lpValueUsdt;
         totalPower += addedPower;
 
-        _updateDirectPerformance(user.referrer, lpValueUsdt, wasEffective, user.lpValueUsdt, true);
+        _updateDirectPerformance(user.referrer, lpValueUsdt, wasEffective, user.lpValueUsdt, true, countsAsNewLp);
         _refreshNodeStatus(account);
         _syncRewardDebt(account);
         emit Deposited(account, amount, lpValueUsdt, addedPower);
@@ -914,6 +978,8 @@ contract KNTAllInOneUpgradeable {
     function _removeDeposit(address account, uint256 amount, uint256 lpValueUsdt) internal {
         UserInfo storage user = users[account];
         _require(user.depositAmount >= amount && user.lpValueUsdt >= lpValueUsdt);
+        _require(user.lpValueUsdt - lpValueUsdt >= legacyLpValueUsdtOf[account]);
+        _require(newLpValueUsdtOf[account] >= lpValueUsdt);
 
         bool wasEffective = user.lpValueUsdt >= EFFECTIVE_DIRECT_LP_USDT;
         uint256 removedPower = lpValueUsdt == user.lpValueUsdt ? user.power : (user.power * lpValueUsdt) / user.lpValueUsdt;
@@ -921,11 +987,12 @@ contract KNTAllInOneUpgradeable {
         user.depositAmount -= amount;
         user.lpValueUsdt -= lpValueUsdt;
         user.power -= removedPower;
+        newLpValueUsdtOf[account] -= lpValueUsdt;
         reservedDeposits -= amount;
         totalLpValueUsdt -= lpValueUsdt;
         totalPower -= removedPower;
 
-        _updateDirectPerformance(user.referrer, lpValueUsdt, wasEffective, user.lpValueUsdt, false);
+        _updateDirectPerformance(user.referrer, lpValueUsdt, wasEffective, user.lpValueUsdt, false, false);
         _refreshNodeStatus(account);
         _syncRewardDebt(account);
     }
@@ -993,7 +1060,7 @@ contract KNTAllInOneUpgradeable {
 
             if (totalPower > 0) accStaticRewardPerPower += (staticAmount * 1e18) / totalPower;
             dynamicPool += dynamicAmount;
-            if (nodeList.length > 0) accNodeRewardPerNode += nodeAmount / nodeList.length;
+            if (totalNodeUnitCount > 0) accNodeRewardPerNode += nodeAmount / totalNodeUnitCount;
             emit PoolUpdated(d, emission, staticAmount, dynamicAmount, nodeAmount);
         }
         lastRewardDay = dayNow;
@@ -1015,8 +1082,9 @@ contract KNTAllInOneUpgradeable {
             }
         }
 
-        if (user.isNode) {
-            uint256 nodePending = accNodeRewardPerNode - user.nodeRewardDebt;
+        uint256 userNodeUnits = nodeUnits[account];
+        if (userNodeUnits > 0) {
+            uint256 nodePending = (accNodeRewardPerNode - user.nodeRewardDebt) * userNodeUnits;
             if (nodePending > 0) {
                 user.pendingKnt += nodePending;
                 user.totalNodeReward += nodePending;
@@ -1068,7 +1136,7 @@ contract KNTAllInOneUpgradeable {
     function _syncRewardDebt(address account) internal {
         UserInfo storage user = users[account];
         user.rewardDebt = (user.power * accStaticRewardPerPower) / 1e18;
-        user.nodeRewardDebt = user.isNode ? accNodeRewardPerNode : 0;
+        user.nodeRewardDebt = nodeUnits[account] > 0 ? accNodeRewardPerNode : 0;
     }
 
     function _distributeDynamic(address source, uint256 staticReward) internal {
@@ -1112,12 +1180,23 @@ contract KNTAllInOneUpgradeable {
         return maxLevel;
     }
 
-    function _updateDirectPerformance(address referrer, uint256 lpValueDelta, bool wasEffective, uint256 newSelfLpValue, bool increase) internal {
+    function _powerForLpValue(uint256 lpValueUsdt) internal pure returns (uint256) {
+        return lpValueUsdt * POWER_PER_USDT;
+    }
+
+    function _updateDirectPerformance(address referrer, uint256 lpValueDelta, bool wasEffective, uint256 newSelfLpValue, bool increase, bool countsAsNewLp) internal {
         if (referrer == address(0)) return;
         _settleAccount(referrer);
         UserInfo storage parent = users[referrer];
         if (increase) {
             parent.directLpValueUsdt += lpValueDelta;
+            if (countsAsNewLp) {
+                bool wasMigrationBoosted = directNewLpValueUsdtOf[referrer] >= NODE_DIRECT_LP_USDT;
+                directNewLpValueUsdtOf[referrer] += lpValueDelta;
+                if (!wasMigrationBoosted && directNewLpValueUsdtOf[referrer] >= NODE_DIRECT_LP_USDT) {
+                    migrationBoostStartDayOf[referrer] = _migrationDay();
+                }
+            }
             if (!wasEffective && newSelfLpValue >= EFFECTIVE_DIRECT_LP_USDT) parent.directEffectiveCount += 1;
         } else {
             parent.directLpValueUsdt = parent.directLpValueUsdt > lpValueDelta ? parent.directLpValueUsdt - lpValueDelta : 0;
@@ -1134,30 +1213,23 @@ contract KNTAllInOneUpgradeable {
         bool qualifies = user.lpValueUsdt >= NODE_SELF_LP_USDT
             && user.directLpValueUsdt >= NODE_DIRECT_LP_USDT
             && user.directEffectiveCount > 0;
-        if (qualifies == user.isNode) return;
+        uint256 oldUnits = nodeUnits[account];
+        uint256 newUnits = qualifies ? user.directLpValueUsdt / NODE_DIRECT_LP_USDT : 0;
+        if (newUnits == oldUnits && qualifies == user.isNode) return;
 
-        if (qualifies) {
+        totalNodeUnitCount = totalNodeUnitCount + newUnits - oldUnits;
+        nodeUnits[account] = newUnits;
+
+        if (newUnits > 0) {
+            bool wasNode = user.isNode;
             user.isNode = true;
-            nodeList.push(account);
-            nodeIndexPlusOne[account] = nodeList.length;
             user.nodeRewardDebt = accNodeRewardPerNode;
+            if (!wasNode) emit NodeStatusUpdated(account, true);
         } else {
             user.isNode = false;
-            uint256 indexPlusOne = nodeIndexPlusOne[account];
-            if (indexPlusOne > 0) {
-                uint256 index = indexPlusOne - 1;
-                uint256 lastIndex = nodeList.length - 1;
-                if (index != lastIndex) {
-                    address moved = nodeList[lastIndex];
-                    nodeList[index] = moved;
-                    nodeIndexPlusOne[moved] = index + 1;
-                }
-                nodeList.pop();
-                delete nodeIndexPlusOne[account];
-            }
             user.nodeRewardDebt = 0;
+            emit NodeStatusUpdated(account, false);
         }
-        emit NodeStatusUpdated(account, qualifies);
     }
 
     function _burnAndQueue(address account, uint256 amount) internal {
@@ -1230,11 +1302,12 @@ contract KNTAllInOneUpgradeable {
         uint256 toFoundation = amount - toQueue;
         rewardPool += toQueue;
         if (toFoundation > 0) {
-            _swapFoundationTaxToLabubu(toFoundation);
+            uint256 labubuAmount = _swapKntToLabubu(foundationWallet, toFoundation);
+            emit FoundationTaxConverted(foundationWallet, toFoundation, labubuAmount);
         }
     }
 
-    function _swapFoundationTaxToLabubu(uint256 kntAmount) internal {
+    function _swapKntToLabubu(address recipient, uint256 kntAmount) internal returns (uint256 labubuAmount) {
         _require(pancakeRouter != address(0) && labubuToken != address(0));
         IERC20(address(this)).forceApprove(pancakeRouter, kntAmount);
 
@@ -1247,12 +1320,12 @@ contract KNTAllInOneUpgradeable {
             kntAmount,
             0,
             path,
-            foundationWallet,
+            recipient,
             block.timestamp
         );
         systemTransfer = false;
 
-        emit FoundationTaxConverted(foundationWallet, kntAmount, amounts[amounts.length - 1]);
+        labubuAmount = amounts[amounts.length - 1];
     }
 
     function _distributeProfitTax(uint256 amount) internal {
@@ -1263,9 +1336,8 @@ contract KNTAllInOneUpgradeable {
         rewardPool += toQueue;
         if (toBurn > 0) _burn(address(this), toBurn);
         if (toEcosystem > 0) {
-            systemTransfer = true;
-            _transfer(address(this), ecosystemWallet, toEcosystem);
-            systemTransfer = false;
+            uint256 labubuAmount = _swapKntToLabubu(ecosystemWallet, toEcosystem);
+            emit EcosystemTaxConverted(ecosystemWallet, toEcosystem, labubuAmount);
         }
     }
 

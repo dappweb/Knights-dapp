@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>KNT 智能合约安全审计报告</title>
+  <style>
+    @page { size: A4; margin: 18mm 16mm; }
+    body {
+      font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+      color: #172033;
+      font-size: 12px;
+      line-height: 1.58;
+      margin: 0;
+      background: #fff;
+    }
+    h1, h2, h3 { color: #0b1f3a; line-height: 1.25; margin: 0 0 10px; }
+    h1 { font-size: 26px; margin-top: 8px; }
+    h2 { font-size: 18px; margin-top: 26px; padding-bottom: 5px; border-bottom: 1px solid #d8dee9; }
+    h3 { font-size: 14px; margin-top: 18px; }
+    p { margin: 7px 0; }
+    code {
+      font-family: Consolas, "SFMono-Regular", monospace;
+      background: #f4f6fa;
+      padding: 1px 4px;
+      border-radius: 3px;
+      color: #24324d;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 10px 0 16px;
+      table-layout: fixed;
+    }
+    th, td {
+      border: 1px solid #d8dee9;
+      padding: 7px 8px;
+      vertical-align: top;
+      word-break: break-word;
+    }
+    th { background: #edf2f8; color: #0b1f3a; text-align: left; }
+    ul { margin: 6px 0 10px 20px; padding: 0; }
+    li { margin: 3px 0; }
+    .meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 18px;
+      border: 1px solid #d8dee9;
+      background: #f8fafc;
+      padding: 12px;
+      margin: 14px 0 18px;
+    }
+    .tag {
+      display: inline-block;
+      min-width: 62px;
+      text-align: center;
+      border-radius: 3px;
+      padding: 1px 6px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 11px;
+    }
+    .critical { background: #6f1d1b; }
+    .high { background: #b42318; }
+    .medium { background: #b54708; }
+    .low { background: #175cd3; }
+    .info { background: #475467; }
+    .ok { color: #067647; font-weight: 700; }
+    .warn { color: #b54708; font-weight: 700; }
+    .finding { break-inside: avoid; }
+    .small { color: #526070; font-size: 11px; }
+    .cover-note {
+      border-left: 4px solid #175cd3;
+      padding: 8px 10px;
+      background: #f3f7ff;
+      margin: 12px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>KNT 智能合约安全审计报告</h1>
+  <p><strong>项目：</strong>Knights-dapp / KNTAllInOne</p>
+  <p><strong>报告日期：</strong>2026-05-19</p>
+
+  <div class="meta">
+    <div><strong>审计对象</strong><br>当前工作区智能合约、部署脚本、迁移脚本、测试脚本</div>
+    <div><strong>核心合约</strong><br><code>contracts/KNTAllInOneUpgradeable.sol</code>, <code>contracts/KNTAllInOne.sol</code></div>
+    <div><strong>链上核验</strong><br>BSC Mainnet block <code>99156104</code></div>
+    <div><strong>主网代理</strong><br><code>0x4635Ca6392229a4F7D528e9a841a5ad570aAd00D</code></div>
+    <div><strong>当前实现</strong><br><code>0x557b1120A903D13573dd19840574559fCE10384D</code></div>
+    <div><strong>ProxyAdmin</strong><br><code>0xD8a03E2D61C16728e67814Cc5c1514e4d51f4e7E</code></div>
+  </div>
+
+  <div class="cover-note">
+    本报告基于当前本地 checkout 和只读链上核验生成。工作区在审计时存在未提交修改与新增文件，因此结论对应的是当前文件状态，而不是某个干净 Git commit。审计未执行破坏性操作，也未修改合约代码。
+  </div>
+
+  <h2>结论摘要</h2>
+  <p>未发现无需权限即可直接盗取全部 KNT 或任意外部 ERC20 的典型漏洞；但项目的安全边界高度依赖 Owner/Admin/Manager/Keeper 和 ProxyAdmin 私钥安全。当前最高风险集中在迁移锁仓资金未隔离、keeper 可直接销毁用户余额/调减 LP 记账、以及 Admin 与 Owner 权限边界过宽。</p>
+
+  <table>
+    <tr><th>严重级别</th><th>数量</th><th>说明</th></tr>
+    <tr><td><span class="tag critical">Critical</span></td><td>0</td><td>未发现无需权限的直接全量资产盗取路径。</td></tr>
+    <tr><td><span class="tag high">High</span></td><td>2</td><td>迁移/奖励资金池隔离不足；Keeper 可直接破坏用户余额或 LP 记账。</td></tr>
+    <tr><td><span class="tag medium">Medium</span></td><td>6</td><td>治理权限、价格输入、外部 swap、奖励更新循环、升级运维等风险。</td></tr>
+    <tr><td><span class="tag low">Low</span></td><td>3</td><td>实现合约初始化、ERC20 approve 体验、初始化参数校验等低风险项。</td></tr>
+    <tr><td><span class="tag info">Info</span></td><td>3</td><td>中心化假设、自动扫描限制、源码验证状态。</td></tr>
+  </table>
+
+  <h2>验证结果</h2>
+  <table>
+    <tr><th>项目</th><th>结果</th><th>证据</th></tr>
+    <tr><td>Hardhat 编译</td><td class="ok">通过</td><td><code>npm run compile</code>，输出 <code>Nothing to compile</code></td></tr>
+    <tr><td>本地测试</td><td class="ok">通过</td><td><code>npm run test:local</code>，<code>16 passing</code></td></tr>
+    <tr><td>升级版本地脚本</td><td class="ok">通过</td><td><code>npm run test:knt:upgradeable:local</code>，状态 <code>PASS</code></td></tr>
+    <tr><td>奖励/税费本地脚本</td><td class="ok">通过</td><td><code>npm run test:knt:rewards:local</code>，状态 <code>PASS</code></td></tr>
+    <tr><td>字节码体积</td><td class="warn">接近上限</td><td><code>KNTAllInOneUpgradeable</code> 为 <code>24282</code> bytes，距离 24576 bytes 仅约 294 bytes</td></tr>
+    <tr><td>Slither / Solhint</td><td class="warn">未运行</td><td>当前环境未安装 <code>slither</code> 与 <code>solhint</code></td></tr>
+  </table>
+
+  <h2>链上状态核验</h2>
+  <table>
+    <tr><th>字段</th><th>值</th></tr>
+    <tr><td>Proxy</td><td><code>0x4635Ca6392229a4F7D528e9a841a5ad570aAd00D</code></td></tr>
+    <tr><td>Implementation</td><td><code>0x557b1120A903D13573dd19840574559fCE10384D</code></td></tr>
+    <tr><td>Owner</td><td><code>0xAC25dA7FdEEEaDf2943EBF505Fa9739CBD111bD8</code></td></tr>
+    <tr><td>ProxyAdmin Owner</td><td><code>0xAC25dA7FdEEEaDf2943EBF505Fa9739CBD111bD8</code></td></tr>
+    <tr><td>Reward Pool</td><td><code>0.0 KNT</code></td></tr>
+    <tr><td>Contract KNT Balance</td><td><code>0.0 KNT</code></td></tr>
+    <tr><td>Reward Period</td><td><code>600</code> seconds</td></tr>
+    <tr><td>Node Count</td><td><code>328</code></td></tr>
+  </table>
+
+  <h2>发现明细</h2>
+
+  <div class="finding">
+    <h3><span class="tag high">High</span> H-01 迁移锁仓与奖励发放共用合约余额，且迁移头寸未自动托管资金</h3>
+    <p><strong>位置：</strong><code>KNTAllInOneUpgradeable.sol:646-663</code>, <code>1087-1095</code>, <code>585-599</code></p>
+    <p><strong>问题：</strong><code>mintMigration</code> 只记录 <code>MigrationPosition</code>，不会从管理员转入 KNT，也不会增加专门的迁移储备。<code>keeperClaimMigrations</code> 与普通奖励发放都只检查 <code>_freeBalance()</code>，而 <code>_freeBalance()</code> 等于合约 KNT 余额，没有扣除未释放迁移债务、奖励池债务或燃烧队列债务。</p>
+    <p><strong>影响：</strong>如果后续把迁移 KNT 打入合约，奖励分发或燃烧队列可能先消耗这部分余额；如果未提前注资，迁移 claim 会直接停在 <code>_freeBalance() &lt; amount</code>。本次只读核验显示当前主网合约 KNT 余额与 rewardPool 均为 <code>0</code>。</p>
+    <p><strong>建议：</strong>为迁移释放建立独立储备变量，例如 <code>migrationReservedKnt</code>；创建迁移头寸时强制转入或锁定对应 KNT；奖励发放使用 <code>availableRewardBalance = balance - migrationReserved - otherReserved</code>；增加“迁移储备充足率”测试和链上监控。</p>
+  </div>
+
+  <div class="finding">
+    <h3><span class="tag high">High</span> H-02 Keeper 可无用户签名销毁用户 KNT 或调减用户 LP 记账</h3>
+    <p><strong>位置：</strong><code>KNTAllInOneUpgradeable.sol:522-580</code></p>
+    <p><strong>问题：</strong><code>keeperBurnFrom</code> 可直接销毁任意非合约、非 AMM 地址的 KNT；<code>keeperReduceUserLp</code> 可直接减少用户的 <code>depositAmount</code>、<code>lpValueUsdt</code> 和 <code>power</code>。合约虽然提供带 <code>sourceTxHash/sourceLogIndex</code> 的去重版本，但无 source 的版本仍可直接调用。</p>
+    <p><strong>影响：</strong>Keeper 私钥泄露、误授权或后台逻辑错误会造成用户余额损失、LP 权益减少、节点资格变化和奖励权重下降。该设计符合当前无用户 UI、后台辅助操作模型，但它是实质性中心化托管风险。</p>
+    <p><strong>建议：</strong>生产环境禁用或移除无 source 版本；保留只接受链上来源 ID 的函数；为 keeper 操作增加每日限额、批次审计日志、延迟执行或多签确认；Admin 后台必须展示待执行明细并支持回滚/补偿流程。</p>
+  </div>
+
+  <div class="finding">
+    <h3><span class="tag medium">Medium</span> M-01 Admin 与 Owner 权限边界过宽</h3>
+    <p><strong>位置：</strong><code>KNTAllInOneUpgradeable.sol:229-240</code>, <code>319-323</code>, <code>709-787</code></p>
+    <p><strong>问题：</strong><code>onlyOwner</code> 实际调用 <code>_isAdminOrOwner</code>，因此 Admin 可以执行 <code>transferOwnership</code>。Admin 还能设置 Admin、Manager、关键钱包等。测试也明确覆盖了“Admin 拥有 ownership-transfer 权限”。</p>
+    <p><strong>影响：</strong>Admin 密钥等同于协议所有权密钥。若 Admin 被盗，攻击者可接管 owner，重配钱包、路由、keeper、AMM pair 等参数。</p>
+    <p><strong>建议：</strong>恢复真正的 <code>onlyOwner</code> 与 <code>onlyAdminOrOwner</code> 分层；<code>transferOwnership</code>、<code>setAdmin</code>、关键路由/钱包修改建议走 ProxyAdmin owner 或多签；给 Manager/Keeper 单独做最小权限。</p>
+  </div>
+
+  <div class="finding">
+    <h3><span class="tag medium">Medium</span> M-02 公开 <code>settleSell</code> 接受调用者自报价格参数</h3>
+    <p><strong>位置：</strong><code>KNTAllInOneUpgradeable.sol:616-643</code></p>
+    <p><strong>问题：</strong><code>settleSell</code> 是公开函数，调用者传入 <code>currentValueUsdt</code>、<code>priceNowUsdt_</code> 和 <code>price24hAgoUsdt_</code> 参与利润税和下跌税计算。</p>
+    <p><strong>影响：</strong>如果后台或财务流程把 <code>SellSettled</code> 事件当作有效结算凭证，用户可通过低报价格降低税费。即便当前主要卖出路径已由 AMM 自动触发，保留该公开入口仍增加误用面。</p>
+    <p><strong>建议：</strong>若仍需人工结算，应改为 <code>onlyKeeperOrAbove</code> 并使用合约内最新价格；若不再需要，建议移除或暂停该入口。</p>
+  </div>
+
+  <div class="finding">
+    <h3><span class="tag medium">Medium</span> M-03 税费兑换使用零滑点保护</h3>
+    <p><strong>位置：</strong><code>KNTAllInOneUpgradeable.sol:1292-1307</code></p>
+    <p><strong>问题：</strong><code>_swapKntToLabubu</code> 调用 Pancake router 时 <code>amountOutMin</code> 固定为 <code>0</code>，deadline 使用当前区块时间。</p>
+    <p><strong>影响：</strong>税费兑换可能被三明治或低流动性价格影响，导致基金会/生态钱包收到极少 LABUBU；如果路由流动性异常，用户卖出也可能被税费兑换路径拖垮。</p>
+    <p><strong>建议：</strong>使用 keeper 更新的最小输出、TWAP/报价容忍区间，或把税费 KNT 先入库再由后台批量兑换；卖出交易内不要执行无保护兑换。</p>
+  </div>
+
+  <div class="finding">
+    <h3><span class="tag medium">Medium</span> M-04 Keeper 可直接影响价格税与排放参数</h3>
+    <p><strong>位置：</strong><code>KNTAllInOneUpgradeable.sol:733-743</code>, <code>1242-1278</code></p>
+    <p><strong>问题：</strong><code>keeperUpdateGlobalLpValue</code> 与 <code>keeperUpdateKntPrices</code> 无上下限、无时效性校验、无多源报价校验。卖出税计算依赖这些价格，日排放也依赖全局 LP 值。</p>
+    <p><strong>影响：</strong>错误或恶意 keeper 可提高/降低税费、改变排放节奏，甚至使卖出交易因为总税费过高而失败。</p>
+    <p><strong>建议：</strong>价格与 LP 值应增加最大变动幅度、更新时间窗口、多签确认或链上 TWAP；卖出税应拒绝过期价格，并对 dump tax 设置业务上限。</p>
+  </div>
+
+  <div class="finding">
+    <h3><span class="tag medium">Medium</span> M-05 奖励更新循环可能在长时间无人维护后变成 gas 阻塞点</h3>
+    <p><strong>位置：</strong><code>KNTAllInOneUpgradeable.sol:798-803</code>, <code>1028-1049</code>, <code>1099-1115</code></p>
+    <p><strong>问题：</strong><code>rewardPeriodSeconds</code> 可降至 10 分钟，当前主网也是 <code>600</code> 秒。<code>_updatePool</code> 按未更新周期循环，<code>_touchPower</code> 也按用户未触达周期循环。</p>
+    <p><strong>影响：</strong>若 keeper 长时间未调用更新，后续一次性补账可能超过 gas 限制，导致奖励发放、存款处理或用户结算卡住。</p>
+    <p><strong>建议：</strong>改为批量 catch-up，例如每次最多处理 N 个周期；保存指数化累计因子，避免逐周期循环；后台设置“超过 M 个周期未更新”报警。</p>
+  </div>
+
+  <div class="finding">
+    <h3><span class="tag medium">Medium</span> M-06 升级与源码验证流程仍是主要运维风险</h3>
+    <p><strong>位置：</strong><code>scripts/upgrade-knt-upgradeable-bsc-mainnet.cjs</code>, <code>deployments/bscMainnet/knt-upgradeable-mainnet.json</code></p>
+    <p><strong>问题：</strong>部署记录中 <code>contractVerification.enabled=false</code>，源码验证关闭；合约未使用 OpenZeppelin upgradeable storage gap，当前实现字节码 <code>24282</code> bytes，接近 BSC/EVM 24576 bytes 上限。</p>
+    <p><strong>影响：</strong>外部审查难以确认链上源码；未来升级容易因字节码体积或存储布局变化失败。虽然升级脚本会校验 ProxyAdmin owner 和实现槽，但缺少自动化存储布局 diff 是持续风险。</p>
+    <p><strong>建议：</strong>上线后立即做 BscScan 验证；每次升级前输出 storage layout diff；保留 append-only 存储策略；为字节码体积设置 CI 阈值，例如超过 24200 bytes 即阻塞。</p>
+  </div>
+
+  <div class="finding">
+    <h3><span class="tag low">Low</span> L-01 实现合约可被直接初始化</h3>
+    <p><strong>位置：</strong><code>KNTAllInOneUpgradeable.sol:223-288</code></p>
+    <p><strong>问题：</strong>合约没有构造函数禁用实现合约初始化。代理部署时会通过 initData 初始化代理存储，但实现合约本身仍可能被外部账户初始化。</p>
+    <p><strong>影响：</strong>通常不会影响代理资产，但会制造一个“看似 KNT”的实现合约状态，误转资产到实现地址时会增加救援难度。</p>
+    <p><strong>建议：</strong>采用 OpenZeppelin Initializable 并在实现构造函数中禁用初始化，或在部署后立即初始化实现合约到不可用 owner。</p>
+  </div>
+
+  <div class="finding">
+    <h3><span class="tag low">Low</span> L-02 ERC20 approve 存在标准 allowance 竞态体验问题</h3>
+    <p><strong>位置：</strong><code>KNTAllInOneUpgradeable.sol:326-330</code>, <code>1383-1392</code></p>
+    <p><strong>问题：</strong><code>approve</code> 直接覆盖 allowance，没有 <code>increaseAllowance</code>/<code>decreaseAllowance</code> 辅助函数。</p>
+    <p><strong>影响：</strong>与标准 ERC20 approve 竞态相同，用户在修改非零 allowance 时可能被 spender 抢跑使用旧额度。</p>
+    <p><strong>建议：</strong>前端要求先置零再授权；合约可补充 increase/decrease allowance。</p>
+  </div>
+
+  <div class="finding">
+    <h3><span class="tag low">Low</span> L-03 初始化未强制校验 router/token 参数非零</h3>
+    <p><strong>位置：</strong><code>KNTAllInOneUpgradeable.sol:260-288</code></p>
+    <p><strong>问题：</strong><code>initialize</code> 只校验 owner、foundation、dexSettlement，未校验 router、USDT、LABUBU。虽然后续 <code>_processUsdtDeposit</code> 会检查配置，但部署期错误不会第一时间失败。</p>
+    <p><strong>影响：</strong>错误初始化会导致存款路径不可用，必须依赖后续 manager 修正。</p>
+    <p><strong>建议：</strong>初始化阶段即校验关键地址，或明确允许先空配置并在部署脚本中强制二次检查。</p>
+  </div>
+
+  <h2>正向安全点</h2>
+  <ul>
+    <li>主要外部资金流使用 <code>SafeERC20</code>。</li>
+    <li><code>processUsdtDeposit</code> 使用 <code>processedUsdtDeposits</code> 防重复处理。</li>
+    <li>带 source 的 keeper 操作使用 <code>processedKeeperActions</code> 防重复执行。</li>
+    <li>AMM sell 自动结算路径已在本地测试覆盖，包括利润税、下跌税和成本消耗。</li>
+    <li>主网升级脚本会校验 ProxyAdmin 地址、ProxyAdmin owner 和 ERC1967 implementation slot。</li>
+  </ul>
+
+  <h2>修复优先级</h2>
+  <table>
+    <tr><th>优先级</th><th>行动</th><th>原因</th></tr>
+    <tr><td>P0</td><td>隔离迁移储备与奖励可用余额；补充迁移 claim 资金充足性测试。</td><td>避免未来迁移释放无法兑付或被奖励消耗。</td></tr>
+    <tr><td>P0</td><td>生产环境移除或限制无 source 的 keeper 销毁/调减函数。</td><td>降低 keeper 私钥或后台错误带来的用户资产损害。</td></tr>
+    <tr><td>P1</td><td>拆分 Owner/Admin/Manager/Keeper 权限，关键操作迁移到多签。</td><td>降低单一 Admin 密钥接管协议的风险。</td></tr>
+    <tr><td>P1</td><td>关闭公开 <code>settleSell</code> 或改为 keeper-only 且使用内部价格。</td><td>避免事件被误用为低税结算凭证。</td></tr>
+    <tr><td>P1</td><td>为价格、LP、税费兑换加入限价/时效/变动幅度约束。</td><td>减少 keeper 输入错误和 MEV 损耗。</td></tr>
+    <tr><td>P2</td><td>上线 BscScan 源码验证、storage layout diff、字节码体积 CI 阈值。</td><td>提升后续升级可审计性和可部署性。</td></tr>
+  </table>
+
+  <h2>限制说明</h2>
+  <ul>
+    <li>本报告是代码审计与只读链上核验，不等同于形式化验证。</li>
+    <li>未运行 Slither/Solhint，因为当前环境没有安装这些工具。</li>
+    <li>未进行主网交易模拟或私钥操作。</li>
+    <li>由于工作区有未提交改动，建议在修复后基于固定 commit 重新生成最终版审计报告。</li>
+  </ul>
+
+  <p class="small">Generated by Codex on 2026-05-19 from local repository <code>C:\Users\Administrator\Documents\GitHub\Knights-dapp</code>.</p>
+</body>
+</html>

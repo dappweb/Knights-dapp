@@ -192,7 +192,7 @@
         border-radius: 6px;
         display: grid;
         gap: 3px;
-        grid-template-columns: repeat(6, minmax(max-content, 1fr));
+        grid-template-columns: repeat(7, minmax(max-content, 1fr));
         overflow-x: auto;
         padding: 4px;
       }
@@ -633,6 +633,7 @@
     <main>
       <nav class="tabs" aria-label="Admin sections">
         <button class="tab active" type="button" data-view="overview">总览</button>
+        <button class="tab" type="button" data-view="migration">迁移</button>
         <button class="tab" type="button" data-view="roles">权限</button>
         <button class="tab" type="button" data-view="params">参数</button>
         <button class="tab" type="button" data-view="keeper">Keeper</button>
@@ -643,6 +644,7 @@
         <span>菜单</span>
         <select id="mobileViewSelect" aria-label="选择后台栏目">
           <option value="overview">总览</option>
+          <option value="migration">迁移</option>
           <option value="roles">权限</option>
           <option value="params">参数</option>
           <option value="keeper">Keeper</option>
@@ -678,6 +680,76 @@
         </section>
       </section>
 
+      <section class="view" id="view-migration">
+        <div class="metrics" id="migrationMetrics"></div>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>KNT 锁仓释放储备</h2>
+            <span class="badge neutral" id="migrationReserveBadge">-</span>
+          </div>
+          <p class="panel-description">锁仓登记只记录用户释放额度，用户领取时必须由新 KNT 合约地址转出 KNT。本区域用于判断是否可以开始批量登记锁仓。</p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>项目</th>
+                  <th>地址</th>
+                  <th>KNT</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody id="migrationReserveRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>释放规则</h2>
+            <span class="badge neutral">只读</span>
+          </div>
+          <div class="metrics" id="migrationRuleMetrics"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>用户迁移资产详情</h2>
+            <span class="badge neutral">跳转账务</span>
+          </div>
+          <div class="form-grid">
+            <label class="span-8">用户地址
+              <input id="migrationUserAddress" placeholder="0x..." autocomplete="off" />
+            </label>
+            <div class="span-4 button-row">
+              <button class="secondary" id="migrationUserDetailButton" type="button">查看用户</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>迁移链上记录</h2>
+            <span class="badge neutral" id="migrationLedgerBadge">-</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>类型</th>
+                  <th>区块</th>
+                  <th>用户</th>
+                  <th>ID</th>
+                  <th>KNT</th>
+                  <th>TX</th>
+                </tr>
+              </thead>
+              <tbody id="migrationLedgerRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
       <section class="view" id="view-roles">
         <section class="panel">
           <div class="panel-head">
@@ -700,7 +772,7 @@
             <h2>Owner 转移</h2>
             <span class="badge bad">最高权限</span>
           </div>
-          <p class="panel-description">只能由当前 Owner 钱包提交。交易确认后，新地址立即获得 Owner 权限，原 Owner 立即失去 Owner 权限；Admin、Manager、Keeper、Tax Recorder 角色不会自动迁移。</p>
+          <p class="panel-description">Owner 或 Admin 钱包都可以提交。交易确认后，新地址立即获得 Owner 权限，原 Owner 立即失去 Owner 权限；Admin、Manager、Keeper 角色不会自动迁移。</p>
           <div class="metrics" id="ownerTransferMetrics"></div>
           <div class="form-grid">
             <label class="span-5">新 Owner 地址
@@ -750,7 +822,6 @@
                 <option value="admin">Admin</option>
                 <option value="manager">Manager</option>
                 <option value="keeper">Keeper</option>
-                <option value="taxRecorder">Tax Recorder</option>
               </select>
             </label>
             <label class="span-2">状态
@@ -859,6 +930,13 @@
               <input id="pancakeRouter" placeholder="0x..." autocomplete="off" />
               <span class="field-help">PancakeSwap V2 Router 地址。入金时用于 USDT、LABUBU 和 KNT 之间的换币与加池。</span>
             </label>
+            <label class="span-6">Pancake Proxy
+              <input id="pancakeProxy" placeholder="0x..." autocomplete="off" />
+              <span class="field-help">USDT 兑换 LABUBU 的代理合约。主网使用 0xc0F1Ef7FE2ae3AAD0175af192713d36eD151755a。</span>
+            </label>
+            <div class="span-6 button-row">
+              <button id="setPancakeProxyButton" type="button">Set Pancake Proxy</button>
+            </div>
             <label class="span-6">USDT Token
               <input id="usdtToken" placeholder="0x..." autocomplete="off" />
               <span class="field-help">入金资产地址。Keeper 会扫描用户向合约转入的 USDT 并触发后续处理。</span>
@@ -934,6 +1012,18 @@
             <div class="span-2 button-row">
               <button id="setRewardPeriodButton" type="button">设置周期</button>
             </div>
+            <label class="span-4">新 LP 算力比例
+              <input id="newLpPowerPerUsdt" inputmode="decimal" readonly />
+              <span class="field-help">当前主网合约为只读常量。1 USDT = 6 算力；如需后台可调，需要合约升级。</span>
+            </label>
+            <label class="span-4">迁移基础释放
+              <input id="migrationBaseRelease" readonly />
+              <span class="field-help">旧 KNT 锁仓默认每日释放比例。</span>
+            </label>
+            <label class="span-4">迁移加速释放
+              <input id="migrationAccelRelease" readonly />
+              <span class="field-help">新直推 LP 达标后，从达标日后按加速比例释放。</span>
+            </label>
           </div>
           <div class="case-notes">
             <h3>案例说明</h3>
@@ -992,6 +1082,62 @@
               <button id="runProcessUsdtButton" type="button">执行 Deposit</button>
               <button id="runMaintenanceButton" type="button">执行 Market + Reward</button>
               <button id="runAllKeeperButton" type="button">执行全部 Keeper</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Admin Keeper Actions</h2>
+            <span class="badge warn">Keeper+</span>
+          </div>
+          <div class="form-grid">
+            <label class="span-12">Reward Accounts
+              <input id="rewardAccounts" placeholder="0x..., 0x..." autocomplete="off" />
+              <span class="field-help">批量结算并发放指定地址的待发奖励，用逗号或换行分隔。</span>
+            </label>
+            <div class="span-12 button-row">
+              <button id="distributeRewardsButton" type="button">Distribute Rewards</button>
+            </div>
+            <label class="span-12">Migration IDs
+              <input id="migrationClaimIds" placeholder="1, 2, 3" autocomplete="off" />
+              <span class="field-help">Keeper/Admin batch claim migration releases to each migration owner wallet.</span>
+            </label>
+            <div class="span-12 button-row">
+              <button id="claimMigrationsButton" type="button">Claim Migrations</button>
+            </div>
+            <label class="span-4">Buy Account
+              <input id="recordBuyAccount" placeholder="0x..." autocomplete="off" />
+            </label>
+            <label class="span-4">KNT Amount
+              <input id="recordBuyKntAmount" placeholder="100" inputmode="decimal" />
+            </label>
+            <label class="span-4">USDT Spent
+              <input id="recordBuyUsdtSpent" placeholder="100" inputmode="decimal" />
+            </label>
+            <div class="span-12 button-row">
+              <button id="recordBuyButton" type="button">Record Buy</button>
+            </div>
+            <label class="span-4">LP Account
+              <input id="reduceLpAccount" placeholder="0x..." autocomplete="off" />
+            </label>
+            <label class="span-4">LP Amount
+              <input id="reduceLpAmount" placeholder="100" inputmode="decimal" />
+            </label>
+            <label class="span-4">LP Value USDT
+              <input id="reduceLpValueUsdt" placeholder="100" inputmode="decimal" />
+            </label>
+            <div class="span-12 button-row">
+              <button class="secondary" id="reduceLpButton" type="button">Reduce Accounted LP</button>
+            </div>
+            <label class="span-6">Burn Account
+              <input id="burnKntAccount" placeholder="0x..." autocomplete="off" />
+            </label>
+            <label class="span-6">KNT Amount
+              <input id="burnKntAmount" placeholder="100" inputmode="decimal" />
+            </label>
+            <div class="span-12 button-row">
+              <button class="danger" id="burnUserKntButton" type="button">Burn User KNT</button>
             </div>
           </div>
         </section>
@@ -1376,16 +1522,16 @@
       import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6.16.0/+esm";
 
       const KNT_ABI = [
-        "function roleOf(address) view returns(bool isOwnerRole,bool isAdminRole,bool isManagerRole,bool isKeeperRole,bool isTaxRecorderRole)",
+        "function roleOf(address) view returns(bool isOwnerRole,bool isAdminRole,bool isManagerRole,bool isKeeperRole)",
         "function transferOwnership(address)",
         "function setAdmin(address,bool)",
         "function setManager(address,bool)",
         "function setKeeper(address,bool)",
-        "function setTaxRecorder(address,bool)",
         "function setWallets(address,address)",
         "function setProjectSinkWallet(address)",
         "function setEcosystemWallet(address)",
         "function setLiquidityConfig(address,address,address,address)",
+        "function setPancakeProxy(address)",
         "function setLabubuSwapIntermediateToken(address)",
         "function setAmmPair(address,bool)",
         "function setBurnQueueRewardBP(uint256)",
@@ -1393,10 +1539,14 @@
         "function setRewardPeriodSeconds(uint256)",
         "function keeperUpdateGlobalLpValue(uint256)",
         "function keeperUpdateKntPrices(uint256,uint256)",
+        "function keeperDistributeRewards(address[])",
+        "function keeperClaimMigrations(uint256[])",
         "function keeperReduceUserLp(address,uint256,uint256)",
         "function keeperBurnFrom(address,uint256)",
+        "function recordBuy(address,uint256,uint256)",
         "function adminUpdatePool()",
         "function processBurnQueue(uint256) returns(uint256)",
+        "function pancakeProxy() view returns(address)",
         "function labubuSwapIntermediateToken() view returns(address)",
       ];
 
@@ -1420,7 +1570,7 @@
       const ACCOUNTING_RECORD_LIMIT = 500;
       const DEFAULT_PAGE_SIZE = 20;
       const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
-      const VIEW_IDS = new Set(["overview", "roles", "params", "keeper", "accounting", "logs"]);
+      const VIEW_IDS = new Set(["overview", "migration", "roles", "params", "keeper", "accounting", "logs"]);
       const KEEPER_TYPES = [
         {
           key: "observer",
@@ -1576,6 +1726,21 @@
         } catch (_error) {
           return fallback;
         }
+      }
+
+      function parseDisplayAmountRaw(value) {
+        try {
+          return ethers.parseEther(String(value || "0"));
+        } catch (_error) {
+          return 0n;
+        }
+      }
+
+      function basisPointPercent(value) {
+        const bp = Number(value || 0);
+        if (!Number.isFinite(bp)) return "-";
+        const percent = bp / 100;
+        return `${percent.toFixed(4).replace(/0+$/, "").replace(/\.$/, "")}%`;
       }
 
       function rawFromFields(item, fields, fallback = 0n) {
@@ -1883,6 +2048,28 @@
         return ethers.parseEther(raw);
       }
 
+      function parseAddressList(value, fieldName) {
+        const items = String(value || "")
+          .split(/[\s,;]+/)
+          .map((item) => item.trim())
+          .filter(Boolean);
+        if (!items.length) throw new Error(`${fieldName} 不能为空`);
+        return items.map((item) => validateAddress(item, fieldName));
+      }
+
+      function parseUintList(value, fieldName) {
+        const items = String(value || "")
+          .split(/[\s,;]+/)
+          .map((item) => item.trim())
+          .filter(Boolean);
+        if (!items.length) throw new Error(`${fieldName} 不能为空`);
+        return items.map((item) => {
+          const id = BigInt(item);
+          if (id <= 0n) throw new Error(`${fieldName} must contain positive ids`);
+          return id.toString();
+        });
+      }
+
       function parseRewardPeriodSeconds(value) {
         const raw = String(value || "").trim();
         if (!/^\d+$/.test(raw)) throw new Error("产币周期必须是整数秒");
@@ -1929,6 +2116,7 @@
         setActiveView(state.activeView);
         renderHeader();
         renderOverview();
+        renderMigration();
         renderParams();
         renderKeeper();
         renderOwnerTransfer();
@@ -1957,6 +2145,7 @@
         const logs = state.status?.logs || {};
         $("metrics").innerHTML = [
           metric("奖励池 KNT", contract.rewardPool),
+          metric("合约 KNT 储备", contract.contractKntBalance || "0"),
           metric("Daily Emission", contract.dailyEmission),
           metric("Reward Period", formatPeriodSeconds(contract.params?.rewardPeriodSeconds)),
           metric("Global LP USDT", contract.globalLpValueUsdt),
@@ -1983,6 +2172,75 @@
         $("pairRows").innerHTML = rows.length ? rows.join("") : `<tr><td colspan="6">${escapeHtml(market.error || "No LP data")}</td></tr>`;
       }
 
+      function renderMigration() {
+        const contract = state.status?.contract || {};
+        const migration = contract.migration || {};
+        const accounting = state.accounting || {};
+        const totals = accounting.totals || {};
+        const expectedKntRaw = parseDisplayAmountRaw(migration.expectedKntAmount);
+        const contractKntRaw = rawBigInt(migration.contractKntBalanceRaw || contract.contractKntBalanceRaw);
+        const mintedRows = Number(migration.mintedRowsOnChain || 0);
+        const expectedRows = Number(migration.expectedMintRows || 0);
+        const missingKntRaw = expectedKntRaw > contractKntRaw ? expectedKntRaw - contractKntRaw : 0n;
+        const reserveReady = expectedKntRaw > 0n && contractKntRaw >= expectedKntRaw;
+        const migrationMinted = totals.migrationMinted || "0";
+        const migrationClaimed = totals.migrationClaimed || "0";
+
+        $("migrationMetrics").innerHTML = [
+          metric("锁仓登记", `${mintedRows}/${migration.expectedMintRows || 0}`),
+          metric("待锁仓 KNT", unitValue(compactAmount(migration.expectedKntAmount || "0"), "KNT")),
+          metric("已登记 KNT", unitValue(compactAmount(migrationMinted), "KNT")),
+          metric("已领取 KNT", unitValue(compactAmount(migrationClaimed), "KNT")),
+          metric("合约 KNT 储备", unitValue(compactAmount(migration.contractKntBalance || contract.contractKntBalance || "0"), "KNT")),
+          metric("储备缺口", unitValue(compactRawAmount(missingKntRaw), "KNT")),
+          metric("旧 LP 行数", migration.expectedLpRows || "-"),
+          metric("旧 LP 价值", unitValue(compactAmount(migration.expectedLpValueUsdt || contract.totalLpValueUsdt || "0"), "USDT")),
+          metric("旧算力", compactAmount(migration.expectedLegacyPower || "0")),
+          metric("链上总算力", compactAmount(contract.totalPower || "0")),
+        ].join("");
+
+        $("migrationReserveBadge").textContent = reserveReady ? "储备充足" : "需要转入 KNT";
+        $("migrationReserveBadge").className = `badge ${reserveReady ? "good" : "warn"}`;
+        $("migrationReserveRows").innerHTML = [
+          `<tr>
+            <td>新 KNT 合约</td>
+            <td>${addressLink(state.config?.contract || "")}</td>
+            <td>${escapeHtml(unitValue(compactAmount(migration.contractKntBalance || contract.contractKntBalance || "0"), "KNT"))}</td>
+            <td>${reserveReady ? "可覆盖当前迁移锁仓" : `还需 ${escapeHtml(unitValue(compactRawAmount(missingKntRaw), "KNT"))}`}</td>
+          </tr>`,
+          `<tr>
+            <td>主储备地址</td>
+            <td>${addressLink(migration.reserveHolder || "")}</td>
+            <td>${escapeHtml(unitValue(compactAmount(migration.reserveHolderBalance || "0"), "KNT"))}</td>
+            <td>用于向新合约转入迁移释放储备</td>
+          </tr>`,
+        ].join("");
+
+        $("migrationRuleMetrics").innerHTML = [
+          metric("普通释放", `${basisPointPercent(migration.baseReleaseBp)} / 天`),
+          metric("加速释放", `${basisPointPercent(migration.acceleratedReleaseBp)} / 天`),
+          metric("加速门槛", `${compactAmount(migration.accelerationDirectNewLpUsdt || "3000")} USDT 新直推 LP`),
+          metric("旧 LP 计入加速", "No"),
+          metric("新 LP 算力", `1 USDT = ${compactAmount(migration.newLpPowerPerUsdt || "6")} 算力`),
+          metric("算力比例可调", contract.params?.newLpPowerPerUsdtConfigurable ? "Yes" : "需合约升级"),
+        ].join("");
+
+        const records = (accounting.records?.ledger || [])
+          .filter((record) => record.type === "MigrationMinted" || record.type === "MigrationClaimed")
+          .map((record) => `
+            <tr>
+              <td>${typeBadge(record.type)}</td>
+              <td>${blockCell(record)}</td>
+              <td>${addressLink(record.user)}</td>
+              <td>${escapeHtml(record.id || "-")}</td>
+              <td>${escapeHtml(unitValue(compactAmount(record.amount || "0"), "KNT"))}</td>
+              <td>${txLink(record.txHash)}</td>
+            </tr>
+          `);
+        $("migrationLedgerBadge").textContent = `${records.length}/${accounting.recordTotals?.ledger ?? records.length}`;
+        renderPagedRows("migrationLedger", "migrationLedgerRows", records, '<tr><td colspan="6">No migration records</td></tr>', renderMigration);
+      }
+
       function reserveCell(token) {
         if (!token) return "-";
         return `${escapeHtml(token.symbol || "-")}: ${escapeHtml(token.reserve || "-")}<br>${addressLink(token.address)}`;
@@ -1993,11 +2251,13 @@
         const wallets = contract.wallets || {};
         const liquidity = contract.liquidity || {};
         const params = contract.params || {};
+        const migration = contract.migration || {};
         $("foundationWallet").value = wallets.foundationWallet || "";
         $("dexSettlementWallet").value = wallets.dexSettlementWallet || "";
         $("projectSinkWallet").value = wallets.projectSinkWallet || "";
         $("ecosystemWallet").value = wallets.ecosystemWallet || "";
         $("pancakeRouter").value = liquidity.pancakeRouter || state.config?.router || "";
+        $("pancakeProxy").value = liquidity.pancakeProxy || state.config?.pancakeProxy || "";
         $("usdtToken").value = liquidity.usdtToken || state.config?.usdt || "";
         $("labubuToken").value = liquidity.labubuToken || state.config?.labubu || "";
         $("labubuKntPair").value = liquidity.labubuKntPair || state.config?.labubuPair || "";
@@ -2007,6 +2267,9 @@
         $("referralSignalAmount").value = params.referralSignalAmount || "";
         $("rewardPeriodSeconds").value = params.rewardPeriodSeconds || "";
         $("rewardPeriodCurrent").textContent = formatPeriodSeconds(params.rewardPeriodSeconds);
+        $("newLpPowerPerUsdt").value = params.newLpPowerPerUsdt || migration.newLpPowerPerUsdt || "6";
+        $("migrationBaseRelease").value = `${basisPointPercent(migration.baseReleaseBp)} / 天`;
+        $("migrationAccelRelease").value = `${basisPointPercent(migration.acceleratedReleaseBp)} / 天`;
         $("manualGlobalLp").value = contract.globalLpValueUsdt || "";
         $("manualKntPrice").value = contract.latestKntPriceUsdt || "";
         $("manualKntPrice24h").value = contract.price24hAgoUsdt || "";
@@ -2805,7 +3068,6 @@
         if (role.isAdmin) roles.push("Admin");
         if (role.isManager) roles.push("Manager");
         if (role.isKeeper) roles.push("Keeper");
-        if (role.isTaxRecorder) roles.push("Tax Recorder");
         return roles.length ? roles.join(" / ") : "No role";
       }
 
@@ -2815,17 +3077,16 @@
           metric("Admin", role.isAdmin ? "Yes" : "No"),
           metric("Manager", role.isManager ? "Yes" : "No"),
           metric("Keeper", role.isKeeper ? "Yes" : "No"),
-          metric("Tax Recorder", role.isTaxRecorder ? "Yes" : "No"),
         ].join("");
       }
 
       function renderOwnerTransfer() {
         const owner = state.status?.contract?.owner || "";
-        const connectedOwner = state.account && owner && ethers.isAddress(owner) && ethers.getAddress(state.account) === ethers.getAddress(owner);
+        const canTransferOwner = Boolean(state.role?.isOwner || state.role?.isAdmin);
         $("ownerTransferMetrics").innerHTML = [
           metric("当前 Owner", owner || "-"),
           metric("连接钱包", state.account || "未连接"),
-          metric("Owner 状态", connectedOwner ? "可转移" : "仅当前 Owner 可转移"),
+          metric("Owner 状态", canTransferOwner ? "可转移" : "仅 Owner/Admin 可转移"),
         ].join("");
       }
 
@@ -2839,6 +3100,7 @@
         $("setRoleAddress").value = state.account;
         if (!$("ownerTransferConfirm").value) $("ownerTransferConfirm").value = state.status?.contract?.owner || "";
         if (!$("userDetailAddress").value) $("userDetailAddress").value = state.account;
+        if (!$("migrationUserAddress").value) $("migrationUserAddress").value = state.account;
         await ensureChain();
         await loadCurrentRole();
         renderHeader();
@@ -2909,14 +3171,13 @@
           admin: "setAdmin",
           manager: "setManager",
           keeper: "setKeeper",
-          taxRecorder: "setTaxRecorder",
         }[name];
         await sendTx(method, [address, enabled], `设置 ${name}`);
       }
 
       async function transferOwner() {
         await loadCurrentRole();
-        if (!state.role?.isOwner) throw new Error("只有当前 Owner 钱包可以转移 Owner");
+        if (!state.role?.isOwner && !state.role?.isAdmin) throw new Error("只有 Owner 或 Admin 钱包可以转移 Owner");
         const currentOwner = validateAddress(state.status?.contract?.owner, "当前 Owner");
         const newOwner = validateAddress($("newOwnerAddress").value, "新 Owner");
         const confirmation = validateAddress($("ownerTransferConfirm").value, "确认当前 Owner 地址");
@@ -2987,6 +3248,12 @@
 
         $("connectButton").addEventListener("click", () => runAction(connectWallet));
         $("refreshButton").addEventListener("click", () => runAction(refreshAll));
+        $("migrationUserDetailButton").addEventListener("click", () => runAction(() => {
+          const address = validateAddress($("migrationUserAddress").value, "用户地址");
+          $("userDetailAddress").value = address;
+          selectAccountingAddress(address);
+          setActiveView("accounting");
+        }));
         $("loadUserDetailButton").addEventListener("click", () => runAction(() => selectAccountingAddress($("userDetailAddress").value)));
         $("renderReferralTreeButton").addEventListener("click", () => runAction(() => {
           const raw = String($("referralTreeRoot").value || "").trim();
@@ -3038,6 +3305,11 @@
             optionalAddress($("labubuKntPair").value),
           ], "设置流动性配置")
         ));
+        $("setPancakeProxyButton").addEventListener("click", () => runAction(() =>
+          sendTx("setPancakeProxy", [
+            optionalAddress($("pancakeProxy").value),
+          ], "Set Pancake proxy")
+        ));
         $("setLabubuSwapIntermediateButton").addEventListener("click", () => runAction(() =>
           sendTx("setLabubuSwapIntermediateToken", [
             optionalAddress($("labubuSwapIntermediateToken").value),
@@ -3065,6 +3337,37 @@
         $("runProcessUsdtButton").addEventListener("click", () => runAction(() => runKeeperApi("/api/keeper/process-usdt", "执行 Deposit")));
         $("runMaintenanceButton").addEventListener("click", () => runAction(() => runKeeperApi("/api/keeper/maintenance", "执行 Market + Reward")));
         $("runAllKeeperButton").addEventListener("click", () => runAction(() => runKeeperApi("/api/keeper/run-all", "执行全部 Keeper")));
+
+        $("distributeRewardsButton").addEventListener("click", () => runAction(() =>
+          signedKeeperApi("/api/keeper/distribute-rewards", "Distribute Rewards", {
+            accounts: parseAddressList($("rewardAccounts").value, "Reward Accounts"),
+          })
+        ));
+        $("claimMigrationsButton").addEventListener("click", () => runAction(() =>
+          signedKeeperApi("/api/keeper/claim-migrations", "Claim Migrations", {
+            ids: parseUintList($("migrationClaimIds").value, "Migration IDs"),
+          })
+        ));
+        $("recordBuyButton").addEventListener("click", () => runAction(() =>
+          signedKeeperApi("/api/keeper/record-buy", "Record Buy", {
+            target: validateAddress($("recordBuyAccount").value, "Buy Account"),
+            kntAmount: $("recordBuyKntAmount").value,
+            usdtSpent: $("recordBuyUsdtSpent").value,
+          })
+        ));
+        $("reduceLpButton").addEventListener("click", () => runAction(() =>
+          signedKeeperApi("/api/keeper/reduce-lp", "Reduce Accounted LP", {
+            target: validateAddress($("reduceLpAccount").value, "LP Account"),
+            lpAmount: $("reduceLpAmount").value,
+            lpValueUsdt: $("reduceLpValueUsdt").value,
+          })
+        ));
+        $("burnUserKntButton").addEventListener("click", () => runAction(() =>
+          signedKeeperApi("/api/keeper/burn-user-knt", "Burn User KNT", {
+            target: validateAddress($("burnKntAccount").value, "Burn Account"),
+            amount: $("burnKntAmount").value,
+          })
+        ));
 
         $("updateGlobalLpButton").addEventListener("click", () => runAction(() =>
           sendTx("keeperUpdateGlobalLpValue", [parseEtherInput($("manualGlobalLp").value, "Global LP")], "更新 Global LP")

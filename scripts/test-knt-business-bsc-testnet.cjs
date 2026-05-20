@@ -301,6 +301,7 @@ async function main() {
     balancesBefore[addressLower] = await knt.balanceOf(addressByLower[addressLower]);
   }
   const foundationLabubuBefore = await labubu.balanceOf(deployment.wallets.foundationWallet);
+  const ecosystemLabubuBefore = await labubu.balanceOf(ecosystemWallet);
   const burnedBefore = await knt.totalBurned();
   const rewardPoolBefore = await knt.rewardPool();
   await wait(knt.keeperUpdateKntPrices(ether("1.5"), ether("1.5")), "keeper updates KNT price for auto sell tax");
@@ -310,6 +311,7 @@ async function main() {
     balancesAfter[addressLower] = await knt.balanceOf(addressByLower[addressLower]);
   }
   const foundationLabubuDelta = (await labubu.balanceOf(deployment.wallets.foundationWallet)) - foundationLabubuBefore;
+  const ecosystemLabubuDelta = (await labubu.balanceOf(ecosystemWallet)) - ecosystemLabubuBefore;
   const burnedAfter = await knt.totalBurned();
   const rewardPoolAfter = await knt.rewardPool();
   const burnedDelta = burnedAfter - burnedBefore;
@@ -321,7 +323,6 @@ async function main() {
     expectedDeltas[key] = (expectedDeltas[key] || 0n) + amount;
   }
   addExpected(autoSellPair, ether("85"));
-  addExpected(ecosystemWallet, ether("5.000000000000000001"));
 
   const balanceDeltas = {};
   for (const addressLower of uniqueObservedWallets) {
@@ -330,18 +331,20 @@ async function main() {
   const taxOk = uniqueObservedWallets.every((addressLower) => {
     const actual = balancesAfter[addressLower] - balancesBefore[addressLower];
     return actual === (expectedDeltas[addressLower] || 0n);
-  }) && foundationLabubuDelta > 0n && burnedDelta === ether("3.333333333333333333") && rewardPoolDelta === ether("3.666666666666666666");
+  }) && foundationLabubuDelta > 0n && ecosystemLabubuDelta > 0n && burnedDelta === ether("3.333333333333333333") && rewardPoolDelta === ether("3.666666666666666666");
   report.results.push(
     taxOk
-      ? pass("Automatic AMM sell tax + profit tax distribution", "100 KNT sent to AMM pair at 150U after 100U cost; pair receives 85 KNT, foundation receives LABUBU, and taxes are distributed", {
+      ? pass("Automatic AMM sell tax + profit tax distribution", "100 KNT sent to AMM pair at 150U after 100U cost; pair receives 85 KNT, foundation and ecosystem receive LABUBU, and taxes are distributed", {
           balanceDeltas,
           foundationLabubuDelta: fmt(foundationLabubuDelta),
+          ecosystemLabubuDelta: fmt(ecosystemLabubuDelta),
           burnedDelta: fmt(burnedDelta),
           rewardPoolDelta: fmt(rewardPoolDelta),
         }, [recordTx.hash, sellTx.hash])
-      : diff("Automatic AMM sell tax + profit tax distribution", "100 KNT sent to AMM pair at 150U after 100U cost; pair receives 85 KNT, foundation receives LABUBU, and taxes are distributed", {
+      : diff("Automatic AMM sell tax + profit tax distribution", "100 KNT sent to AMM pair at 150U after 100U cost; pair receives 85 KNT, foundation and ecosystem receive LABUBU, and taxes are distributed", {
           balanceDeltas,
           foundationLabubuDelta: fmt(foundationLabubuDelta),
+          ecosystemLabubuDelta: fmt(ecosystemLabubuDelta),
           burnedDelta: fmt(burnedDelta),
           rewardPoolDelta: fmt(rewardPoolDelta),
         }, [recordTx.hash, sellTx.hash])

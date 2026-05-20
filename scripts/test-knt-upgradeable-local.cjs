@@ -50,12 +50,24 @@ async function main() {
     throw new Error("dynamic or node reward was not distributed");
   }
 
+  const migrationId = await knt.nextMigrationId();
+  await knt.mintMigration(b.address, ether("1000"));
+  await hre.network.provider.send("evm_increaseTime", [24 * 60 * 60 + 1]);
+  await hre.network.provider.send("evm_mine");
+  const migrationBefore = await knt.balanceOf(b.address);
+  await knt.keeperClaimMigrations([migrationId]);
+  const migrationAfter = await knt.balanceOf(b.address);
+  if (migrationAfter - migrationBefore !== ether("1")) {
+    throw new Error("keeper migration claim did not transfer released KNT");
+  }
+
   console.log(JSON.stringify({
     proxy: await proxy.getAddress(),
     implementation: await implementation.getAddress(),
     rewardPeriodSeconds: (await knt.rewardPeriodSeconds()).toString(),
     currentDay: (await knt.currentDay()).toString(),
     bStaticDelta: fmt(after - before),
+    bMigrationDelta: fmt(migrationAfter - migrationBefore),
     aDynamicReward: fmt(aUser.totalDynamicReward),
     aNodeReward: fmt(aUser.totalNodeReward),
     status: "PASS",

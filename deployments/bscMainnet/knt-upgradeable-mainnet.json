@@ -1,0 +1,237 @@
+{
+  "network": "bscMainnet",
+  "chainId": 56,
+  "deployedAt": "2026-05-11T03:31:06.536Z",
+  "deployer": "0xAC25dA7FdEEEaDf2943EBF505Fa9739CBD111bD8",
+  "contractVerification": {
+    "enabled": false,
+    "sourceCodeVerification": "disabled"
+  },
+  "upgradeability": {
+    "pattern": "transparent",
+    "implementation": "0xB550512c75504b4C1cf6adBCBCBefA7528c16c9c",
+    "proxy": "0x4635Ca6392229a4F7D528e9a841a5ad570aAd00D",
+    "proxyAdmin": "0xD8a03E2D61C16728e67814Cc5c1514e4d51f4e7E",
+    "proxyAdminOwner": "0xAC25dA7FdEEEaDf2943EBF505Fa9739CBD111bD8"
+  },
+  "router": "0x10ED43C718714eb63d5aA57B78B54704E256024E",
+  "pancakeProxy": "0xc0F1Ef7FE2ae3AAD0175af192713d36eD151755a",
+  "factory": "0xca143ce32fe78f1f7019d7d551a6402fc5350c73",
+  "KNTAllInOne": "0x4635Ca6392229a4F7D528e9a841a5ad570aAd00D",
+  "KNTImplementation": "0xB550512c75504b4C1cf6adBCBCBefA7528c16c9c",
+  "ProxyAdmin": "0xD8a03E2D61C16728e67814Cc5c1514e4d51f4e7E",
+  "LABUBU": "0x3494dfE19b721DAC6c5c8d7470c8F89548177777",
+  "USDT": "0x55d398326f99059fF775485246999027B3197955",
+  "WBNB": "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+  "deployedAtBlock": 97590924,
+  "pair": "0x517f4223b0f9a221008E3ca71A58218aF4829860",
+  "labubuPair": "0x517f4223b0f9a221008E3ca71A58218aF4829860",
+  "labubuUsdtPair": "",
+  "labubuWbnbPair": "0xdfACdC33e913710ead31eE40F9c5363Ea673C421",
+  "labubuSwapIntermediateToken": "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+  "rewardPeriodSeconds": "600",
+  "liquidity": {
+    "KNT_LABUBU": {
+      "KNT": "1.0",
+      "LABUBU": "1.293",
+      "skipped": true,
+      "tx": ""
+    }
+  },
+  "wallets": {
+    "foundationWallet": "0x994eCC3CD33257Ea0f083Dbc4E8ff5a38E6e8C34",
+    "dexSettlementWallet": "0xab7c362C30afCdB5808378a213102656dc8056a8",
+    "projectSinkWallet": "0x994eCC3CD33257Ea0f083Dbc4E8ff5a38E6e8C34",
+    "ecosystemWallet": "0xab7c362C30afCdB5808378a213102656dc8056a8"
+  },
+  "roles": {
+    "admins": [],
+    "managers": [],
+    "keepers": []
+  },
+  "transactions": {
+    "implementationDeploy": "0x4a0d26a45f240d1ae89dc1dbfd1780f97802122d1be463090fa49d0c62e89a42",
+    "proxyDeploy": "0x3273c7ff023c4575aa5ed99ca1937c9a2259024f880596f49d259236c1952937",
+    "setEcosystemWallet": "0xdf721529daf25babb613932b367f1238150692390b32689a945d6d7464990cc6",
+    "setRewardPeriodSeconds": "0x0ff1f73508fd7bf08f8d83e553a271d31afcbb53310bf3d0b73b29ff36d8971c",
+    "fundRewardPool": "0x02238dc898cc73b36f010b2718647ecc7bb604090071002f5a9dbc51db892e43",
+    "setLabubuSwapIntermediateToken": "0xc74cc8771d3a546df119f07d4b6d2cbae93a4f94da7ce8ad983e18df9d6be1c3",
+    "setMainnetLiquidityConfig": "0x68442f4a87656844a9015cf2200c34f9383706ab8f2e15eb5c9d27fc13eb1260",
+    "setPancakeProxy": "0x4f73dc77775030b49094007a65a714cb755a780403f7100f889c7db4cdeb2074"
+  },
+  "upgradedAt": "2026-05-20T13:09:37.789Z",
+  "upgrades": [
+    {
+      "upgradedAt": "2026-05-11T04:13:13.231Z",
+      "tx": "0x515a4a47fd050f4d816f785bbecb9585768d79f3d81dabf6ac4ac924350ee564",
+      "blockNumber": 97597471,
+      "oldImplementation": "0x265c8d9ca25D0F5a86CB0bcacC9C67aA478F7987",
+      "newImplementation": "0xCd08Be0E4184F3aeCe88b0dBA15164d3b06BcCF2",
+      "proxy": "0x4635Ca6392229a4F7D528e9a841a5ad570aAd00D",
+      "proxyAdmin": "0xD8a03E2D61C16728e67814Cc5c1514e4d51f4e7E",
+      "operator": "0xAC25dA7FdEEEaDf2943EBF505Fa9739CBD111bD8",
+      "contractVerification": {
+        "enabled": false,
+        "sourceCodeVerification": "disabled"
+      }
+    },
+    {
+      "upgradedAt": "2026-05-14T08:16:16.118Z",
+      "tx": "0xa99b374cb70bd2911115d0a04f22cb073ce773ae777af97117c8bce4ca4ba237",
+      "blockNumber": 98205069,
+      "oldImplementation": "0xCd08Be0E4184F3aeCe88b0dBA15164d3b06BcCF2",
+      "newImplementation": "0x293A87486f151c67f35250D3E72A1bb943f5FFC0",
+      "proxy": "0x4635Ca6392229a4F7D528e9a841a5ad570aAd00D",
+      "proxyAdmin": "0xD8a03E2D61C16728e67814Cc5c1514e4d51f4e7E",
+      "operator": "0xAC25dA7FdEEEaDf2943EBF505Fa9739CBD111bD8",
+      "contractVerification": {
+        "enabled": false,
+        "sourceCodeVerification": "disabled"
+      }
+    },
+    {
+      "upgradedAt": "2026-05-14T08:36:32.643Z",
+      "tx": "0x880d24aaf7b58eb5a31496855d7b4fa272ad7a9c53267d44e9e520ea3e929f66",
+      "blockNumber": 98207753,
+      "oldImplementation": "0x293A87486f151c67f35250D3E72A1bb943f5FFC0",
+      "newImplementation": "0xaeBC0637DAf54F0d825940853f779AeeB8a9c664",
+      "proxy": "0x4635Ca6392229a4F7D528e9a841a5ad570aAd00D",
+      "proxyAdmin": "0xD8a03E2D61C16728e67814Cc5c1514e4d51f4e7E",
+      "operator": "0xAC25dA7FdEEEaDf2943EBF505Fa9739CBD111bD8",
+      "setPancakeProxyTx": "0x410be198d8db38c95a6925150fde46f74fcba37ea301670e7586df1eb88759ea",
+      "contractVerification": {
+        "enabled": false,
+        "sourceCodeVerification": "disabled"
+      }
+    },
+    {
+      "upgradedAt": "2026-05-15T11:58:20.982Z",
+      "tx": "0x84d52cbdc11e5a92ad3e9b3f8bb052eeb9a01bf58f80984f9cd8c27df74ae59b",
+      "blockNumber": 98426358,
+      "oldImplementation": "0xaeBC0637DAf54F0d825940853f779AeeB8a9c664",
+      "newImplementation": "0x39dd9Bf7FF02ce5F6fe617500F99D3566bE3ebe8",
+      "proxy": "0x4635Ca6392229a4F7D528e9a841a5ad570aAd00D",
+      "proxyAdmin": "0xD8a03E2D61C16728e67814Cc5c1514e4d51f4e7E",
+      "operator": "0xAC25dA7FdEEEaDf2943EBF505Fa9739CBD111bD8",
+      "setPancakeProxyTx": "",
+      "contractVerification": {
+        "enabled": false,
+        "sourceCodeVerification": "disabled"
+      }
+    },
+    {
+      "upgradedAt": "2026-05-17T07:11:53.087Z",
+      "tx": "0xd72cd902f47c90b72cddea25d070d295656791c2f040015a14ba8d57a56fd402",
+      "blockNumber": 98771735,
+      "oldImplementation": "0x39dd9Bf7FF02ce5F6fe617500F99D3566bE3ebe8",
+      "newImplementation": "0xc203E0E779C4FbDa6ca885b2298D69fd28df497f",
+      "proxy": "0x4635Ca6392229a4F7D528e9a841a5ad570aAd00D",
+      "proxyAdmin": "0xD8a03E2D61C16728e67814Cc5c1514e4d51f4e7E",
+      "operator": "0xAC25dA7FdEEEaDf2943EBF505Fa9739CBD111bD8",
+      "setPancakeProxyTx": "",
+      "contractVerification": {
+        "enabled": false,
+        "sourceCodeVerification": "disabled"
+      }
+    },
+    {
+      "upgradedAt": "2026-05-17T15:36:01.073Z",
+      "tx": "0xb407b8b48b00fd3fddc66c5e90c9745b6e8bd24c16d0e5918a23becb118d8cc3",
+      "blockNumber": 98838901,
+      "oldImplementation": "0xc203E0E779C4FbDa6ca885b2298D69fd28df497f",
+      "newImplementation": "0x09b7cC2F8Ea70354eAd19dAff00495677fACb7Ff",
+      "proxy": "0x4635Ca6392229a4F7D528e9a841a5ad570aAd00D",
+      "proxyAdmin": "0xD8a03E2D61C16728e67814Cc5c1514e4d51f4e7E",
+      "operator": "0xAC25dA7FdEEEaDf2943EBF505Fa9739CBD111bD8",
+      "setPancakeProxyTx": "0x4f73dc77775030b49094007a65a714cb755a780403f7100f889c7db4cdeb2074",
+      "contractVerification": {
+        "enabled": false,
+        "sourceCodeVerification": "disabled"
+      }
+    },
+    {
+      "upgradedAt": "2026-05-19T01:34:23.081Z",
+      "tx": "0x8fb5189764382e834de57da67314306ef39d91e07db39edf37e72b4adacd8209",
+      "blockNumber": 99110377,
+      "oldImplementation": "0x09b7cC2F8Ea70354eAd19dAff00495677fACb7Ff",
+      "newImplementation": "0x322a6A9eB33f94171f5c12E2855B9965872f4e85",
+      "proxy": "0x4635Ca6392229a4F7D528e9a841a5ad570aAd00D",
+      "proxyAdmin": "0xD8a03E2D61C16728e67814Cc5c1514e4d51f4e7E",
+      "operator": "0xAC25dA7FdEEEaDf2943EBF505Fa9739CBD111bD8",
+      "setPancakeProxyTx": "",
+      "contractVerification": {
+        "enabled": false,
+        "sourceCodeVerification": "disabled"
+      }
+    },
+    {
+      "upgradedAt": "2026-05-19T02:30:59.401Z",
+      "tx": "0x1ccddfcc13635fa1d963fe8db06211dbbb2b81b8d4f006aa12c5c658332d84a1",
+      "blockNumber": 99116728,
+      "oldImplementation": "0x322a6A9eB33f94171f5c12E2855B9965872f4e85",
+      "newImplementation": "0x557b1120A903D13573dd19840574559fCE10384D",
+      "proxy": "0x4635Ca6392229a4F7D528e9a841a5ad570aAd00D",
+      "proxyAdmin": "0xD8a03E2D61C16728e67814Cc5c1514e4d51f4e7E",
+      "operator": "0xAC25dA7FdEEEaDf2943EBF505Fa9739CBD111bD8",
+      "setPancakeProxyTx": "",
+      "legacyNodeCountBeforeUpgrade": 308,
+      "syncNodeUnitTxs": [
+        "0xef4d1a5ed753cb9f4921350b948b1e4106c56e85ae456e6293dcea8a47965a97",
+        "0x7b2d65153c0227403ef1f2163a9d0e4e9e240b5ae3fb25520b1cd52efbb8b7c3",
+        "0xffff44940c560c007f3fcf3bc1790a08739ac6ae48787e697a16aa318493d9d9",
+        "0xe62bd13383f0874b4ed2117194fc6bec3868936ad48a66ffcdf2b776f8383166",
+        "0x10e3056dd2e12df5ddd8fd49d740170e67d5510889c9bcda8cd021d34bb4afa5",
+        "0x51ae1cbca5fca2e9d53e1787cb1c5caf28a0afeb8c631678ff04f1f792f60411",
+        "0x06b961a7eaf218821d4cc3e40b6c12c43f23c626c96a807048ea6bc4da93fe08",
+        "0x1fdf36836d49b9cd7c1d24120df58666c7340a92d225d1759ee49690465fed9e",
+        "0xb43204f4673cd0dd11aca76bcec9e2d5a079b362c8b7c9939cdb24da8b950e04",
+        "0x0ef3281aa64d8af53f0e9793587bc1230d21c50947c940772c516b379c55f268",
+        "0xc3c36e3380343958666ac863cdeb70e53875f16f0ef27fb3e916e113b5e8a6ca",
+        "0x65fea9bf0d5e45184df47237b7fe07325a4104ba7b36aa4554df8e868dcc6ccb",
+        "0xf6748efd4eef96b6c1bc7bb045f8a18f23dfedaff292f2824a30ed5ce2d8d31a",
+        "0xf9198f392280324dd5bc6cbe58e5b8579410e2d9f187300b172bbc1ebcc64240",
+        "0x07bff42a9b7e5665e20ccb3f670ef1bb81f564ada280b5e272ec009af32804ea",
+        "0x3f5c00efdf786b15f20babac18f052d6cef30a1f84947f7ac766dc07b4d0508d",
+        "0x42d34c81eee01c769e69fa26a005f5e293c679035de134f0752e257f737df0ac",
+        "0x122392ece2552c25ae20ac6967d4fe3e805ac37cf22813186f62114c47dc51b5",
+        "0xd275f26a2d028f87a0f7beaffb595ec6087ec1d2d3a8172914d8d8d8a4892b4c",
+        "0x7dc7ed65648c8fc44335006c16f6201edc5dc1e4dbf65b44eac980fe57add6e7",
+        "0x0fdd94bf7807b9d7512dc64568325466030385e121bd06d1d21cf877eb3560ac",
+        "0xb2706ecdb1abd33987a2ea5f75ae1a8722450d934c57c94ace82403b14be816d",
+        "0x2756e7098c2de2b2f00a5bb999507aa9eb09697549f0045efd7cfb9f86920b77",
+        "0x019bc02a9d56a0999804554f1458b021dd9cadc09fe77c9a318ac1e31fac8223",
+        "0xfca38e0e98d0c8935fcc1b673282e85774dbe24d899bd14306393092130206cf",
+        "0x7eaaf1ead98122a37557d198e90a3b711daeb3407db7a6c1e276cf558f78643f",
+        "0x03405ed3676bd112eac9714f1f7434a704ff6d04dd71cc875ca8ce0a22b26ae3",
+        "0xe1ee07689ef3dec86909e19a48e0e6a727fbdb2a3108f647e9ad332c5ab02289",
+        "0x2ff836d8c5c88fbce95e66e9ae2d4b23b944a83537bcba4ac39ca2ddaf9a123e",
+        "0x6b4a4cc029da2f982af0f67863a12284bd17a8de4e50aada62c18a1375c844f4",
+        "0x223c5806d41df76990f0f0c86a87fda5c1a8e6b2ebcf747b28166c2fb6b6f25b"
+      ],
+      "syncedNodeUnitCount": "328",
+      "contractVerification": {
+        "enabled": false,
+        "sourceCodeVerification": "disabled"
+      }
+    },
+    {
+      "upgradedAt": "2026-05-20T13:09:37.789Z",
+      "tx": "0x0281b90c34c673c7267e85a1412f33c8313220c5047defd98f8a0ab44b1fcf79",
+      "blockNumber": 99394617,
+      "oldImplementation": "0x557b1120A903D13573dd19840574559fCE10384D",
+      "newImplementation": "0xB550512c75504b4C1cf6adBCBCBefA7528c16c9c",
+      "proxy": "0x4635Ca6392229a4F7D528e9a841a5ad570aAd00D",
+      "proxyAdmin": "0xD8a03E2D61C16728e67814Cc5c1514e4d51f4e7E",
+      "operator": "0xAC25dA7FdEEEaDf2943EBF505Fa9739CBD111bD8",
+      "setPancakeProxyTx": "",
+      "legacyNodeCountBeforeUpgrade": 308,
+      "syncNodeUnitTxs": [],
+      "syncedNodeUnitCount": "",
+      "contractVerification": {
+        "enabled": false,
+        "sourceCodeVerification": "disabled"
+      }
+    }
+  ],
+  "liquidityConfigUpdatedAt": "2026-05-14T08:16:50.886Z"
+}

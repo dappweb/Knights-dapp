@@ -9,6 +9,9 @@ const KEEPER_ACTIONS = new Set([
   "/api/keeper/process-usdt",
   "/api/keeper/sync-lp",
   "/api/keeper/maintenance",
+  "/api/keeper/distribute-rewards",
+  "/api/keeper/claim-migrations",
+  "/api/keeper/record-buy",
   "/api/keeper/reduce-lp",
   "/api/keeper/burn-user-knt",
   "/api/keeper/run-all",
@@ -31,10 +34,13 @@ const PAIR_ABI = [
 
 const KNT_ABI = [
   "function owner() view returns(address)",
-  "function roleOf(address) view returns(bool isOwnerRole,bool isAdminRole,bool isManagerRole,bool isKeeperRole,bool isTaxRecorderRole)",
+  "function roleOf(address) view returns(bool isOwnerRole,bool isAdminRole,bool isManagerRole,bool isKeeperRole)",
   "function processedUsdtDeposits(bytes32) view returns(bool)",
   "function processedKeeperActions(bytes32) view returns(bool)",
   "function processUsdtDeposit(address,uint256,bytes32,uint256,uint256,uint256,uint256,uint256,uint256) returns(uint256)",
+  "function keeperDistributeRewards(address[])",
+  "function keeperClaimMigrations(uint256[])",
+  "function recordBuy(address,uint256,uint256)",
   "function keeperReduceUserLp(address,uint256,uint256)",
   "function keeperReduceUserLpFromSource(address,uint256,uint256,bytes32,uint256)",
   "function keeperReduceUserLpAmountFromSource(address,uint256,bytes32,uint256)",
@@ -57,6 +63,8 @@ const KNT_ABI = [
   "function currentDay() view returns(uint256)",
   "function rewardPeriodSeconds() view returns(uint256)",
   "function dailyEmissionForDay(uint256) view returns(uint256)",
+  "function totalSupply() view returns(uint256)",
+  "function nextMigrationId() view returns(uint256)",
   "function foundationWallet() view returns(address)",
   "function dexSettlementWallet() view returns(address)",
   "function projectSinkWallet() view returns(address)",
@@ -66,6 +74,7 @@ const KNT_ABI = [
   "function labubuToken() view returns(address)",
   "function labubuKntPair() view returns(address)",
   "function labubuSwapIntermediateToken() view returns(address)",
+  "function pancakeProxy() view returns(address)",
   "function burnQueueRewardBP() view returns(uint256)",
   "function referralSignalAmount() view returns(uint256)",
   "function balanceOf(address) view returns(uint256)",
@@ -250,6 +259,7 @@ function getDeployment(env) {
     usdt: env.USDT_TOKEN_ADDRESS || "",
     labubu: env.LABUBU_TOKEN_ADDRESS || "",
     router: env.PANCAKE_V2_ROUTER || "",
+    pancakeProxy: env.MAINNET_PANCAKE_PROXY || env.PANCAKE_PROXY || "",
     labubuPair: env.KNT_LABUBU_PAIR || "",
     kntUsdtPair: env.KNT_USDT_PAIR || "",
     labubuUsdtPair: env.LABUBU_USDT_PAIR || "",
@@ -867,6 +877,47 @@ function bodyAmount(body, rawKey, decimalKey, label) {
   const amount = ethers.parseEther(String(decimalValue));
   if (amount <= 0n) throw new Error(`${label} must be positive`);
   return amount;
+}
+
+function bodyAddressList(body, keys, label) {
+  for (const key of keys) {
+    const value = body?.[key];
+    if (Array.isArray(value)) {
+      const addresses = value.map((item) => ethers.getAddress(String(item).trim()));
+      if (addresses.length === 0) throw new Error(`${label} is required`);
+      return addresses;
+    }
+    if (typeof value === "string" && value.trim()) {
+      const addresses = value
+        .split(/[\s,;]+/)
+        .filter(Boolean)
+        .map((item) => ethers.getAddress(item));
+      if (addresses.length === 0) throw new Error(`${label} is required`);
+      return addresses;
+    }
+  }
+  throw new Error(`${label} is required`);
+}
+
+function bodyUintList(body, keys, label) {
+  for (const key of keys) {
+    const value = body?.[key];
+    const items = Array.isArray(value)
+      ? value
+      : typeof value === "string" && value.trim()
+        ? value.split(/[\s,;]+/)
+        : [];
+    const ids = items
+      .map((item) => String(item).trim())
+      .filter(Boolean)
+      .map((item) => {
+        const id = BigInt(item);
+        if (id <= 0n) throw new Error(`${label} must contain positive ids`);
+        return id;
+      });
+    if (ids.length > 0) return ids;
+  }
+  throw new Error(`${label} is required`);
 }
 
 function keeperActionId(actionTypeText, sourceTxHash, sourceLogIndex, account) {
@@ -2124,9 +2175,14 @@ async function loadStatus(env) {
   const provider = providerFor(env);
   const knt = kntContract(env, provider);
   const state = await readAdminState(env);
+  const migration = migrationConfig(env);
   const currentDay = await knt.currentDay();
   const [
     owner,
+    totalSupply,
+    contractKntBalance,
+    migrationReserveBalance,
+    nextMigrationId,
     rewardPool,
     globalLpValueUsdt,
     totalLpValueUsdt,
@@ -2151,6 +2207,10 @@ async function loadStatus(env) {
     rewardPeriodSeconds,
   ] = await Promise.all([
     knt.owner(),
+    knt.totalSupply(),
+    knt.balanceOf(deployment.contract),
+    ethers.isAddress(migration.reserveHolder) ? knt.balanceOf(migration.reserveHolder) : Promise.resolve(0n),
+    knt.nextMigrationId(),
     knt.rewardPool(),
     knt.globalLpValueUsdt(),
     knt.totalLpValueUsdt(),
@@ -2181,6 +2241,12 @@ async function loadStatus(env) {
   } catch (_error) {
     labubuSwapIntermediateToken = deployment.labubuSwapIntermediateToken || "";
   }
+  let pancakeProxy = deployment.pancakeProxy || "";
+  try {
+    pancakeProxy = await knt.pancakeProxy();
+  } catch (_error) {
+    pancakeProxy = deployment.pancakeProxy || "";
+  }
 
   let market = { pairs: [], error: null };
   try {
@@ -2208,6 +2274,10 @@ async function loadStatus(env) {
     deployment,
     contract: {
       owner,
+      totalSupply: fmt(totalSupply),
+      totalSupplyRaw: totalSupply.toString(),
+      contractKntBalance: fmt(contractKntBalance),
+      contractKntBalanceRaw: contractKntBalance.toString(),
       rewardPool: fmt(rewardPool),
       rewardPoolRaw: rewardPool.toString(),
       globalLpValueUsdt: fmt(globalLpValueUsdt),
@@ -2235,6 +2305,7 @@ async function loadStatus(env) {
       },
       liquidity: {
         pancakeRouter,
+        pancakeProxy,
         usdtToken,
         labubuToken,
         labubuKntPair,
@@ -2245,6 +2316,26 @@ async function loadStatus(env) {
         referralSignalAmount: fmt(referralSignalAmount),
         referralSignalAmountRaw: referralSignalAmount.toString(),
         rewardPeriodSeconds: rewardPeriodSeconds.toString(),
+        newLpPowerPerUsdt: migration.newLpPowerPerUsdt,
+        newLpPowerPerUsdtConfigurable: false,
+      },
+      migration: {
+        reserveHolder: migration.reserveHolder,
+        reserveHolderBalance: fmt(migrationReserveBalance),
+        reserveHolderBalanceRaw: migrationReserveBalance.toString(),
+        contractKntBalance: fmt(contractKntBalance),
+        contractKntBalanceRaw: contractKntBalance.toString(),
+        nextMigrationId: nextMigrationId.toString(),
+        mintedRowsOnChain: (nextMigrationId > 0n ? nextMigrationId - 1n : 0n).toString(),
+        expectedKntAmount: migration.expectedKntAmount,
+        expectedMintRows: migration.expectedMintRows.toString(),
+        expectedLpRows: migration.expectedLpRows.toString(),
+        expectedLpValueUsdt: migration.expectedLpValueUsdt,
+        expectedLegacyPower: migration.expectedLegacyPower,
+        baseReleaseBp: migration.baseReleaseBp.toString(),
+        acceleratedReleaseBp: migration.acceleratedReleaseBp.toString(),
+        accelerationDirectNewLpUsdt: migration.accelerationDirectNewLpUsdt,
+        newLpPowerPerUsdt: migration.newLpPowerPerUsdt,
       },
     },
     market,
@@ -2286,8 +2377,75 @@ async function loadRole(env, account) {
   };
 }
 
+function migrationConfig(env) {
+  return {
+    reserveHolder: env.KNT_MIGRATION_RESERVE_HOLDER || "0xF6FCDB875a7CdBE4e07Fb7DabE233bF88f35E34b",
+    expectedKntAmount: nonNegativeDecimal(env.KNT_MIGRATION_EXPECTED_KNT || "351622.272577569467629156", "0"),
+    expectedMintRows: envNumber(env, "KNT_MIGRATION_EXPECTED_ROWS", 1215),
+    expectedLpRows: envNumber(env, "KNT_MIGRATION_EXPECTED_LP_ROWS", 1913),
+    expectedLpValueUsdt: nonNegativeDecimal(env.KNT_MIGRATION_EXPECTED_LP_USDT || "1360238.991159536737295168", "0"),
+    expectedLegacyPower: nonNegativeDecimal(env.KNT_MIGRATION_EXPECTED_LEGACY_POWER || "65346806.123652943211440508", "0"),
+    baseReleaseBp: envNumber(env, "KNT_MIGRATION_BASE_RELEASE_BP", 10),
+    acceleratedReleaseBp: envNumber(env, "KNT_MIGRATION_ACCEL_RELEASE_BP", 50),
+    accelerationDirectNewLpUsdt: nonNegativeDecimal(env.KNT_MIGRATION_ACCEL_DIRECT_LP_USDT || "3000", "3000"),
+    newLpPowerPerUsdt: nonNegativeDecimal(env.KNT_NEW_LP_POWER_PER_USDT || "6", "6"),
+  };
+}
+
 function roleCanRunKeeper(role) {
   return Boolean(role?.isOwner || role?.isAdmin || role?.isManager || role?.isKeeper);
+}
+
+async function runKeeperDistributeRewards(env, body) {
+  const signer = signerFor(env);
+  const knt = kntContract(env, signer);
+  const accounts = bodyAddressList(body, ["accounts", "users", "targets"], "Reward accounts");
+  const tx = await knt.keeperDistributeRewards(accounts);
+  const receipt = await tx.wait(1);
+  return {
+    status: "processed",
+    keeper: await signer.getAddress(),
+    accounts,
+    tx: receipt.hash,
+    accountCount: accounts.length,
+    ...parseKntReceipt(receipt),
+  };
+}
+
+async function runKeeperClaimMigrations(env, body) {
+  const signer = signerFor(env);
+  const knt = kntContract(env, signer);
+  const ids = bodyUintList(body, ["ids", "migrationIds"], "Migration ids");
+  const tx = await knt.keeperClaimMigrations(ids);
+  const receipt = await tx.wait(1);
+  return {
+    status: "processed",
+    keeper: await signer.getAddress(),
+    ids: ids.map((id) => id.toString()),
+    tx: receipt.hash,
+    idCount: ids.length,
+    ...parseKntReceipt(receipt),
+  };
+}
+
+async function runKeeperRecordBuy(env, body) {
+  const signer = signerFor(env);
+  const knt = kntContract(env, signer);
+  const target = bodyAddress(body, ["target", "targetAccount", "user", "account"], "Target account");
+  const kntAmount = bodyAmount(body, "kntAmountRaw", "kntAmount", "KNT amount");
+  const usdtSpent = bodyAmount(body, "usdtSpentRaw", "usdtSpent", "USDT spent");
+  const tx = await knt.recordBuy(target, kntAmount, usdtSpent);
+  const receipt = await tx.wait(1);
+  return {
+    status: "processed",
+    keeper: await signer.getAddress(),
+    target,
+    tx: receipt.hash,
+    kntAmount: fmt(kntAmount),
+    kntAmountRaw: kntAmount.toString(),
+    usdtSpent: fmt(usdtSpent),
+    usdtSpentRaw: usdtSpent.toString(),
+  };
 }
 
 async function runKeeperReduceUserLp(env, body) {
@@ -2470,6 +2628,9 @@ async function handleApi(request, env) {
       if (url.pathname === "/api/keeper/process-usdt") return json({ ok: true, run: await runProcessUsdtDeposits(env) });
       if (url.pathname === "/api/keeper/sync-lp") return json({ ok: true, run: await runLpExitSync(env) });
       if (url.pathname === "/api/keeper/maintenance") return json({ ok: true, run: await runMaintenance(env, { force: true, runMarket: true, runReward: true }) });
+      if (url.pathname === "/api/keeper/distribute-rewards") return json({ ok: true, run: await runKeeperDistributeRewards(env, body) });
+      if (url.pathname === "/api/keeper/claim-migrations") return json({ ok: true, run: await runKeeperClaimMigrations(env, body) });
+      if (url.pathname === "/api/keeper/record-buy") return json({ ok: true, run: await runKeeperRecordBuy(env, body) });
       if (url.pathname === "/api/keeper/reduce-lp") return json({ ok: true, run: await runKeeperReduceUserLp(env, body) });
       if (url.pathname === "/api/keeper/burn-user-knt") return json({ ok: true, run: await runKeeperBurnUserKnt(env, body) });
       if (url.pathname === "/api/keeper/run-all") {

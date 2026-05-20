@@ -1,48 +1,48 @@
 {
   "network": "bscTestnet",
   "chainId": 97,
-  "deployedAt": "2026-05-05T03:24:55.621Z",
-  "deployer": "0x744447d8580EB900b199e852C132F626247a36F7",
+  "deployedAt": "2026-05-19T09:12:29.487Z",
+  "deployer": "0xAC25dA7FdEEEaDf2943EBF505Fa9739CBD111bD8",
+  "contractVerification": {
+    "enabled": false,
+    "sourceCodeVerification": "disabled"
+  },
   "router": "0xD99D1c33F9fC3444f8101754aBC46c52416550D1",
   "factory": "0x6725F303b657a9451d8BA641348b6761A6CC7a17",
-  "KNTAllInOne": "0x5e23c00276d4454072b181eBA5079440cA6ce83f",
-  "LABUBU": "0x202C8095F5D52EDF56EaFF8c36aA930e2C414181",
+  "KNTAllInOne": "0xAA0FCaf31Fd4ce39fa78feaB1295A1Ff9cb156D5",
+  "LABUBU": "0xe8214E6580f81835F13Ac358DCc72ac7d4d78052",
   "USDT": "0xacD944e910952c020eb129C50921f180c62c3291",
   "usdtSource": "configured",
-  "deployedAtBlock": 105576192,
-  "pair": "0x3B77d4f0BEFC697ae51c39158e4161328FDeFC40",
-  "labubuPair": "0x3B77d4f0BEFC697ae51c39158e4161328FDeFC40",
-  "labubuUsdtPair": "0x3d15C36a566c99bC740d2f2fA6F602B384476f9b",
+  "deployedAtBlock": 108308582,
+  "pair": "0x69f5810845e5B5ee8Fce58f98b960107Cd2e92aE",
+  "labubuPair": "0x69f5810845e5B5ee8Fce58f98b960107Cd2e92aE",
+  "labubuUsdtPair": "0x628578cACC1210f8a082bDe659072aCB4Ad11DEA",
+  "labubuSwapIntermediateToken": "",
+  "labubuWbnbPair": "",
+  "wbnbUsdtPair": "",
   "liquidity": {
     "KNT_LABUBU": {
-      "KNT": "200000.0",
-      "LABUBU": "600000.0",
-      "tx": "0x86dcb9402c269a3e0e5a546044ede492f30e47357c27b286063316247ff93f0c"
+      "KNT": "2000.0",
+      "LABUBU": "6000.0",
+      "tx": "0xf276f76b825465911921544f730186485496adf136ed5cddea56b5a752f145a3"
     },
     "LABUBU_USDT": {
-      "LABUBU": "500000.0",
-      "USDT": "500000.0",
-      "tx": "0x917821dfdecc3d53b681b53da97392f82482c8e75234fda3e49e1ee37791a04e"
+      "LABUBU": "1000.0",
+      "USDT": "1000.0",
+      "tx": "0x6978e0a5f41149d07c63686f4fece319f278cbbe8c59945fa3f0e0d20b7c5163"
     }
   },
   "wallets": {
-    "foundationWallet": "0x744447d8580EB900b199e852C132F626247a36F7",
-    "dexSettlementWallet": "0x744447d8580EB900b199e852C132F626247a36F7",
-    "projectSinkWallet": "0x744447d8580EB900b199e852C132F626247a36F7",
-    "ecosystemWallet": "0x744447d8580EB900b199e852C132F626247a36F7"
+    "foundationWallet": "0xAC25dA7FdEEEaDf2943EBF505Fa9739CBD111bD8",
+    "dexSettlementWallet": "0xAC25dA7FdEEEaDf2943EBF505Fa9739CBD111bD8",
+    "projectSinkWallet": "0xAC25dA7FdEEEaDf2943EBF505Fa9739CBD111bD8",
+    "ecosystemWallet": "0xAC25dA7FdEEEaDf2943EBF505Fa9739CBD111bD8"
   },
   "roles": {
     "admins": [],
     "managers": [],
     "keepers": []
   },
-  "supersededBy": "0x14Dc8a0E97815128304883DEaEc89D6773937dc0",
-  "supersededAt": "2026-05-05T04:38:42.605Z",
-  "oldPausedOnChain": true,
-  "oldPausedAt": "2026-05-05T05:02:21.177Z",
-  "oldPauseMethod": "setLiquidityConfig(router, usdt, labubu, zeroAddress)",
-  "oldPauseNote": "Legacy contract has no Pausable switch. Its liquidity pair config is set to zero so processUsdtDeposit/withdrawDeposit revert at the legacy entry.",
-  "oldPauseTxs": [
-    "0x1bd2a53ad2111f615e5257afd2e7ea40d54ff0e4a03b0e444d0d47d4983c9888"
-  ]
+  "supersededBy": "0x6d15543f858E185240841015159427957f390eAF",
+  "supersededAt": "2026-05-19T09:13:30.788Z"
 }

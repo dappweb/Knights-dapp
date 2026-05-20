@@ -66,6 +66,10 @@ contract TestPancakeRouter {
         swapOutputs[_swapKey(tokenIn, tokenOut)] = amountOut;
     }
 
+    function setSwapOutputEqualInput(address tokenIn, address tokenOut) external {
+        swapOutputs[_swapKey(tokenIn, tokenOut)] = type(uint256).max;
+    }
+
     function setLiquidityToMint(uint256 amount) external {
         liquidityToMint = amount;
     }
@@ -96,7 +100,8 @@ contract TestPancakeRouter {
         require(path.length >= 2, "Invalid path");
         address tokenIn = path[0];
         address tokenOut = path[path.length - 1];
-        uint256 amountOut = swapOutputs[_swapKey(tokenIn, tokenOut)];
+        uint256 configuredOutput = swapOutputs[_swapKey(tokenIn, tokenOut)];
+        uint256 amountOut = configuredOutput == type(uint256).max ? amountIn : configuredOutput;
         require(amountOut >= amountOutMin, "Insufficient output");
 
         IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), amountIn);
@@ -172,5 +177,74 @@ contract TestPancakeRouter {
 
     function _swapKey(address tokenIn, address tokenOut) private pure returns (bytes32) {
         return keccak256(abi.encode(tokenIn, tokenOut));
+    }
+}
+
+contract TestPancakeProxy {
+    using SafeERC20 for IERC20;
+
+    struct SwapByUsdtRecord {
+        uint256 amountIn;
+        uint256 amountOut;
+        uint256 amountOutMin;
+        address to;
+        uint256 deadline;
+    }
+
+    address public immutable usdtToken;
+    address public immutable labubuToken;
+    uint256 public swapByUsdtOutput;
+    SwapByUsdtRecord[] private swapByUsdtRecords;
+
+    event SwapByUsdtRecorded(
+        uint256 indexed index,
+        uint256 amountIn,
+        uint256 amountOut,
+        uint256 amountOutMin,
+        address to,
+        uint256 deadline
+    );
+
+    constructor(address usdtToken_, address labubuToken_) {
+        usdtToken = usdtToken_;
+        labubuToken = labubuToken_;
+    }
+
+    function setSwapByUsdtOutput(uint256 amountOut) external {
+        swapByUsdtOutput = amountOut;
+    }
+
+    function swapByUsdtRecordCount() external view returns (uint256) {
+        return swapByUsdtRecords.length;
+    }
+
+    function swapByUsdtRecord(uint256 index) external view returns (SwapByUsdtRecord memory) {
+        return swapByUsdtRecords[index];
+    }
+
+    function swapByBnb(uint256, uint256, address, uint256) external pure returns (uint256) {
+        revert("Not implemented");
+    }
+
+    function swapByUsdt(
+        uint256 amountIn,
+        uint256 amountOutMin,
+        address to,
+        uint256 deadline
+    ) external returns (uint256 amountOut) {
+        amountOut = swapByUsdtOutput;
+        require(amountOut >= amountOutMin, "Insufficient output");
+
+        IERC20(usdtToken).safeTransferFrom(msg.sender, address(this), amountIn);
+        IERC20(labubuToken).safeTransfer(to, amountOut);
+
+        swapByUsdtRecords.push(SwapByUsdtRecord({
+            amountIn: amountIn,
+            amountOut: amountOut,
+            amountOutMin: amountOutMin,
+            to: to,
+            deadline: deadline
+        }));
+        emit SwapByUsdtRecorded(swapByUsdtRecords.length - 1, amountIn, amountOut, amountOutMin, to, deadline);
     }
 }

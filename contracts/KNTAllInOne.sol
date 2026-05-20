@@ -30,8 +30,26 @@ interface IPancakeV2Router {
 
 }
 
+interface IPancakeProxy {
+    function swapByBnb(
+        uint256 amountIn,
+        uint256 amountOutMin,
+        address to,
+        uint256 deadline
+    ) external returns (uint256);
+
+    function swapByUsdt(
+        uint256 amountIn,
+        uint256 amountOutMin,
+        address to,
+        uint256 deadline
+    ) external returns (uint256);
+}
+
 contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
+
+    error KntError();
 
     uint256 public constant BASIS_POINTS = 10_000;
     uint256 public constant TOTAL_SUPPLY = 210_000_000 ether;
@@ -63,7 +81,7 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
     uint256 public constant PROFIT_TAX_QUEUE_BP = 500;
     uint256 public constant PROFIT_TAX_BURN_BP = 1_000;
     uint256 public constant MIGRATION_RELEASE_BP = 10;
-    uint256 public constant MIGRATION_BOOST_RELEASE_BP = 30;
+    uint256 public constant MIGRATION_ACCEL_RELEASE_BP = 50;
 
     address public foundationWallet;
     address public dexSettlementWallet;
@@ -93,6 +111,7 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
     uint256 public latestKntPriceUsdt;
     uint256 public price24hAgoUsdt;
     uint256 public latestPriceUpdatedAt;
+    uint256 public lpPowerPerUsdt = POWER_PER_USDT;
 
     bool private systemTransfer;
 
@@ -139,7 +158,6 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
     mapping(address => CostBasis) public costBasisOf;
     mapping(address => bool) public admins;
     mapping(address => bool) public managers;
-    mapping(address => bool) public taxRecorders;
     mapping(address => bool) public keepers;
     mapping(address => bool) public ammPairs;
     mapping(bytes32 => bool) public processedUsdtDeposits;
@@ -151,7 +169,13 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
     uint256 public nextMigrationId = 1;
     mapping(uint256 => MigrationPosition) public migrationPositions;
     mapping(bytes32 => bool) public processedKeeperActions;
+    mapping(address => uint256) public directNewLpValueUsdtOf;
+    mapping(address => uint256) public newLpValueUsdtOf;
+    mapping(address => uint256) public migrationBoostStartDayOf;
     address public labubuSwapIntermediateToken;
+    address public pancakeProxy;
+    mapping(address => uint256) private nodeUnits;
+    uint256 private totalNodeUnitCount;
 
     event ReferralSignal(address indexed from, address indexed to, uint256 amount);
     event ReferrerBound(address indexed user, address indexed referrer);
@@ -175,6 +199,7 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
     event BuyRecorded(address indexed account, uint256 kntAmount, uint256 usdtSpent);
     event SellSettled(address indexed account, uint256 grossAmount, uint256 netAmount, uint256 sellTax, uint256 profitTax, uint256 dumpTax);
     event FoundationTaxConverted(address indexed foundationWallet, uint256 kntAmount, uint256 labubuAmount);
+    event EcosystemTaxConverted(address indexed ecosystemWallet, uint256 kntAmount, uint256 labubuAmount);
     event DynamicSunk(address indexed source, uint256 amount);
     event LiquidityKntBurned(address indexed account, uint256 amount);
     event UserLpCredited(address indexed account, uint256 lpAmount, uint256 lpValueUsdt);
@@ -184,6 +209,7 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
     event MigrationMinted(address indexed account, uint256 indexed id, uint256 amount);
     event MigrationClaimed(address indexed account, uint256 indexed id, uint256 amount);
     event LiquidityConfigUpdated(address router, address usdtToken, address labubuToken, address labubuKntPair);
+    event PancakeProxyUpdated(address indexed oldProxy, address indexed newProxy);
     event AdminUpdated(address indexed admin, bool enabled);
     event ManagerUpdated(address indexed manager, bool enabled);
     event KeeperUpdated(address indexed keeper, bool enabled);
@@ -193,18 +219,22 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
     event UsdtDepositProcessed(bytes32 indexed depositId, address indexed account, address indexed operator, uint256 amount);
 
     modifier onlyAdminOrOwner() {
-        require(_isAdminOrOwner(msg.sender), "Not admin");
+        _require(_isAdminOrOwner(msg.sender));
         _;
     }
 
     modifier onlyManagerOrAbove() {
-        require(_isManagerOrAbove(msg.sender), "Not manager");
+        _require(_isManagerOrAbove(msg.sender));
         _;
     }
 
     modifier onlyKeeperOrAbove() {
-        require(_isKeeperOrAbove(msg.sender), "Not keeper");
+        _require(_isKeeperOrAbove(msg.sender));
         _;
+    }
+
+    function _require(bool condition) internal pure {
+        if (!condition) revert KntError();
     }
 
     constructor(
@@ -218,7 +248,7 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
         ERC20("Knight Token", "KNT")
         Ownable(initialOwner)
     {
-        require(foundationWallet_ != address(0) && dexSettlementWallet_ != address(0), "Zero wallet");
+        _require(foundationWallet_ != address(0) && dexSettlementWallet_ != address(0));
         foundationWallet = foundationWallet_;
         dexSettlementWallet = dexSettlementWallet_;
         projectSinkWallet = foundationWallet_;
@@ -228,7 +258,6 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
         labubuToken = labubuToken_;
         startTimestamp = block.timestamp;
         _mint(initialOwner, TOTAL_SUPPLY);
-        taxRecorders[initialOwner] = true;
     }
 
     function _update(address from, address to, uint256 value) internal override {
@@ -278,17 +307,16 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
     function roleOf(address account)
         external
         view
-        returns (bool isOwnerRole, bool isAdminRole, bool isManagerRole, bool isKeeperRole, bool isTaxRecorderRole)
+        returns (bool isOwnerRole, bool isAdminRole, bool isManagerRole, bool isKeeperRole)
     {
         isOwnerRole = account == owner();
         isAdminRole = admins[account];
         isManagerRole = managers[account];
         isKeeperRole = keepers[account];
-        isTaxRecorderRole = taxRecorders[account];
     }
 
     function transferOwnership(address newOwner) public override onlyAdminOrOwner {
-        require(newOwner != address(0), "Invalid owner");
+        _require(newOwner != address(0));
         _transferOwnership(newOwner);
     }
 
@@ -309,7 +337,7 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
     }
 
     function bindReferrer(address referrer) external {
-        require(referrer != address(0), "Zero referrer");
+        _require(referrer != address(0));
         if (!users[msg.sender].registered) {
             _register(msg.sender, referrer);
         } else {
@@ -318,11 +346,7 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
     }
 
     function nodeCount() external view returns (uint256) {
-        return nodeList.length;
-    }
-
-    function nodes() external view returns (address[] memory) {
-        return nodeList;
+        return totalNodeUnitCount;
     }
 
     function burnQueueLength() external view returns (uint256) {
@@ -376,11 +400,11 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
         uint256 minLpAmount,
         uint256 deadline
     ) external nonReentrant onlyKeeperOrAbove returns (uint256 liquidity) {
-        require(account != address(0), "Zero account");
-        require(amount > 0, "Zero amount");
-        require(depositId != bytes32(0), "Zero deposit id");
-        require(!processedUsdtDeposits[depositId], "Deposit processed");
-        require(IERC20(usdtToken).balanceOf(address(this)) >= amount, "Insufficient USDT");
+        _require(account != address(0));
+        _require(amount > 0);
+        _require(depositId != bytes32(0));
+        _require(!processedUsdtDeposits[depositId]);
+        _require(IERC20(usdtToken).balanceOf(address(this)) >= amount);
         processedUsdtDeposits[depositId] = true;
         liquidity = _processUsdtDeposit(account, amount, minKntBought, minLabubuBought, minKntToLp, minLabubuToLp, minLpAmount, deadline);
         _distributePendingLineage(account);
@@ -388,7 +412,7 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
     }
 
     function fundRewardPool(uint256 amount) external nonReentrant {
-        require(amount > 0, "Zero amount");
+        _require(amount > 0);
         systemTransfer = true;
         _transfer(msg.sender, address(this), amount);
         systemTransfer = false;
@@ -410,14 +434,20 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
         }
     }
 
+    function keeperSyncNodeUnits(address[] calldata accounts) external onlyKeeperOrAbove {
+        for (uint256 i = 0; i < accounts.length; i++) {
+            if (accounts[i] != address(0)) _refreshNodeStatus(accounts[i]);
+        }
+    }
+
     function burnAndQueue(uint256 amount) external nonReentrant {
-        require(amount > 0, "Zero amount");
+        _require(amount > 0);
         _burnAndQueue(msg.sender, amount);
     }
 
     function keeperBurnFrom(address account, uint256 amount) external nonReentrant onlyKeeperOrAbove {
-        require(account != address(0) && account != address(this) && !ammPairs[account], "Invalid burn account");
-        require(amount > 0, "Zero amount");
+        _require(account != address(0) && account != address(this) && !ammPairs[account]);
+        _require(amount > 0);
         _burn(account, amount);
         emit KeeperBurned(account, msg.sender, amount);
     }
@@ -428,16 +458,16 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
         onlyKeeperOrAbove
     {
         bytes32 actionId = _useKeeperAction(account, sourceTxHash, sourceLogIndex, keccak256("KNT_BURN"));
-        require(account != address(0) && account != address(this) && !ammPairs[account], "Invalid burn account");
-        require(amount > 0, "Zero amount");
+        _require(account != address(0) && account != address(this) && !ammPairs[account]);
+        _require(amount > 0);
         _burn(account, amount);
         emit KeeperBurned(account, msg.sender, amount);
         emit KeeperActionProcessed(actionId, sourceTxHash, sourceLogIndex, account, keccak256("KNT_BURN"));
     }
 
     function keeperReduceUserLp(address account, uint256 amount, uint256 lpValueUsdt) external nonReentrant onlyKeeperOrAbove {
-        require(account != address(0), "Zero account");
-        require(amount > 0 && lpValueUsdt > 0, "Zero amount");
+        _require(account != address(0));
+        _require(amount > 0 && lpValueUsdt > 0);
         _updatePool();
         _settleAccount(account);
         _removeDeposit(account, amount, lpValueUsdt);
@@ -450,8 +480,8 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
         onlyKeeperOrAbove
     {
         bytes32 actionId = _useKeeperAction(account, sourceTxHash, sourceLogIndex, keccak256("LP_REDUCE"));
-        require(account != address(0), "Zero account");
-        require(amount > 0 && lpValueUsdt > 0, "Zero amount");
+        _require(account != address(0));
+        _require(amount > 0 && lpValueUsdt > 0);
         _updatePool();
         _settleAccount(account);
         _removeDeposit(account, amount, lpValueUsdt);
@@ -465,14 +495,14 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
         onlyKeeperOrAbove
     {
         bytes32 actionId = _useKeeperAction(account, sourceTxHash, sourceLogIndex, keccak256("LP_REDUCE"));
-        require(account != address(0), "Zero account");
-        require(amount > 0, "Zero amount");
+        _require(account != address(0));
+        _require(amount > 0);
         _updatePool();
         _settleAccount(account);
         UserInfo storage user = users[account];
-        require(user.depositAmount >= amount && user.depositAmount > 0, "Insufficient deposit");
+        _require(user.depositAmount >= amount && user.depositAmount > 0);
         uint256 lpValueUsdt = (user.lpValueUsdt * amount) / user.depositAmount;
-        require(lpValueUsdt > 0, "Zero LP value");
+        _require(lpValueUsdt > 0);
         _removeDeposit(account, amount, lpValueUsdt);
         emit KeeperLpReduced(account, msg.sender, amount, lpValueUsdt);
         emit KeeperActionProcessed(actionId, sourceTxHash, sourceLogIndex, account, keccak256("LP_REDUCE"));
@@ -502,8 +532,8 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
     }
 
     function recordBuy(address account, uint256 kntAmount, uint256 usdtSpent) external {
-        require(taxRecorders[msg.sender] || _isAdminOrOwner(msg.sender), "Not recorder");
-        require(account != address(0) && kntAmount > 0 && usdtSpent > 0, "Invalid buy");
+        _require(_isKeeperOrAbove(msg.sender));
+        _require(account != address(0) && kntAmount > 0 && usdtSpent > 0);
         costBasisOf[account].boughtKnt += kntAmount;
         costBasisOf[account].spentUsdt += usdtSpent;
         emit BuyRecorded(account, kntAmount, usdtSpent);
@@ -514,7 +544,7 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
         nonReentrant
         returns (uint256 netAmount)
     {
-        require(amount > 0 && currentValueUsdt > 0, "Zero amount");
+        _require(amount > 0 && currentValueUsdt > 0);
         systemTransfer = true;
         _transfer(msg.sender, address(this), amount);
         systemTransfer = false;
@@ -523,7 +553,7 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
         uint256 profitTax = _profitTax(msg.sender, amount, currentValueUsdt);
         uint256 dumpTax = _dumpTax(amount, priceNowUsdt_, price24hAgoUsdt_);
         uint256 totalTax = sellTax + profitTax + dumpTax;
-        require(totalTax <= amount, "Tax exceeds amount");
+        _require(totalTax <= amount);
 
         _distributeSellTax(sellTax);
         _distributeProfitTax(profitTax);
@@ -540,7 +570,7 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
     }
 
     function mintMigration(address account, uint256 amount) external onlyAdminOrOwner returns (uint256 id) {
-        require(account != address(0) && amount > 0, "Invalid migration");
+        _require(account != address(0) && amount > 0);
         id = nextMigrationId++;
         migrationPositions[id] = MigrationPosition({
             owner: account,
@@ -551,30 +581,36 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
         emit MigrationMinted(account, id, amount);
     }
 
-    function claimMigration(uint256 id) external nonReentrant {
-        MigrationPosition storage position = migrationPositions[id];
-        require(position.owner == msg.sender, "Not owner");
-        uint256 amount = migrationClaimable(id);
-        require(amount > 0, "Nothing claimable");
-        require(_freeBalance() >= amount, "Insufficient pool");
-
-        position.claimedAmount += amount;
-        position.lastClaimDay = currentDay();
-        systemTransfer = true;
-        _transfer(address(this), msg.sender, amount);
-        systemTransfer = false;
-        emit MigrationClaimed(msg.sender, id, amount);
+    function keeperClaimMigrations(uint256[] calldata ids) external onlyKeeperOrAbove {
+        for (uint256 i = 0; i < ids.length;) {
+            uint256 amount = migrationClaimable(ids[i]);
+            if (amount > 0) {
+                if (_freeBalance() < amount) break;
+                _claimMigration(migrationPositions[ids[i]], ids[i], amount);
+            }
+            unchecked {
+                i++;
+            }
+        }
     }
 
     function migrationClaimable(uint256 id) public view returns (uint256) {
         MigrationPosition storage position = migrationPositions[id];
         if (position.owner == address(0) || position.claimedAmount >= position.originalAmount) return 0;
-        uint256 elapsedDays = currentDay() - position.lastClaimDay;
+        uint256 dayNow = currentDay();
+        uint256 elapsedDays = dayNow - position.lastClaimDay;
         if (elapsedDays == 0) return 0;
-        uint256 bp = users[position.owner].directLpValueUsdt >= NODE_DIRECT_LP_USDT
-            ? MIGRATION_BOOST_RELEASE_BP
-            : MIGRATION_RELEASE_BP;
-        uint256 amount = (position.originalAmount * bp * elapsedDays) / BASIS_POINTS;
+        uint256 boostStartDay = migrationBoostStartDayOf[position.owner];
+        uint256 baseDays = elapsedDays;
+        uint256 accelDays;
+        if (boostStartDay > 0 && boostStartDay < dayNow) {
+            uint256 accelStart = boostStartDay > position.lastClaimDay ? boostStartDay : position.lastClaimDay;
+            accelDays = dayNow - accelStart;
+            baseDays = elapsedDays - accelDays;
+        }
+        uint256 amount = (
+            position.originalAmount * ((MIGRATION_RELEASE_BP * baseDays) + (MIGRATION_ACCEL_RELEASE_BP * accelDays))
+        ) / BASIS_POINTS;
         uint256 remaining = position.originalAmount - position.claimedAmount;
         return amount > remaining ? remaining : amount;
     }
@@ -583,44 +619,55 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
         external
         onlyAdminOrOwner
     {
-        require(accounts.length == amounts.length && accounts.length == lpValuesUsdt.length && accounts.length == referrers.length, "Length mismatch");
+        _require(accounts.length == amounts.length && accounts.length == lpValuesUsdt.length && accounts.length == referrers.length);
         _updatePool();
         for (uint256 i = 0; i < accounts.length; i++) {
-            _depositImported(accounts[i], amounts[i], lpValuesUsdt[i], referrers[i]);
+            _depositImported(accounts[i], amounts[i], lpValuesUsdt[i], _powerForLpValue(lpValuesUsdt[i]), referrers[i]);
         }
     }
 
+    function processAssistedUsdtDeposit(address account, address referrer, uint256 lpValueUsdt, uint256 lpAmount)
+        external
+        onlyAdminOrOwner
+    {
+        _require(account != address(0) && lpValueUsdt > 0 && lpAmount > 0);
+        _updatePool();
+        if (!users[account].registered) {
+            _register(account, referrer);
+        } else if (referrer != address(0) && users[account].referrer == address(0)) {
+            _bindReferrer(account, referrer);
+        }
+        _settleAccount(account);
+        _applyDeposit(account, lpAmount, lpValueUsdt, _powerForLpValue(lpValueUsdt), true);
+        emit UserLpCredited(account, lpAmount, lpValueUsdt);
+    }
+
     function adminSetReferrer(address account, address referrer) external onlyAdminOrOwner {
-        require(account != address(0) && referrer != address(0), "Zero address");
-        require(!users[account].registered || users[account].referrer == address(0), "Already bound");
+        _require(account != address(0) && referrer != address(0));
+        _require(!users[account].registered || users[account].referrer == address(0));
         _register(account, referrer);
     }
 
     function setAdmin(address admin, bool enabled) external onlyAdminOrOwner {
-        require(admin != address(0), "Zero admin");
+        _require(admin != address(0));
         admins[admin] = enabled;
         emit AdminUpdated(admin, enabled);
     }
 
     function setManager(address manager, bool enabled) external onlyAdminOrOwner {
-        require(manager != address(0), "Zero manager");
+        _require(manager != address(0));
         managers[manager] = enabled;
         emit ManagerUpdated(manager, enabled);
     }
 
-    function setTaxRecorder(address recorder, bool enabled) external onlyManagerOrAbove {
-        require(recorder != address(0), "Zero recorder");
-        taxRecorders[recorder] = enabled;
-    }
-
     function setKeeper(address keeper, bool enabled) external onlyManagerOrAbove {
-        require(keeper != address(0), "Zero keeper");
+        _require(keeper != address(0));
         keepers[keeper] = enabled;
         emit KeeperUpdated(keeper, enabled);
     }
 
     function setAmmPair(address pair, bool enabled) external onlyManagerOrAbove {
-        require(pair != address(0), "Zero pair");
+        _require(pair != address(0));
         ammPairs[pair] = enabled;
         emit AmmPairUpdated(pair, enabled);
     }
@@ -632,7 +679,7 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
     }
 
     function keeperUpdateKntPrices(uint256 priceNowUsdt_, uint256 price24hAgoUsdt_) external onlyKeeperOrAbove {
-        require(priceNowUsdt_ > 0, "Zero price");
+        _require(priceNowUsdt_ > 0);
         latestKntPriceUsdt = priceNowUsdt_;
         price24hAgoUsdt = price24hAgoUsdt_;
         latestPriceUpdatedAt = block.timestamp;
@@ -640,27 +687,24 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
     }
 
     function setWallets(address foundationWallet_, address dexSettlementWallet_) external onlyAdminOrOwner {
-        require(foundationWallet_ != address(0) && dexSettlementWallet_ != address(0), "Zero wallet");
+        _require(foundationWallet_ != address(0) && dexSettlementWallet_ != address(0));
         foundationWallet = foundationWallet_;
         dexSettlementWallet = dexSettlementWallet_;
     }
 
     function setProjectSinkWallet(address projectSinkWallet_) external onlyAdminOrOwner {
-        require(projectSinkWallet_ != address(0), "Zero wallet");
+        _require(projectSinkWallet_ != address(0));
         projectSinkWallet = projectSinkWallet_;
     }
 
     function setEcosystemWallet(address ecosystemWallet_) external onlyAdminOrOwner {
-        require(ecosystemWallet_ != address(0), "Zero wallet");
+        _require(ecosystemWallet_ != address(0));
         ecosystemWallet = ecosystemWallet_;
     }
 
     function setLiquidityConfig(address pancakeRouter_, address usdtToken_, address labubuToken_, address labubuKntPair_) external onlyManagerOrAbove {
-        require(pancakeRouter_ != address(0) && usdtToken_ != address(0) && labubuToken_ != address(0), "Zero liquidity config");
-        require(
-            labubuSwapIntermediateToken == address(0) || (labubuSwapIntermediateToken != usdtToken_ && labubuSwapIntermediateToken != labubuToken_),
-            "Invalid intermediate"
-        );
+        _require(pancakeRouter_ != address(0) && usdtToken_ != address(0) && labubuToken_ != address(0));
+        _require(labubuSwapIntermediateToken == address(0) || (labubuSwapIntermediateToken != usdtToken_ && labubuSwapIntermediateToken != labubuToken_));
         pancakeRouter = pancakeRouter_;
         usdtToken = usdtToken_;
         labubuToken = labubuToken_;
@@ -673,17 +717,28 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
     }
 
     function setLabubuSwapIntermediateToken(address intermediateToken_) external onlyManagerOrAbove {
-        require(intermediateToken_ == address(0) || (intermediateToken_ != usdtToken && intermediateToken_ != labubuToken), "Invalid intermediate");
+        _require(intermediateToken_ == address(0) || (intermediateToken_ != usdtToken && intermediateToken_ != labubuToken));
         labubuSwapIntermediateToken = intermediateToken_;
     }
 
+    function setPancakeProxy(address pancakeProxy_) external onlyManagerOrAbove {
+        address oldProxy = pancakeProxy;
+        pancakeProxy = pancakeProxy_;
+        emit PancakeProxyUpdated(oldProxy, pancakeProxy_);
+    }
+
     function setBurnQueueRewardBP(uint256 rewardBP) external onlyManagerOrAbove {
-        require(rewardBP >= BASIS_POINTS && rewardBP <= 30_000, "Invalid reward");
+        _require(rewardBP >= BASIS_POINTS && rewardBP <= 30_000);
         burnQueueRewardBP = rewardBP;
     }
 
     function setReferralSignalAmount(uint256 amount) external onlyManagerOrAbove {
         referralSignalAmount = amount;
+    }
+
+    function setLpPowerPerUsdt(uint256 value) external onlyManagerOrAbove {
+        _require(value > 0 && value <= 100);
+        lpPowerPerUsdt = value;
     }
 
     function _isAdminOrOwner(address account) internal view returns (bool) {
@@ -698,11 +753,28 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
         return _isManagerOrAbove(account) || keepers[account];
     }
 
-    function _depositImported(address account, uint256 amount, uint256 lpValueUsdt, address referrer) internal {
-        require(account != address(0) && amount > 0 && lpValueUsdt > 0, "Invalid deposit");
+    function _depositImported(address account, uint256 amount, uint256 lpValueUsdt, uint256 power, address referrer) internal {
+        _require(account != address(0) && amount > 0 && lpValueUsdt > 0 && power > 0);
+        (amount, power) = _unpackImportedAmount(amount, power);
         if (!users[account].registered) _register(account, referrer);
         _settleAccount(account);
-        _applyDeposit(account, amount, lpValueUsdt);
+        _applyDeposit(account, amount, lpValueUsdt, power, false);
+    }
+
+    function _claimMigration(MigrationPosition storage position, uint256 id, uint256 amount) internal {
+        position.claimedAmount += amount;
+        position.lastClaimDay = currentDay();
+        systemTransfer = true;
+        _transfer(address(this), position.owner, amount);
+        systemTransfer = false;
+        emit MigrationClaimed(position.owner, id, amount);
+    }
+
+    function _unpackImportedAmount(uint256 amount, uint256 defaultPower) internal pure returns (uint256 lpAmount, uint256 power) {
+        if (amount <= type(uint128).max) return (amount, defaultPower);
+        lpAmount = uint128(amount);
+        power = amount >> 128;
+        _require(lpAmount > 0 && power > 0);
     }
 
     function _processUsdtDeposit(
@@ -715,39 +787,43 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
         uint256 minLpAmount,
         uint256 deadline
     ) internal returns (uint256 liquidity) {
-        require(
-            pancakeRouter != address(0) && usdtToken != address(0) && labubuToken != address(0) && labubuKntPair != address(0),
-            "Liquidity not configured"
-        );
-        require(deadline >= block.timestamp, "Expired");
+        _require(pancakeRouter != address(0) && usdtToken != address(0) && labubuToken != address(0) && labubuKntPair != address(0));
+        _require(deadline >= block.timestamp);
 
         _updatePool();
         if (!users[account].registered) _register(account, address(0));
         _settleAccount(account);
 
-        IERC20(usdtToken).forceApprove(pancakeRouter, amount);
-
-        address intermediateToken = labubuSwapIntermediateToken;
-        address[] memory labubuPath = new address[](intermediateToken == address(0) ? 2 : 3);
-        labubuPath[0] = usdtToken;
-        if (intermediateToken == address(0)) {
-            labubuPath[1] = labubuToken;
+        uint256 labubuBefore = IERC20(labubuToken).balanceOf(address(this));
+        if (pancakeProxy != address(0)) {
+            IERC20(usdtToken).forceApprove(pancakeProxy, amount);
+            IPancakeProxy(pancakeProxy).swapByUsdt(amount, minLabubuBought, address(this), deadline);
         } else {
-            labubuPath[1] = intermediateToken;
-            labubuPath[2] = labubuToken;
-        }
-        uint256[] memory labubuAmounts = IPancakeV2Router(pancakeRouter).swapExactTokensForTokens(
-            amount,
-            minLabubuBought,
-            labubuPath,
-            address(this),
-            deadline
-        );
+            IERC20(usdtToken).forceApprove(pancakeRouter, amount);
 
-        uint256 labubuBought = labubuAmounts[labubuAmounts.length - 1];
+            address intermediateToken = labubuSwapIntermediateToken;
+            address[] memory labubuPath = new address[](intermediateToken == address(0) ? 2 : 3);
+            labubuPath[0] = usdtToken;
+            if (intermediateToken == address(0)) {
+                labubuPath[1] = labubuToken;
+            } else {
+                labubuPath[1] = intermediateToken;
+                labubuPath[2] = labubuToken;
+            }
+            IPancakeV2Router(pancakeRouter).swapExactTokensForTokens(
+                amount,
+                minLabubuBought,
+                labubuPath,
+                address(this),
+                deadline
+            );
+        }
+
+        uint256 labubuBought = IERC20(labubuToken).balanceOf(address(this)) - labubuBefore;
+        _require(labubuBought >= minLabubuBought);
         uint256 labubuToKnt = labubuBought / 2;
         uint256 labubuToLp = labubuBought - labubuToKnt;
-        require(labubuToKnt > 0 && labubuToLp > 0, "Insufficient LABUBU");
+        _require(labubuToKnt > 0 && labubuToLp > 0);
 
         IERC20(labubuToken).forceApprove(pancakeRouter, labubuToKnt);
 
@@ -782,7 +858,7 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
             deadline
         );
         systemTransfer = false;
-        require(liquidity >= minLpAmount, "Insufficient LP");
+        _require(liquidity >= minLpAmount);
 
         uint256 kntRefund = kntBought - kntUsed;
         uint256 labubuRefund = labubuToLp - labubuUsed;
@@ -794,26 +870,26 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
             IERC20(labubuToken).safeTransfer(account, labubuRefund);
         }
 
-        _applyDeposit(account, liquidity, amount);
+        _applyDeposit(account, liquidity, amount, _powerForLpValue(amount), true);
         emit UserLpCredited(account, liquidity, amount);
         emit UsdtDeposited(account, amount, kntUsed, labubuUsed, liquidity, amount);
     }
 
-    function _applyDeposit(address account, uint256 amount, uint256 lpValueUsdt) internal {
+    function _applyDeposit(address account, uint256 amount, uint256 lpValueUsdt, uint256 addedPower, bool countsAsNewLp) internal {
         UserInfo storage user = users[account];
         bool wasEffective = user.lpValueUsdt >= EFFECTIVE_DIRECT_LP_USDT;
-        uint256 addedPower = lpValueUsdt * POWER_PER_USDT;
 
         user.depositAmount += amount;
         user.lpValueUsdt += lpValueUsdt;
         user.power += addedPower;
+        if (countsAsNewLp) newLpValueUsdtOf[account] += lpValueUsdt;
         if (user.lastPowerUpdateDay == 0) user.lastPowerUpdateDay = currentDay();
 
         reservedDeposits += amount;
         totalLpValueUsdt += lpValueUsdt;
         totalPower += addedPower;
 
-        _updateDirectPerformance(user.referrer, lpValueUsdt, wasEffective, user.lpValueUsdt, true);
+        _updateDirectPerformance(user.referrer, lpValueUsdt, wasEffective, user.lpValueUsdt, true, countsAsNewLp);
         _refreshNodeStatus(account);
         _syncRewardDebt(account);
         emit Deposited(account, amount, lpValueUsdt, addedPower);
@@ -821,7 +897,7 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
 
     function _removeDeposit(address account, uint256 amount, uint256 lpValueUsdt) internal {
         UserInfo storage user = users[account];
-        require(user.depositAmount >= amount && user.lpValueUsdt >= lpValueUsdt, "Insufficient deposit");
+        _require(user.depositAmount >= amount && user.lpValueUsdt >= lpValueUsdt);
 
         bool wasEffective = user.lpValueUsdt >= EFFECTIVE_DIRECT_LP_USDT;
         uint256 removedPower = lpValueUsdt == user.lpValueUsdt ? user.power : (user.power * lpValueUsdt) / user.lpValueUsdt;
@@ -833,15 +909,15 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
         totalLpValueUsdt -= lpValueUsdt;
         totalPower -= removedPower;
 
-        _updateDirectPerformance(user.referrer, lpValueUsdt, wasEffective, user.lpValueUsdt, false);
+        _updateDirectPerformance(user.referrer, lpValueUsdt, wasEffective, user.lpValueUsdt, false, false);
         _refreshNodeStatus(account);
         _syncRewardDebt(account);
     }
 
     function _useKeeperAction(address account, bytes32 sourceTxHash, uint256 sourceLogIndex, bytes32 actionType) internal returns (bytes32 actionId) {
-        require(sourceTxHash != bytes32(0), "Zero source");
+        _require(sourceTxHash != bytes32(0));
         actionId = keccak256(abi.encode(actionType, sourceTxHash, sourceLogIndex, account));
-        require(!processedKeeperActions[actionId], "Keeper action processed");
+        _require(!processedKeeperActions[actionId]);
         processedKeeperActions[actionId] = true;
     }
 
@@ -859,7 +935,7 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
     }
 
     function _register(address account, address referrer) internal {
-        require(!users[account].registered, "Already registered");
+        _require(!users[account].registered);
         if (referrer == address(0) && account != owner()) referrer = owner();
         users[account].registered = true;
         users[account].lastPowerUpdateDay = currentDay();
@@ -867,9 +943,9 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
     }
 
     function _bindReferrer(address account, address referrer) internal {
-        require(account != referrer, "Self referrer");
-        require(users[account].referrer == address(0), "Already bound");
-        require(!_wouldCreateReferralCycle(account, referrer), "Referral cycle");
+        _require(account != referrer);
+        _require(users[account].referrer == address(0));
+        _require(!_wouldCreateReferralCycle(account, referrer));
         users[account].referrer = referrer;
         directReferrals[referrer].push(account);
         emit ReferrerBound(account, referrer);
@@ -901,7 +977,7 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
 
             if (totalPower > 0) accStaticRewardPerPower += (staticAmount * 1e18) / totalPower;
             dynamicPool += dynamicAmount;
-            if (nodeList.length > 0) accNodeRewardPerNode += nodeAmount / nodeList.length;
+            if (totalNodeUnitCount > 0) accNodeRewardPerNode += nodeAmount / totalNodeUnitCount;
             emit PoolUpdated(d, emission, staticAmount, dynamicAmount, nodeAmount);
         }
         lastRewardDay = dayNow;
@@ -923,8 +999,9 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
             }
         }
 
-        if (user.isNode) {
-            uint256 nodePending = accNodeRewardPerNode - user.nodeRewardDebt;
+        uint256 userNodeUnits = nodeUnits[account];
+        if (userNodeUnits > 0) {
+            uint256 nodePending = (accNodeRewardPerNode - user.nodeRewardDebt) * userNodeUnits;
             if (nodePending > 0) {
                 user.pendingKnt += nodePending;
                 user.totalNodeReward += nodePending;
@@ -976,7 +1053,7 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
     function _syncRewardDebt(address account) internal {
         UserInfo storage user = users[account];
         user.rewardDebt = (user.power * accStaticRewardPerPower) / 1e18;
-        user.nodeRewardDebt = user.isNode ? accNodeRewardPerNode : 0;
+        user.nodeRewardDebt = nodeUnits[account] > 0 ? accNodeRewardPerNode : 0;
     }
 
     function _distributeDynamic(address source, uint256 staticReward) internal {
@@ -1020,12 +1097,24 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
         return maxLevel;
     }
 
-    function _updateDirectPerformance(address referrer, uint256 lpValueDelta, bool wasEffective, uint256 newSelfLpValue, bool increase) internal {
+    function _powerForLpValue(uint256 lpValueUsdt) internal view returns (uint256) {
+        uint256 multiplier = lpPowerPerUsdt == 0 ? POWER_PER_USDT : lpPowerPerUsdt;
+        return lpValueUsdt * multiplier;
+    }
+
+    function _updateDirectPerformance(address referrer, uint256 lpValueDelta, bool wasEffective, uint256 newSelfLpValue, bool increase, bool countsAsNewLp) internal {
         if (referrer == address(0)) return;
         _settleAccount(referrer);
         UserInfo storage parent = users[referrer];
         if (increase) {
             parent.directLpValueUsdt += lpValueDelta;
+            if (countsAsNewLp) {
+                bool wasMigrationBoosted = directNewLpValueUsdtOf[referrer] >= NODE_DIRECT_LP_USDT;
+                directNewLpValueUsdtOf[referrer] += lpValueDelta;
+                if (!wasMigrationBoosted && directNewLpValueUsdtOf[referrer] >= NODE_DIRECT_LP_USDT) {
+                    migrationBoostStartDayOf[referrer] = currentDay();
+                }
+            }
             if (!wasEffective && newSelfLpValue >= EFFECTIVE_DIRECT_LP_USDT) parent.directEffectiveCount += 1;
         } else {
             parent.directLpValueUsdt = parent.directLpValueUsdt > lpValueDelta ? parent.directLpValueUsdt - lpValueDelta : 0;
@@ -1042,34 +1131,27 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
         bool qualifies = user.lpValueUsdt >= NODE_SELF_LP_USDT
             && user.directLpValueUsdt >= NODE_DIRECT_LP_USDT
             && user.directEffectiveCount > 0;
-        if (qualifies == user.isNode) return;
+        uint256 oldUnits = nodeUnits[account];
+        uint256 newUnits = qualifies ? user.directLpValueUsdt / NODE_DIRECT_LP_USDT : 0;
+        if (newUnits == oldUnits && qualifies == user.isNode) return;
 
-        if (qualifies) {
+        totalNodeUnitCount = totalNodeUnitCount + newUnits - oldUnits;
+        nodeUnits[account] = newUnits;
+
+        if (newUnits > 0) {
+            bool wasNode = user.isNode;
             user.isNode = true;
-            nodeList.push(account);
-            nodeIndexPlusOne[account] = nodeList.length;
             user.nodeRewardDebt = accNodeRewardPerNode;
+            if (!wasNode) emit NodeStatusUpdated(account, true);
         } else {
             user.isNode = false;
-            uint256 indexPlusOne = nodeIndexPlusOne[account];
-            if (indexPlusOne > 0) {
-                uint256 index = indexPlusOne - 1;
-                uint256 lastIndex = nodeList.length - 1;
-                if (index != lastIndex) {
-                    address moved = nodeList[lastIndex];
-                    nodeList[index] = moved;
-                    nodeIndexPlusOne[moved] = index + 1;
-                }
-                nodeList.pop();
-                delete nodeIndexPlusOne[account];
-            }
             user.nodeRewardDebt = 0;
+            emit NodeStatusUpdated(account, false);
         }
-        emit NodeStatusUpdated(account, qualifies);
     }
 
     function _burnAndQueue(address account, uint256 amount) internal {
-        require(amount > 0, "Zero amount");
+        _require(amount > 0);
         _burn(account, amount);
         _createBurnQueueEntry(account, amount);
     }
@@ -1099,7 +1181,7 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
         uint256 profitTax = currentValueUsdt == 0 ? 0 : _profitTax(account, amount, currentValueUsdt);
         uint256 dumpTax = _dumpTax(amount, latestKntPriceUsdt, price24hAgoUsdt);
         uint256 totalTax = sellTax + profitTax + dumpTax;
-        require(totalTax <= amount, "Tax exceeds amount");
+        _require(totalTax <= amount);
 
         uint256 netAmount = amount - totalTax;
         if (totalTax > 0) {
@@ -1138,12 +1220,13 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
         uint256 toFoundation = amount - toQueue;
         rewardPool += toQueue;
         if (toFoundation > 0) {
-            _swapFoundationTaxToLabubu(toFoundation);
+            uint256 labubuAmount = _swapKntToLabubu(foundationWallet, toFoundation);
+            emit FoundationTaxConverted(foundationWallet, toFoundation, labubuAmount);
         }
     }
 
-    function _swapFoundationTaxToLabubu(uint256 kntAmount) internal {
-        require(pancakeRouter != address(0) && labubuToken != address(0), "Liquidity not configured");
+    function _swapKntToLabubu(address recipient, uint256 kntAmount) internal returns (uint256 labubuAmount) {
+        _require(pancakeRouter != address(0) && labubuToken != address(0));
         IERC20(address(this)).forceApprove(pancakeRouter, kntAmount);
 
         address[] memory path = new address[](2);
@@ -1155,12 +1238,12 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
             kntAmount,
             0,
             path,
-            foundationWallet,
+            recipient,
             block.timestamp
         );
         systemTransfer = false;
 
-        emit FoundationTaxConverted(foundationWallet, kntAmount, amounts[amounts.length - 1]);
+        labubuAmount = amounts[amounts.length - 1];
     }
 
     function _distributeProfitTax(uint256 amount) internal {
@@ -1171,9 +1254,8 @@ contract KNTAllInOne is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
         rewardPool += toQueue;
         if (toBurn > 0) _burn(address(this), toBurn);
         if (toEcosystem > 0) {
-            systemTransfer = true;
-            _transfer(address(this), ecosystemWallet, toEcosystem);
-            systemTransfer = false;
+            uint256 labubuAmount = _swapKntToLabubu(ecosystemWallet, toEcosystem);
+            emit EcosystemTaxConverted(ecosystemWallet, toEcosystem, labubuAmount);
         }
     }
 

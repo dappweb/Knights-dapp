@@ -1,166 +1,79 @@
 {
   "network": "bscTestnet",
   "chainId": 97,
-  "deployedAt": "2026-05-05T04:38:42.605Z",
-  "deployer": "0x744447d8580EB900b199e852C132F626247a36F7",
+  "deployedAt": "2026-05-19T09:13:30.788Z",
+  "deployer": "0xAC25dA7FdEEEaDf2943EBF505Fa9739CBD111bD8",
+  "contractVerification": {
+    "enabled": false,
+    "sourceCodeVerification": "disabled"
+  },
   "upgradeability": {
     "pattern": "transparent",
-    "implementation": "0xbC88F5931188E93C16a0dE4CfA9C6794E85Ef544",
-    "proxy": "0x14Dc8a0E97815128304883DEaEc89D6773937dc0",
-    "proxyAdmin": "0x9dfB1e1FD8d1083153d02Fd46FA0dEFbb261fAE2",
-    "proxyAdminOwner": "0x744447d8580EB900b199e852C132F626247a36F7"
+    "implementation": "0xd5Ed9fD67222c51F3878ef2e40A123E5410b9912",
+    "proxy": "0x6d15543f858E185240841015159427957f390eAF",
+    "proxyAdmin": "0xE0235eba1079Ac17350c344D214c527f90237536",
+    "proxyAdminOwner": "0xAC25dA7FdEEEaDf2943EBF505Fa9739CBD111bD8"
   },
   "router": "0xD99D1c33F9fC3444f8101754aBC46c52416550D1",
   "factory": "0x6725F303b657a9451d8BA641348b6761A6CC7a17",
-  "KNTAllInOne": "0x14Dc8a0E97815128304883DEaEc89D6773937dc0",
-  "KNTImplementation": "0xbC88F5931188E93C16a0dE4CfA9C6794E85Ef544",
-  "ProxyAdmin": "0x9dfB1e1FD8d1083153d02Fd46FA0dEFbb261fAE2",
-  "LABUBU": "0x202C8095F5D52EDF56EaFF8c36aA930e2C414181",
+  "KNTAllInOne": "0x6d15543f858E185240841015159427957f390eAF",
+  "KNTImplementation": "0xd5Ed9fD67222c51F3878ef2e40A123E5410b9912",
+  "ProxyAdmin": "0xE0235eba1079Ac17350c344D214c527f90237536",
+  "LABUBU": "0xe8214E6580f81835F13Ac358DCc72ac7d4d78052",
   "USDT": "0xacD944e910952c020eb129C50921f180c62c3291",
   "usdtSource": "configured",
-  "deployedAtBlock": 105585919,
-  "pair": "0x3C6934609378293B0698c1242a661a875B5f0c18",
-  "labubuPair": "0x3C6934609378293B0698c1242a661a875B5f0c18",
-  "labubuUsdtPair": "0x3d15C36a566c99bC740d2f2fA6F602B384476f9b",
+  "deployedAtBlock": 108308778,
+  "pair": "0x8A5E41D891b6BE9E470Ab3307dE8E24C8073ff00",
+  "labubuPair": "0x8A5E41D891b6BE9E470Ab3307dE8E24C8073ff00",
+  "labubuUsdtPair": "0x628578cACC1210f8a082bDe659072aCB4Ad11DEA",
+  "labubuSwapIntermediateToken": "",
+  "labubuWbnbPair": "",
+  "wbnbUsdtPair": "",
   "rewardPeriodSeconds": "600",
   "liquidity": {
     "KNT_LABUBU": {
-      "KNT": "100000.0",
-      "LABUBU": "300000.0",
-      "lpReservedInContract": "173205.080756887729351744",
-      "tx": "0x807348270025e1ff0279124daeaf7979ee9285caeab8ac9b4c452f75b1adb81e"
+      "KNT": "1000.0",
+      "LABUBU": "3000.0",
+      "lpReservedInContract": "1732.050807568877292527",
+      "tx": "0x10323d322409862ceae5f96ced398c3a435afbd1cac9ca4e00416997d47050db"
     },
     "LABUBU_USDT": {
-      "LABUBU": "500000.0",
-      "USDT": "500000.0",
-      "tx": "0x917821dfdecc3d53b681b53da97392f82482c8e75234fda3e49e1ee37791a04e"
+      "LABUBU": "1000.0",
+      "USDT": "1000.0",
+      "tx": "0x6978e0a5f41149d07c63686f4fece319f278cbbe8c59945fa3f0e0d20b7c5163"
     }
   },
   "migration": {
-    "sourceContract": "0x5e23c00276d4454072b181eBA5079440cA6ce83f",
-    "migratedAccounts": 15,
-    "totalImportedLpValueUsdt": "10150.0",
-    "totalReservedLpAmount": "173205.080756887729351744",
-    "oldPausedOnChain": true,
-    "oldPauseNote": "Legacy contract has no Pausable switch. Its liquidity pair config is set to zero so processUsdtDeposit/withdrawDeposit revert at the legacy entry.",
-    "accounts": [
-      {
-        "account": "0x2360CA8b4AB282bC35FbA778D9f2242d45505D41",
-        "referrer": "0x744447d8580EB900b199e852C132F626247a36F7",
-        "lpValueUsdt": "1000.0",
-        "importedLpAmount": "17064.539976048052152881",
-        "migratedKntBalance": "100.0"
-      },
-      {
-        "account": "0xDe4896982DB284710820F4720BdF39F67351f0b5",
-        "referrer": "0x2360CA8b4AB282bC35FbA778D9f2242d45505D41",
-        "lpValueUsdt": "1000.0",
-        "importedLpAmount": "17064.539976048052152881",
-        "migratedKntBalance": "152.0"
-      },
-      {
-        "account": "0x10f904eD8C7edd00F2b230400836F2AA28FdA608",
-        "referrer": "0x2360CA8b4AB282bC35FbA778D9f2242d45505D41",
-        "lpValueUsdt": "1000.0",
-        "importedLpAmount": "17064.539976048052152881",
-        "migratedKntBalance": "25.0"
-      },
-      {
-        "account": "0xfaf813025B080130b7D88607789d9d346026a6D0",
-        "referrer": "0x2360CA8b4AB282bC35FbA778D9f2242d45505D41",
-        "lpValueUsdt": "1000.0",
-        "importedLpAmount": "17064.539976048052152881",
-        "migratedKntBalance": "25.0"
-      },
-      {
-        "account": "0x4A6D0a1dbF4b09CD04fE6Cd0C88e931e177fe51D",
-        "referrer": "0x2360CA8b4AB282bC35FbA778D9f2242d45505D41",
-        "lpValueUsdt": "900.0",
-        "importedLpAmount": "15358.085978443246937593",
-        "migratedKntBalance": "25.0"
-      },
-      {
-        "account": "0xA9f97d498A2fC2FAf735676e78f230C0Ba2828B8",
-        "referrer": "0x744447d8580EB900b199e852C132F626247a36F7",
-        "lpValueUsdt": "50.0",
-        "importedLpAmount": "853.226998802402607644",
-        "migratedKntBalance": "20.0"
-      },
-      {
-        "account": "0xA2FbA26b8A13a94561a296d8d703B5a2a998540f",
-        "referrer": "0xA9f97d498A2fC2FAf735676e78f230C0Ba2828B8",
-        "lpValueUsdt": "50.0",
-        "importedLpAmount": "853.226998802402607644",
-        "migratedKntBalance": "10.0"
-      },
-      {
-        "account": "0xb3058d16f50cfAdB638E08356bd975DdC54642F1",
-        "referrer": "0xA9f97d498A2fC2FAf735676e78f230C0Ba2828B8",
-        "lpValueUsdt": "50.0",
-        "importedLpAmount": "853.226998802402607644",
-        "migratedKntBalance": "10.0"
-      },
-      {
-        "account": "0x1E1C1740Dfc21276CE615c77e2628CafDe7622A5",
-        "referrer": "0xA9f97d498A2fC2FAf735676e78f230C0Ba2828B8",
-        "lpValueUsdt": "50.0",
-        "importedLpAmount": "853.226998802402607644",
-        "migratedKntBalance": "10.0"
-      },
-      {
-        "account": "0x67167d0b55121ef69248aACee5106411C9B7AA02",
-        "referrer": "0xA9f97d498A2fC2FAf735676e78f230C0Ba2828B8",
-        "lpValueUsdt": "50.0",
-        "importedLpAmount": "853.226998802402607644",
-        "migratedKntBalance": "10.0"
-      },
-      {
-        "account": "0x068682216a2434ecF3D492378e115A27D4933a61",
-        "referrer": "0x744447d8580EB900b199e852C132F626247a36F7",
-        "lpValueUsdt": "1000.0",
-        "importedLpAmount": "17064.539976048052152881",
-        "migratedKntBalance": "10000.0"
-      },
-      {
-        "account": "0x47dCd3e112bD133fEe14625043f15b581fc87241",
-        "referrer": "0x068682216a2434ecF3D492378e115A27D4933a61",
-        "lpValueUsdt": "1000.0",
-        "importedLpAmount": "17064.539976048052152881",
-        "migratedKntBalance": "5902.0"
-      },
-      {
-        "account": "0x643903200dbF41F2B1b0224f64BC4ec2cEA051D9",
-        "referrer": "0x068682216a2434ecF3D492378e115A27D4933a61",
-        "lpValueUsdt": "1000.0",
-        "importedLpAmount": "17064.539976048052152881",
-        "migratedKntBalance": "2500.0"
-      },
-      {
-        "account": "0x29c24549F65A08cbCA135787149572685625217b",
-        "referrer": "0x068682216a2434ecF3D492378e115A27D4933a61",
-        "lpValueUsdt": "1000.0",
-        "importedLpAmount": "17064.539976048052152881",
-        "migratedKntBalance": "2500.0"
-      },
-      {
-        "account": "0x29FC8c7Abd18D495Ad481d0a6dfd2d2960447Dd3",
-        "referrer": "0x068682216a2434ecF3D492378e115A27D4933a61",
-        "lpValueUsdt": "1000.0",
-        "importedLpAmount": "17064.539976048052152883",
-        "migratedKntBalance": "2500.0"
-      }
-    ],
-    "oldPausedAt": "2026-05-05T05:02:21.177Z",
-    "oldPauseMethod": "setLiquidityConfig(router, usdt, labubu, zeroAddress)",
-    "oldPauseTxs": [
-      "0x1bd2a53ad2111f615e5257afd2e7ea40d54ff0e4a03b0e444d0d47d4983c9888"
-    ]
+    "sourceContract": "0xAA0FCaf31Fd4ce39fa78feaB1295A1Ff9cb156D5",
+    "migratedAccounts": 3558,
+    "totalImportedLpValueUsdt": "1360238.991159536737295168",
+    "totalReservedLpAmount": "1732.050807568877292527",
+    "oldPausedOnChain": false,
+    "oldPauseNote": "Legacy contract has no pause switch; frontend and keeper deployment config now point at the proxy.",
+    "accounts": [],
+    "sourceSnapshot": "deployments/bscMainnet/migration/knt-mainnet-migration-state.full.json",
+    "importLog": "deployments/bscTestnet/knt-mainnet-data-import-log.json",
+    "importedAt": "2026-05-19T12:26:00.792Z",
+    "tokenCsvHolders": 1218,
+    "lpCsvHolders": 1913,
+    "totalImportedLpAmount": "14675936.888089855403678801",
+    "totalLegacyPower": "65346806.123652943211440508",
+    "migrationLockRows": 1215,
+    "totalMigrationKnt": "351622.272577569467629156",
+    "onChainNextMigrationId": "1216",
+    "logCompleted": {
+      "lpBatches": 48,
+      "referrerRows": 3558,
+      "migrationRows": 1215,
+      "pending": 0,
+      "referrerSkipped": 1919
+    }
   },
   "wallets": {
-    "foundationWallet": "0x744447d8580EB900b199e852C132F626247a36F7",
-    "dexSettlementWallet": "0x744447d8580EB900b199e852C132F626247a36F7",
-    "projectSinkWallet": "0x744447d8580EB900b199e852C132F626247a36F7",
-    "ecosystemWallet": "0x744447d8580EB900b199e852C132F626247a36F7"
+    "foundationWallet": "0xAC25dA7FdEEEaDf2943EBF505Fa9739CBD111bD8",
+    "dexSettlementWallet": "0xAC25dA7FdEEEaDf2943EBF505Fa9739CBD111bD8",
+    "projectSinkWallet": "0xAC25dA7FdEEEaDf2943EBF505Fa9739CBD111bD8",
+    "ecosystemWallet": "0xAC25dA7FdEEEaDf2943EBF505Fa9739CBD111bD8"
   },
   "roles": {
     "admins": [],
@@ -168,76 +81,7 @@
     "keepers": []
   },
   "legacy": {
-    "KNTAllInOne": "0x5e23c00276d4454072b181eBA5079440cA6ce83f",
-    "labubuPair": "0x3B77d4f0BEFC697ae51c39158e4161328FDeFC40"
-  },
-  "upgradedAt": "2026-05-10T11:51:27.812Z",
-  "upgrades": [
-    {
-      "upgradedAt": "2026-05-05T09:29:03.098Z",
-      "tx": "0x09c38d5114058810d77864c6529890e10d8f67b54101172ae893942508a28360",
-      "blockNumber": 105624792,
-      "oldImplementation": "0xBC8eD475e638E6e5167b70cd01675a86Bf7238cD",
-      "newImplementation": "0xd1656D403eFf5855Ed5a4a52294bE80B65A9D9e2",
-      "proxy": "0x14Dc8a0E97815128304883DEaEc89D6773937dc0",
-      "proxyAdmin": "0x9dfB1e1FD8d1083153d02Fd46FA0dEFbb261fAE2",
-      "operator": "0x744447d8580EB900b199e852C132F626247a36F7"
-    },
-    {
-      "upgradedAt": "2026-05-05T12:42:24.700Z",
-      "tx": "0xbc48f5e3cc1bfc9d63d242921ffc836ccf2bef6c670dc05bf3a449b0c1d9f75c",
-      "blockNumber": 105650574,
-      "oldImplementation": "0xd1656D403eFf5855Ed5a4a52294bE80B65A9D9e2",
-      "newImplementation": "0x0Ce2CCdFC43da2415Eac3cB7Dc2596B7CB39d326",
-      "proxy": "0x14Dc8a0E97815128304883DEaEc89D6773937dc0",
-      "proxyAdmin": "0x9dfB1e1FD8d1083153d02Fd46FA0dEFbb261fAE2",
-      "operator": "0x744447d8580EB900b199e852C132F626247a36F7"
-    },
-    {
-      "upgradedAt": "2026-05-08T05:29:27.414Z",
-      "tx": "0x7932a312b114125346ce7db8310757e270e8339eb4411c8b23e287c7dfb6d1da",
-      "blockNumber": 106168849,
-      "oldImplementation": "0x0Ce2CCdFC43da2415Eac3cB7Dc2596B7CB39d326",
-      "newImplementation": "0x2672c381E4681679469eeEfe4F548026E04785C8",
-      "proxy": "0x14Dc8a0E97815128304883DEaEc89D6773937dc0",
-      "proxyAdmin": "0x9dfB1e1FD8d1083153d02Fd46FA0dEFbb261fAE2",
-      "operator": "0x744447d8580EB900b199e852C132F626247a36F7",
-      "contractVerification": {
-        "enabled": false,
-        "sourceCodeVerification": "disabled"
-      }
-    },
-    {
-      "upgradedAt": "2026-05-09T14:55:18.873Z",
-      "tx": "0x4c7eeaacc9c921d195ab4cef75176dd8bd97dd0c39282e3af0a0c10c7fd85dbf",
-      "blockNumber": 106434438,
-      "oldImplementation": "0x2672c381E4681679469eeEfe4F548026E04785C8",
-      "newImplementation": "0xfa323383ccd2Bc94725b65EF50ff8223ACEee996",
-      "proxy": "0x14Dc8a0E97815128304883DEaEc89D6773937dc0",
-      "proxyAdmin": "0x9dfB1e1FD8d1083153d02Fd46FA0dEFbb261fAE2",
-      "operator": "0x744447d8580EB900b199e852C132F626247a36F7",
-      "contractVerification": {
-        "enabled": false,
-        "sourceCodeVerification": "disabled"
-      }
-    },
-    {
-      "upgradedAt": "2026-05-10T11:51:27.812Z",
-      "tx": "0x361c2e1d4ad459a78368bfc4b8789b8ccd9697ce9b6be9a9ebd5aec15263b18c",
-      "blockNumber": 106601923,
-      "oldImplementation": "0xfa323383ccd2Bc94725b65EF50ff8223ACEee996",
-      "newImplementation": "0xbC88F5931188E93C16a0dE4CfA9C6794E85Ef544",
-      "proxy": "0x14Dc8a0E97815128304883DEaEc89D6773937dc0",
-      "proxyAdmin": "0x9dfB1e1FD8d1083153d02Fd46FA0dEFbb261fAE2",
-      "operator": "0x744447d8580EB900b199e852C132F626247a36F7",
-      "contractVerification": {
-        "enabled": false,
-        "sourceCodeVerification": "disabled"
-      }
-    }
-  ],
-  "contractVerification": {
-    "enabled": false,
-    "sourceCodeVerification": "disabled"
+    "KNTAllInOne": "0xAA0FCaf31Fd4ce39fa78feaB1295A1Ff9cb156D5",
+    "labubuPair": "0x69f5810845e5B5ee8Fce58f98b960107Cd2e92aE"
   }
 }
